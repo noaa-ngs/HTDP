@@ -1,0 +1,19 @@
+ HTDP OUTPUT, VERSION 3.2.9   
+
+VELOCITIES IN MM/YR RELATIVE TO NAD_83(2011/CORS96/2007)
+
+alpha                   
+LATITUDE   =  38  6 12.96000 N  NORTH VELOCITY =  37.19 mm/yr
+LONGITUDE  = 122 56  7.80000 W  EAST VELOCITY  = -23.79 mm/yr
+ELLIPS. HT. =      0.000 m      UP VELOCITY    =  -1.37 mm/yr
+X = -2732250.837 m              X VELOCITY     =  -6.90 mm/yr
+Y = -4217684.424 m              Y VELOCITY     =  33.10 mm/yr
+Z =  3914499.164 m              Z VELOCITY     =  28.42 mm/yr
+
+beta                    
+LATITUDE   =  36 40 11.28000 N  NORTH VELOCITY =  37.15 mm/yr
+LONGITUDE  = 121 46 19.92000 W  EAST VELOCITY  = -25.83 mm/yr
+ELLIPS. HT. =      0.000 m      UP VELOCITY    =  -1.33 mm/yr
+X = -2696934.816 m              X VELOCITY     =  -9.71 mm/yr
+Y = -4354426.684 m              Y VELOCITY     =  33.37 mm/yr
+Z =  3788064.740 m              Z VELOCITY     =  29.01 mm/yr

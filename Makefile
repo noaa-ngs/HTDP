@@ -28,5 +28,3 @@ initps.o:        initps.f
 htdp:   htdp.o initvl.o initeq.o initbd.o initps.o 
 	$(FC) $(CFLAGS) $(INCLUDES) -o $@ $?  $(LIBS) 
 
-
-#MADE

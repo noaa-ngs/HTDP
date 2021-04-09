@@ -1,0 +1,17 @@
+ HTDP OUTPUT, VERSION 3.2.9   
+
+ TRANSFORMING POSITIONS FROM NAD_83(2011/CORS96/2007) (EPOCH = 01-01-2010 (2010.0000))
+                          TO ITRF2014 or IGS14/IGb14  (EPOCH = 01-01-2010 (2010.0000))
+
+ ***CAUTION: This file was processed using HTDP version 3.2.9   ***
+ ***CAUTION: Coordinates in this file are in ITRF2014 or IGS14/IGb14 ***
+ ***CAUTION: Coordinates in this file have been updated to  1-01-2010=(2010.000) ***
+
+   40.0000062553  100.0000114584    -0.964    Kansas
+   37.0000034059  122.0000150307    -0.546    California
+   48.0000038522  124.0000179554    -0.285    Washington
+   45.0000101759   69.0000029453    -1.137    Maine
+   28.0000056127   81.0000046970    -1.554    Florida
+   18.2000039077   66.4999994854    -1.879    Puerto Rico
+   64.9999985433  152.0000288257     0.484    Alaska
+    0.0000050155  359.9999798125    -1.008    Unmodeled location (near Africa)

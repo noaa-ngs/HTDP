@@ -1,0 +1,16 @@
+ HTDP OUTPUT, VERSION 3.2.9   
+
+ UPDATED POSITIONS IN NAD_83(2011/CORS96/2007)
+ FROM  5-06-1991 TO  7-04-1995 (month-day-year)
+ FROM 1991.345 TO 1995.504 (decimal years)
+
+                OLD COORDINATE    NEW COORDINATE    VELOCITY      DISPLACEMENT
+
+ alpha                   
+ LATITUDE     38 06 12.96000 N   38 06 12.96502 N   37.19 mm/yr   0.155 m north
+ LONGITUDE   122 56  7.80000 W  122 56  7.80406 W  -23.79 mm/yr  -0.099 m east
+ ELLIP. HT.              0.000             -0.006   -1.37 mm/yr  -0.006 m up
+ X                -2732250.837       -2732250.866   -6.90 mm/yr  -0.029 m 
+ Y                -4217684.424       -4217684.286   33.10 mm/yr   0.138 m
+ Z                 3914499.164        3914499.282   28.42 mm/yr   0.118 m
+

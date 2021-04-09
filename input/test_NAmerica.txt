@@ -1,0 +1,8 @@
+40,100,0,Kansas
+37,122,0,California
+48,124,0,Washington
+45,69,0,Maine
+28,81,0,Florida
+18.2,66.5,0,Puerto Rico
+65,152,0,Alaska
+0,0,0,Unmodeled location (near Africa)

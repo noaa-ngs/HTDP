@@ -3,16 +3,18 @@
 **************************************************************
 *  NAME:       HTDP (Horizontal Time-Dependent Positioning)
 *
-*  WRITTEN BY: Richard A. Snay & Chris Pearson
+*  WRITTEN BY: Richard Snay, Chris Pearson, Jarir Saleh, 
+*              and Michael Dennis
 *
 *  PURPOSE:    Transform coordinates across time
 *              and between reference frames
 *
-****************************************************************
+**************************************************************
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
 
-      character    HTDP_version*10
+      character    HTDP_version*8
+      character    Version_date*20
       CHARACTER    OPTION*1
       character    cont*5
 
@@ -20,9 +22,10 @@
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
       COMMON /VERSION/ HTDP_version
 
-C  You must change HTDP version here if necessary
+C  You must change HTDP version and date here, if necessary
 
-      HTDP_version = 'v3.2.8'
+      HTDP_version = '3.2.9'
+      Version_date = 'May 17, 2020'
 
 *** Introduce variables for file id's
 
@@ -61,17 +64,17 @@ C    1      FORM='UNFORMATTED')
 *** Initialize conversion table between reference frame identifiers
       CALL SETRF
 
-      WRITE(LUOUT,5) HTDP_version
+      WRITE(LUOUT,5) HTDP_version, Version_date
     5 FORMAT(
      1 '********************************************************'/
-     1 '*   HTDP (Horizontal Time-Dependent Positioning)       *'/
-     1 '*   SOFTWARE VERSION ',a10                               / 
-     1 '*                                                      *'/)
+     1 '   HTDP (Horizontal Time-Dependent Positioning)         '/
+     1 '   SOFTWARE VERSION: ', a8                               /
+     1 '   VERSION DATE:     ', a20                              /)
       WRITE(LUOUT,501) 
   501 FORMAT(
-     1 '*   AUTHORS: Richard Snay, Chris Pearson & Jarir Saleh *'/
-     1 '*            Email: ngs.cors.htdp@noaa.gov             *'/
-     1 '*                                                      *'/
+     1 '   AUTHORS: Richard Snay, Chris Pearson, Jarir Saleh,   '/
+     1 '            and Michael Dennis                          '/
+     1 '            Email: ngs.cors.htdp@noaa.gov               '/
      1 '********************************************************'/)
       WRITE(LUOUT,10)
    10 FORMAT( 
@@ -90,11 +93,12 @@ C    1      FORM='UNFORMATTED')
    26 FORMAT(' ***************************************'/
      1 ' MAIN MENU:',/
      6 '    0... Exit software.',/
-     7 '    1... Estimate displacements between two dates.'/
-     8 '    2... Estimate velocities.'/
-     9 '    3... Update positions and/or observations '
-     &           ,'to a specified date.'/
-     & '    4... Transform positions between reference frames.  '/
+     7 '    1... Estimate horizontal displacements between two dates.'/
+     8 '    2... Estimate horizontal velocities.'/
+     9 '    3... Transform observations to a specified reference '
+     &           ,'frame and/or date.'/
+     & '    4... Transform positions between reference frames '
+     &           ,'and/or dates.'/
      & '    5... Transform velocities between reference frames. ')
    30 READ(LUIN,35,err=52,iostat=ios) OPTION
       if (ios /= 0) goto 52
@@ -172,7 +176,7 @@ C*** Set default reference epoch to Jan. 1, 2010
 *** Region 1 is the San Andreas fault in central California         
 *** Region 2 is southern California
 *** Region 3 is Northern California
-*** Region 4 is the Pacific Noerthwest
+*** Region 4 is the Pacific Northwest
 *** Region 5 is western CONUS
 *** Region 6 is CONUS
 *** Region 7 is St. Elias, Alaska
@@ -185,7 +189,7 @@ C*** Set default reference epoch to Jan. 1, 2010
 *** Region 14 is the Juan de Fuca plate
 *** Region 15 is the Cocos plate
 *** Region 16 is the Mariana plate
-*** REGION 17 is the Philippine Sea plate
+*** Region 17 is the Philippine Sea plate
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
@@ -1839,7 +1843,7 @@ C
       CHARACTER   CARD*80
       CHARACTER   record*120
       CHARACTER   NAMEF*30,NAME*30,NAMEBB*30, NAMEIF*30
-      CHARACTER   NAME24
+      CHARACTER   NAME24*24
       CHARACTER   BLAB*17
       CHARACTER   NAMEG*10
       CHARACTER   TYPE*4
@@ -2275,7 +2279,7 @@ c    6   '         a specified point having a specified velocity.')
       call MENU1(iopt, frame1)
       if (iopt .ge. 1 .and. iopt .le. numref) then
         WRITE(I2,1002) frame1
- 1002   FORMAT('VELOCITIES IN MM/YR RELATIVE TO ', a24 /)
+ 1002   FORMAT('VELOCITIES IN MM/YR RELATIVE TO ', a24 )
         RVN = 0.0D0
         RVE = 0.0D0
         RVU = 0.0D0
@@ -2320,7 +2324,7 @@ c    6   '         a specified point having a specified velocity.')
         CALL TOVXYZ(YLAT,GLON,SVN,SVE,SVU,SVX,SVY,SVZ)
         WRITE(I2,1060) NAME24,LATD,LATM,SLAT,LATDIR,SVN,LOND,LONM,
      1      SLON,LONDIR,SVE,EHT,SVU,X,SVX,Y,SVY,Z,SVZ
- 1060   FORMAT(/10X,A24,/
+ 1060   FORMAT(/A24,/
      1'LATITUDE   = ',2I3,F9.5,1X,A1,'  NORTH VELOCITY =',F7.2,' mm/yr'/
      2'LONGITUDE  = ',2I3,F9.5,1X,A1,'  EAST VELOCITY  =',F7.2,' mm/yr'/
      3'ELLIPS. HT. = ',F10.3,' m', 6X,'UP VELOCITY    =',F7.2,' mm/yr'/
@@ -2415,7 +2419,7 @@ c    6   '         a specified point having a specified velocity.')
        J = -1
   120  J = J + 1
        YLAT = XLAT
-       ON = MINLON + J*JDS
+       LON = MINLON + J*JDS
        IF(LON .GT. MAXLON) GO TO 110
        YLON = DBLE(LON)/RHOSEC
        CALL TODMSS(YLON,LOND,LONM,SLON,ISIGN)
@@ -2437,16 +2441,16 @@ c    6   '         a specified point having a specified velocity.')
          TOTVEL = DSQRT(VN*VN + VE*VE)
 
 *** code to create vectors to be plotted
-c	     IF (TOTVEL .GE. 5.0D0 .AND. TOTVEL .LE. 50.D0) THEN
-c	       TVE = VE/10.D0
-c	       TVN = VN/10.D0
-c	       WRITE(I2,129) ZLON,ZLAT,TVE,TVN,DUMMY,DUMMY,DUMMY,
+c            IF (TOTVEL .GE. 5.0D0 .AND. TOTVEL .LE. 50.D0) THEN
+c              TVE = VE/10.D0
+c              TVN = VN/10.D0
+c              WRITE(I2,129) ZLON,ZLAT,TVE,TVN,DUMMY,DUMMY,DUMMY,
 c    1                   TEMPNA
 c 129      FORMAT(F10.6, 2x, F9.6, 2X, 5(F7.2, 2x), A8)
-c 	     ENDIF
+c            ENDIF
 
 *** code to create contour plots
-C	     WRITE(I2,129) ZLON, ZLAT, TOTVEL
+C            WRITE(I2,129) ZLON, ZLAT, TOTVEL
 C 129    FORMAT(F6.2, 1X, F6.2, 1X, F5.1)
  
 *** end of temporary code
@@ -2813,7 +2817,6 @@ c     write (*,*) "FROM XT08 ",RLAT*180.d0/pi,WLON*180.d0/pi,EHT08
       parameter (nbbdim = 10000)
       parameter (rad2deg = 180.d0/3.14159265358979d0)
 
-      double precision  lat,lon
       character    card*80,namebb*80,nameif*80,name24*80
       character    record*120                    
       character    namef*30
@@ -2821,21 +2824,12 @@ c     write (*,*) "FROM XT08 ",RLAT*180.d0/pi,WLON*180.d0/pi,EHT08
       character    jn*1,jw*1,LATDIR*1,LONDIR*1
       character    option*1, answer*1, vopt*1
       character    PID*6,PIDs*6
-      character    HTDP_version*10
+      character    HTDP_version*8
       LOGICAL      FRMXYZ
       LOGICAL      TEST
       LOGICAL      Is_inp_NAD83,Is_out_NAD83
       LOGICAL      Is_inp_NAD83PAC,Is_out_NAD83PAC
       LOGICAL      Is_inp_NAD83MAR,Is_out_NAD83MAR
-      logical      am_I_in_or_near_AK
-      logical      am_I_in_or_near_AS
-      logical      am_I_in_or_near_CONUS
-      logical      am_I_in_or_near_CQ  
-      logical      am_I_in_or_near_Guam
-      logical      am_I_in_or_near_HI  
-      logical      am_I_in_or_near_PR  
-      logical      am_I_in_or_near_VQ  
-      logical      am_I_in_or_near_KW  
 
       COMMON /CONST/ A, F, E2, EPS, AF, PI, TWOPI, RHOSEC
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
@@ -2956,48 +2950,6 @@ c     write (*,*) "Starting to look at options"
   180   call GETPNT(latd, latm, slat, LATDIR, lond, lonm, slon, 
      1        LONDIR, name24, x, y, z, ylat, ylon, eht)
         
-C  Added by JS on 07/22/2015 to limit NAD83 to the US*****************************************************
-C  This was reversed on 05/11/2017                   *****************************************************
-
-c        if (Is_inp_NAD83 .or. Is_out_NAD83) then
-c          lat = ylat*rad2deg ; lon = 360.d0 - ylon*rad2deg    
-c          if (lon < 0.d0) lon = lon + 360.d0
-c          if(.not. am_I_in_or_near_AK  (lat,lon) .and.
-c    &       .not. am_I_in_or_near_CONUS(lat,lon) .and.
-c    &       .not. am_I_in_or_near_PR   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_VQ   (lat,lon)) then 
-c            write (luout,'(10x,a,8x,a)') 
-c    &       "NAD83 (2011) is defined only in US territories",name24
-c            stop
-c          endif
-c        endif
-
-c       if(.not. am_I_in_or_near_AK  (lat,lon) .and.
-c    &     .not. am_I_in_or_near_AS   (lat,lon) .and.
-c    &     .not. am_I_in_or_near_CONUS(lat,lon) .and.
-c    &     .not. am_I_in_or_near_CQ   (lat,lon) .and.
-c    &     .not. am_I_in_or_near_Guam (lat,lon) .and.
-c    &     .not. am_I_in_or_near_HI   (lat,lon) .and.
-c    &     .not. am_I_in_or_near_PR   (lat,lon) .and.
-c    &     .not. am_I_in_or_near_VQ   (lat,lon) .and.
-c    &     .not. am_I_in_or_near_KW   (lat,lon)) then
-c          write (luout,'(10x,a,8x,a)') 
-c    &     "FYI, NAD83 (2011) is defined only in US territories",name24
-c          stop
-c       endif
-
-c        if (Is_inp_NAD83MAR .or. Is_out_NAD83MAR) then
-c          lat = ylat*rad2deg ; lon = 360.d0 - ylon*rad2deg    
-c          if (lon < 0.d0) lon = lon + 360.d0
-c          if(.not. am_I_in_or_near_GUAM (lat,lon) .and.
-c    &        .not. am_I_in_or_near_CQ   (lat,lon)) then 
-c            write (luout,'(10x,a,8x,a)') 
-c    &       "NAD83 (2011) is defined only in US territories",name24
-c            stop
-c          endif
-c        endif
-
-C  Until here on 07/22/2015 to limit NAD83 to the US******************************************************
 
 C  Added by JS on 09/10/2014
 
@@ -3125,7 +3077,7 @@ c        write (I2,1309) trim(namebb)
 
          write (i2,1310) HTDP_version
  1310    format (' ***CAUTION: This file was processed using HTDP',
-     &           ' version ',a10, '***')
+     &           ' version ',a8, '***')
          write (i2,1311) frame2       
  1311    format (' ***CAUTION: Coordinates in this file are in ',    
      &           a24, '***')
@@ -3344,27 +3296,7 @@ c    1      name24,0,vxsave,vysave,vzsave,vnsave,vesave,vusave)
          outlon = ylont*rad2deg 
          call extract_name (name24,iii)
 
-C  Added by JS on 07/22/2015 to limit the use in NAD83 to the US
-c  Reversed on 05/11/2017
-
-c        if (Is_inp_NAD83 .or. Is_out_NAD83) then
-c          lat = ylat*rad2deg ; lon = 360.d0 - ylon*rad2deg    
-c          if(.not. am_I_in_or_near_AK  (lat,lon) .and.
-c    &       .not. am_I_in_or_near_AS   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_CONUS(lat,lon) .and.
-c    &       .not. am_I_in_or_near_CQ   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_Guam (lat,lon) .and.
-c    &       .not. am_I_in_or_near_HI   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_PR   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_VQ   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_KW   (lat,lon)) then
-c            write (i2,'(10x,a,8x,a)') 
-c    &     "FYI, NAD83(2011) is defined only in US territories",name24
-c          endif
-c        endif
          write (i2,449) outlat,outlon,ehtnew,name24(1:iii)
-
-C  Until here on 07/22/2015 to limit the use in NAD83 to the US
 
 c        write (i6,449) outlat,outlon,ehtnew,trim(name24)
  449     format (2f16.10,f10.3,4x,a)
@@ -3462,28 +3394,7 @@ c        call PRNTTP(x,y,z,xt,yt,zt,ylat,ylatt,ylon,ylont,eht,ehtnew,
 c    1      name24,0,vxsave,vysave,vzsave,vnsave,vesave,vusave)
          call extract_name (name24,iii)
 
-C  Added by JS on 07/22/2015 to limit the use in NAD83 to the US
-
-c        if (Is_inp_NAD83 .or. Is_out_NAD83) then
-c          lat = ylatt*rad2deg ; lon = 360.d0 - ylont*rad2deg    
-c          if(.not. am_I_in_or_near_AK  (lat,lon) .and.
-c    &       .not. am_I_in_or_near_AS   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_CONUS(lat,lon) .and.
-c    &       .not. am_I_in_or_near_CQ   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_Guam (lat,lon) .and.
-c    &       .not. am_I_in_or_near_HI   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_PR   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_VQ   (lat,lon) .and. 
-c    &       .not. am_I_in_or_near_KW   (lat,lon)) then
-c            write (i2,'(10x,a,8x,a)') 
-c    &       "FYI, NAD83(2011) is defined only in US territories",name24
-c            write (i2,1449) xt,yt,zt,name24(1:iii)
-c          endif
-c        else
-           write (i2,1449) xt,yt,zt,name24(1:iii)
-c        endif
-
-C  Until here on 07/22/2015 to limit the use in NAD83 to the US
+         write (i2,1449) xt,yt,zt,name24(1:iii)
 
 c        write (i6,1449) xt,yt,zt,trim(name24)
  1449    format (3f20.3,4x,a)
@@ -3582,28 +3493,7 @@ c        call PRNTTP(x,y,z,xt,yt,zt,ylat,ylatt,ylon,ylont,eht,ehtnew,
 c    1      name24,0,vxsave,vysave,vzsave,vnsave,vesave,vusave)
          call extract_name (name24,iii)
 
-C  Added by JS on 07/22/2015 to limit the use in NAD83 to the US
-
-c        if (Is_inp_NAD83 .or. Is_out_NAD83) then
-c          lat = ylatt*rad2deg ; lon = 360.d0 - ylont*rad2deg    
-c          if(.not. am_I_in_or_near_AK  (lat,lon) .and.
-c    &       .not. am_I_in_or_near_AS   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_CONUS(lat,lon) .and.
-c    &       .not. am_I_in_or_near_CQ   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_Guam (lat,lon) .and.
-c    &       .not. am_I_in_or_near_HI   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_PR   (lat,lon) .and.
-c    &       .not. am_I_in_or_near_VQ   (lat,lon) .and. 
-c    &       .not. am_I_in_or_near_KW   (lat,lon)) then
-c            write (i2,'(10x,a,8x,a)') 
-c    &       "FYI, NAD83(2011) is defined only in US territories",name24
-c            write (i2,1449) xt,yt,zt,name24(1:iii)
-c          endif
-c        else
-           write (i2,1449) xt,yt,zt,name24(1:iii)
-c        endif
-
-C  Until here on 07/22/2015 to limit the use in NAD83 to the US
+         write (i2,1449) xt,yt,zt,name24(1:iii)
 
 c        write (i6,1449) xt,yt,zt,trim(name24)
          go to 511
@@ -3737,11 +3627,11 @@ C*******************************************8***********************************
 *** to other reference frames
 **************************************
 C  Important note:
-C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
-C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
+C  The parameters in common block tranpa are computed using the IGS convention ITRF96 <> ITRF97.
+C  The parameters in common block tranpa1 are computed using the IERS convention ITRF96 = ITRF97.
 C  The latter parameters were added to HTDP in 09/2014. They will be used to transform between
 C  ITRF systems. They will not be used if the transformation involves NAD83 or WGS84 (transit).
-C  They will be used for the Pacific branches of NAD83.
+C  However, the NAD 83 Pacific frames use the IERS convention ITRF96 = ITRF97.
 
 
       implicit double precision (a-h, o-z)
@@ -3760,12 +3650,12 @@ C  They will be used for the Pacific branches of NAD83.
      &                drx1(numref), dry1(numref), drz1(numref),
      &                scale1(numref), dscale1(numref), refepc1(numref)
 
-C  Parameters computed with the IGS values of ITRF96==>ITRF97
+C  Parameters computed with the IGS convention ITRF96 <> ITRF97
 
 *** From ITRF94 to NAD 83
       tx(1) = 0.9910d0        
       ty(1) = -1.9072d0      
-      tz(1) = -.5129d0      
+      tz(1) = -0.5129d0      
       dtx(1) = 0.d0        
       dty(1) = 0.d0       
       dtz(1) = 0.d0      
@@ -3773,8 +3663,8 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       ry(1) = 0.46785d-7
       rz(1) = 0.56529d-7
       drx(1) = 0.00258d-7
-      dry(1) = -.03599d-7
-      drz(1) = -.00153d-7
+      dry(1) = -0.03599d-7
+      drz(1) = -0.00153d-7
       scale(1) = 0.d0
       dscale(1) = 0.0d0
       refepc(1) = 1997.0d0
@@ -3782,11 +3672,11 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
 *** From ITRF94 to ITRF88
       tx(2) = 0.018d0
       ty(2) = 0.000d0
-      tz(2) = -.092d0
+      tz(2) = -0.092d0
       dtx(2) = 0.0d0    
       dty(2) = 0.0d0
       dtz(2) = 0.0d0
-      rx(2) = -.0001d0 / rhosec
+      rx(2) = -0.0001d0 / rhosec
       ry(2) = 0.0d0                 
       rz(2) = 0.0d0 
       drx(2) = 0.0d0                  
@@ -3799,7 +3689,7 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
 *** From ITRF94 to ITRF89
       tx(3) = 0.023d0
       ty(3) = 0.036d0
-      tz(3) = -.068d0
+      tz(3) = -0.068d0
       dtx(3) = 0.0d0    
       dty(3) = 0.0d0
       dtz(3) = 0.0d0
@@ -3816,7 +3706,7 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
 *** From ITRF94 to ITRF90
       tx(4) = 0.018d0
       ty(4) = 0.012d0
-      tz(4) = -.030d0
+      tz(4) = -0.030d0
       dtx(4) = 0.0d0    
       dty(4) = 0.0d0
       dtz(4) = 0.0d0
@@ -3833,7 +3723,7 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
 *** From ITRF94 to ITRF91
       tx(5) = 0.020d0
       ty(5) = 0.016d0
-      tz(5) = -.014d0
+      tz(5) = -0.014d0
       dtx(5) = 0.0d0    
       dty(5) = 0.0d0
       dtz(5) = 0.0d0
@@ -3850,7 +3740,7 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
 *** From ITRF94 to ITRF92
       tx(6) = 0.008d0
       ty(6) = 0.002d0
-      tz(6) = -.008d0
+      tz(6) = -0.008d0
       dtx(6) = 0.0d0    
       dty(6) = 0.0d0
       dtz(6) = 0.0d0
@@ -3860,23 +3750,23 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       drx(6) = 0.0d0                  
       dry(6) = 0.0d0              
       drz(6) = 0.0d0                   
-      scale(6) = -.08d-8
+      scale(6) = -0.08d-8
       dscale(6) = 0.0d0
       refepc(6) = 1988.0d0
 
 *** From ITRF94 to ITRF93
       tx(7) = 0.006d0
-      ty(7) = -.005d0
-      tz(7) = -.015d0
-      dtx(7) = -.0029d0
+      ty(7) = -0.005d0
+      tz(7) = -0.015d0
+      dtx(7) = -0.0029d0
       dty(7) = 0.0004d0
       dtz(7) = 0.0008d0
       rx(7) = 0.00039d0 / rhosec
-      ry(7) = -.00080d0 / rhosec
+      ry(7) = -0.00080d0 / rhosec
       rz(7) = 0.00096d0 / rhosec
-      drx(7) = .00011d0 / rhosec
-      dry(7) = .00019d0 / rhosec
-      drz(7) =-.00005d0 / rhosec
+      drx(7) = 0.00011d0 / rhosec
+      dry(7) = 0.00019d0 / rhosec
+      drz(7) = -0.00005d0 / rhosec
       scale(7) = 0.04d-8
       dscale(7) = 0.0d0
       refepc(7) = 1988.0d0
@@ -3898,8 +3788,8 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       dscale(8) = 0.0d0
       refepc(8) = 1996.0d0
 
-*** From ITRF94 to ITRF97 (based on IGS adopted values)
-*** According to IERS:  ITRF97 = ITRF96 = ITRF94
+*** From ITRF94 to ITRF97 (also IGS97), based on IGS adopted values
+*** According to IGS:  ITRF97 <> ITRF96 = ITRF94
       tx(9) = 0.00207d0
       ty(9) = 0.00021d0
       tz(9) = -0.00995d0
@@ -3919,7 +3809,7 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
 *** From ITRF94 to WGS 72 (composition of ITRF94 -> NAD_83 -> WGS_72)
       tx(10) = 0.9910d0
       ty(10) = -1.9072d0
-      tz(10) = -.5129d0 - 4.5d0
+      tz(10) = -0.5129d0 - 4.5d0
       dtx(10) = 0.d0
       dty(10) = 0.d0
       dtz(10) = 0.d0
@@ -3927,23 +3817,23 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       ry(10) = 0.46785d-7
       rz(10) = 0.56529d-7 + 26.85868d-7
       drx(10) = 0.00258d-7
-      dry(10) = -.03599d-7
-      drz(10) = -.00153d-7
+      dry(10) = -0.03599d-7
+      drz(10) = -0.00153d-7
       scale(10) = 0.d0 - 0.2263d-6
       dscale(10) = 0.0d0
       refepc(10) = 1997.0d0
 
-*** From ITRF94 to ITRF00
+*** From ITRF94 to ITRF2000 (also IGS00 and IGb00)
 *** assumes that ITRF94 = ITRF96 and
 *** uses IGS values for ITRF96 -> ITRF97
-*** and IERS values for ITRF97 -> ITRF00
-      tx(11) = -.00463d0
-      ty(11) = -.00589d0
-      tz(11) = +.00855d0
+*** and IERS values for ITRF97 -> ITRF2000
+      tx(11) = -0.00463d0
+      ty(11) = -0.00589d0
+      tz(11) = 0.00855d0
       dtx(11) = -0.00069d0
       dty(11) = 0.00070d0
       dtz(11) = -0.00046d0
-      rx(11) = -.00012467d0 / rhosec
+      rx(11) = -0.00012467d0 / rhosec
       ry(11) = 0.00022355d0 / rhosec
       rz(11) = 0.00006065d0 / rhosec
       drx(11) = -0.00001347d0 / rhosec
@@ -3954,19 +3844,19 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       refepc(11) = 1997.0d0
 
 *** From ITRF94 to PACP00
-*** use PA/ITRF00 rotation rates from Beavan et al., (2002)
+*** use PA/ITRF2000 rotation rates from Beavan et al., (2002)
       tx(12) = 0.9056d0
       ty(12) = -2.0200d0
       tz(12) = -0.5516d0
-      dtx(12) = -.00069d0
+      dtx(12) = -0.00069d0
       dty(12) = 0.00070d0
       dtz(12) = -0.00046d0
       rx(12) = 0.027616d0 / rhosec
       ry(12) = 0.013692d0 / rhosec
       rz(12) = 0.002773d0 / rhosec
-      drx(12) = -.000397d0 / rhosec
+      drx(12) = -0.000397d0 / rhosec
       dry(12) = 0.001022d0 / rhosec
-      drz(12) = -.002166d0 / rhosec
+      drz(12) = -0.002166d0 / rhosec
       scale(12) = -0.61504d-9
       dscale(12) = 0.18201d-9
       refepc(12) = 1997.0d0
@@ -3979,8 +3869,8 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       dtx(13) = -0.00069d0
       dty(13) = 0.00070d0
       dtz(13) = -0.00046d0
-      rx(13) = .028847d0 / rhosec
-      ry(13) = .010644d0 / rhosec
+      rx(13) = 0.028847d0 / rhosec
+      ry(13) = 0.010644d0 / rhosec
       rz(13) = 0.008989d0 / rhosec
       drx(13) = -0.000033d0 / rhosec
       dry(13) =  0.000120d0 / rhosec
@@ -3989,7 +3879,7 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       dscale(13) = 0.18201d-9
       refepc(13) = 1997.00d0
 
-*** From ITRF94 to ITRF2005
+*** From ITRF94 to ITRF2005 (also IGS05)
 *** assumes that ITRF94 = ITRF96
 *** uses IGS values for ITRF96 -> ITRF97
 *** uses IERS values for ITRF97 -> ITRF2000
@@ -4000,7 +3890,7 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       dtx(14) = -0.00049d0
       dty(14) =  0.00060d0
       dtz(14) =  0.00134d0
-      rx(14) = -.00012467d0 / rhosec
+      rx(14) = -0.00012467d0 / rhosec
       ry(14) = 0.00022355d0 / rhosec
       rz(14) = 0.00006065d0 / rhosec
       drx(14) = -0.00001347d0 / rhosec
@@ -4010,12 +3900,12 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       dscale(14) = 0.10201d-9
       refepc(14) = 1997.0d0
 
-*** From ITRF94 to ITRF2008 (also IGS08 and IGB08)
+*** From ITRF94 to ITRF2008 (also IGS08 and IGb08)
 *** assumes that ITRF94 = ITRF96
 *** uses IGS values for ITRF96 -> ITRF97
 *** uses IERS values for ITRF97 -> ITRF2000
 *** uses IERS values for ITRF2000-> ITRF2005
-*** uses IERS values for ITRF2005 -> ITRF2008 (and IGS08 and IGB08)
+*** uses IERS values for ITRF2005 -> ITRF2008
 
       tx(15) = -0.00243d0
       ty(15) = -0.00389d0
@@ -4023,9 +3913,9 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       dtx(15) = -0.00079d0
       dty(15) =  0.00060d0
       dtz(15) =  0.00134d0
-      rx(15) = -0.00012467d0 / rhosec
-      ry(15) =  0.00022355d0 / rhosec
-      rz(15) =  0.00006065d0 / rhosec
+      rx(15)  = -0.00012467d0 / rhosec
+      ry(15)  =  0.00022355d0 / rhosec
+      rz(15)  =  0.00006065d0 / rhosec
       drx(15) = -0.00001347d0 / rhosec
       dry(15) =  0.00001514d0 / rhosec
       drz(15) =  0.00001973d0 / rhosec
@@ -4033,47 +3923,37 @@ C  Parameters computed with the IGS values of ITRF96==>ITRF97
       dscale(15) = 0.10201d-9
       refepc(15) = 1997.0d0
 
-*** From ITRF94 to ITRF2014
+*** From ITRF94 to ITRF2014 (also IGS14 and IGb14)
 *** assumes that ITRF94 = ITRF96
 *** uses IGS values for ITRF96 -> ITRF97
 *** uses IERS values for ITRF97 -> ITRF2000
 *** uses IERS values for ITRF2000-> ITRF2005
-*** uses IERS values for ITRF2005 -> ITRF2008 (and IGS08 and IGB08)
+*** uses IERS values for ITRF2005 -> ITRF2008
 *** uses IERS values for ITRF2008 -> ITRF2014
 
-c     tx(16)     = -0.00403d0                 !Differs from ITRF2008
       tx(16)     = -0.01430d0
-c     ty(16)     = -0.00579d0                 !Differs from ITRF2008
       ty(16)     =  0.00201d0
-c     tz(16)     =  0.01125d0                 !Differs from ITRF2008
       tz(16)     =  0.02867d0
-
-      dtx(16)    = -0.00079d0                 !Like ITRF2008
-      dty(16)    =  0.00060d0                 !Like ITRF2008
-      dtz(16)    =  0.00144d0                 !Differs from ITRF2008
-
-c     rx(16)     = -0.00012467d0 / rhosec     !Like ITRF2008
+      dtx(16)    = -0.00079d0
+      dty(16)    =  0.00060d0
+      dtz(16)    =  0.00144d0
       rx(16)     = -0.00029978d0 / rhosec
-c     ry(16)     =  0.00022355d0 / rhosec     !Like ITRF2008
       ry(16)     =  0.00042037d0 / rhosec
-c     rz(16)     =  0.00006065d0 / rhosec     !Like ITRF2008
       rz(16)     =  0.00031714d0 / rhosec
-      drx(16)    = -0.00001347d0 / rhosec     !Like ITRF2008
-      dry(16)    =  0.00001514d0 / rhosec     !Like ITRF2008
-      drz(16)    =  0.00001973d0 / rhosec     !Like ITRF2008
-
-C     scale(16)  = -1.69504d-9                !Differs from ITRF2008, but only insignificantly
+      drx(16)    = -0.00001347d0 / rhosec
+      dry(16)    =  0.00001514d0 / rhosec
+      drz(16)    =  0.00001973d0 / rhosec
       scale(16)  = -0.36891d-9
-      dscale(16) =  0.07201d-9                !Differs from ITRF2008, but only insignificantly
-      refepc(16) =  2010.0d0                  !Differs from ITRF2008
+      dscale(16) =  0.07201d-9
+      refepc(16) =  2010.0d0
 
 C*************************************************************************************************************************
-C  Parameters computed with the IERS values of ITRF96==>ITRF97
+C  Parameters computed with the IERS convention ITRF96 = ITRF97
 
 *** From ITRF94 to NAD 83
       tx1(1) = 0.9910d0        
       ty1(1) = -1.9072d0      
-      tz1(1) = -.5129d0      
+      tz1(1) = -0.5129d0      
       dtx1(1) = 0.d0        
       dty1(1) = 0.d0       
       dtz1(1) = 0.d0      
@@ -4081,8 +3961,8 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
       ry1(1) = 0.46785d-7
       rz1(1) = 0.56529d-7
       drx1(1) = 0.00258d-7
-      dry1(1) = -.03599d-7
-      drz1(1) = -.00153d-7
+      dry1(1) = -0.03599d-7
+      drz1(1) = -0.00153d-7
       scale(1) = 0.d0
       dscale1(1) = 0.0d0
       refepc1(1) = 1997.0d0
@@ -4090,11 +3970,11 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
 *** From ITRF94 to ITRF88
       tx1(2) = 0.018d0
       ty1(2) = 0.000d0
-      tz1(2) = -.092d0
+      tz1(2) = -0.092d0
       dtx1(2) = 0.0d0    
       dty1(2) = 0.0d0
       dtz1(2) = 0.0d0
-      rx1(2) = -.0001d0 / rhosec
+      rx1(2) = -0.0001d0 / rhosec
       ry1(2) = 0.0d0                 
       rz1(2) = 0.0d0 
       drx1(2) = 0.0d0                  
@@ -4107,7 +3987,7 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
 *** From ITRF94 to ITRF89
       tx1(3) = 0.023d0
       ty1(3) = 0.036d0
-      tz1(3) = -.068d0
+      tz1(3) = -0.068d0
       dtx1(3) = 0.0d0    
       dty1(3) = 0.0d0
       dtz1(3) = 0.0d0
@@ -4124,7 +4004,7 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
 *** From ITRF94 to ITRF90
       tx1(4) = 0.018d0
       ty1(4) = 0.012d0
-      tz1(4) = -.030d0
+      tz1(4) = -0.030d0
       dtx1(4) = 0.0d0    
       dty1(4) = 0.0d0
       dtz1(4) = 0.0d0
@@ -4141,7 +4021,7 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
 *** From ITRF94 to ITRF91
       tx1(5) = 0.020d0
       ty1(5) = 0.016d0
-      tz1(5) = -.014d0
+      tz1(5) = -0.014d0
       dtx1(5) = 0.0d0    
       dty1(5) = 0.0d0
       dtz1(5) = 0.0d0
@@ -4158,7 +4038,7 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
 *** From ITRF94 to ITRF92
       tx1(6) = 0.008d0
       ty1(6) = 0.002d0
-      tz1(6) = -.008d0
+      tz1(6) = -0.008d0
       dtx1(6) = 0.0d0    
       dty1(6) = 0.0d0
       dtz1(6) = 0.0d0
@@ -4168,28 +4048,29 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
       drx1(6) = 0.0d0                  
       dry1(6) = 0.0d0              
       drz1(6) = 0.0d0                   
-      scale1(6) = -.08d-8
+      scale1(6) = -0.08d-8
       dscale1(6) = 0.0d0
       refepc1(6) = 1988.0d0
 
 *** From ITRF94 to ITRF93
-      tx1(7) = 0.006d0
-      ty1(7) = -.005d0
-      tz1(7) = -.015d0
-      dtx1(7) = -.0029d0
-      dty1(7) = 0.0004d0
-      dtz1(7) = 0.0008d0
-      rx1(7) = 0.00039d0 / rhosec
-      ry1(7) = -.00080d0 / rhosec
-      rz1(7) = 0.00096d0 / rhosec
-      drx1(7) = .00011d0 / rhosec
-      dry1(7) = .00019d0 / rhosec
-      drz1(7) =-.00005d0 / rhosec
-      scale1(7) = 0.04d-8
+      tx1(7)     =  0.006d0
+      ty1(7)     = -0.005d0
+      tz1(7)     = -0.015d0
+      dtx1(7)    = -0.0029d0
+      dty1(7)    =  0.0004d0
+      dtz1(7)    =  0.0008d0
+      rx1(7)     =  0.00039d0 / rhosec
+      ry1(7)     = -0.00080d0 / rhosec
+      rz1(7)     =  0.00096d0 / rhosec
+      drx1(7)    =  0.00011d0 / rhosec
+      dry1(7)    =  0.00019d0 / rhosec
+      drz1(7)    = -0.00005d0 / rhosec
+      scale1(7)  = 0.04d-8
       dscale1(7) = 0.0d0
       refepc1(7) = 1988.0d0
 
 *** From ITRF94 to ITRF96
+*** According to IERS:  ITRF97 = ITRF96 = ITRF94
       tx1(8) = 0.d0
       ty1(8) = 0.d0
       tz1(8) = 0.d0
@@ -4206,20 +4087,20 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
       dscale1(8) = 0.0d0
       refepc1(8) = 1996.0d0
 
-*** From ITRF94 to ITRF97 (based on IERS adopted values)
+*** From ITRF94 to ITRF97 (also IGS97), based on IERS adopted values
 *** According to IERS:  ITRF97 = ITRF96 = ITRF94
-      tx1(9)     = 0.00000d0
-      ty1(9)     = 0.00000d0
-      tz1(9)     = 0.00000d0
-      dtx1(9)    = 0.00000d0
-      dty1(9)    = 0.00000d0
-      dtz1(9)    = 0.00000d0
-      rx1(9)     = 0.00000000d0 
-      ry1(9)     = 0.00000000d0
-      rz1(9)     = 0.00000000d0 
-      drx1(9)    = 0.00000000d0 
-      dry1(9)    = 0.00000000d0 
-      drz1(9)    = 0.00000000d0 
+      tx1(9)     = 0.0d0
+      ty1(9)     = 0.0d0
+      tz1(9)     = 0.0d0
+      dtx1(9)    = 0.0d0
+      dty1(9)    = 0.0d0
+      dtz1(9)    = 0.0d0
+      rx1(9)     = 0.0d0 
+      ry1(9)     = 0.0d0
+      rz1(9)     = 0.0d0 
+      drx1(9)    = 0.0d0 
+      dry1(9)    = 0.0d0 
+      drz1(9)    = 0.0d0 
       scale1(9)  = 0.d0          
       dscale1(9) = 0.d0          
       refepc1(9) = 2000.0d0
@@ -4241,40 +4122,40 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
       dscale1(10) = 0.0d0
       refepc1(10) = 1997.0d0
 
-*** From ITRF94 to ITRF00
+*** From ITRF94 to ITRF2000 (also IGS00 and IGb00)
 *** assumes that         ITRF94 = ITRF96 and
-*** uses IERS values for ITRF96 -> ITRF97
-*** and  IERS values for ITRF97 -> ITRF00
-      tx1(11)     = -.00670d0
-      ty1(11)     = -.00430d0
-      tz1(11)     = +.02270d0
-      dtx1(11)    = 0.00000d0
-      dty1(11)    = 0.00060d0
-      dtz1(11)    = 0.00140d0
-      rx1(11)     = 0.00000000d0 / rhosec
-      ry1(11)     = 0.00000000d0 / rhosec
-      rz1(11)     = +0.00006000d0 / rhosec
-      drx1(11)    = 0.00000000d0 / rhosec
-      dry1(11)    = 0.00000000d0 / rhosec
-      drz1(11)    = +0.00002000d0 / rhosec
+*** uses IERS convention ITRF96 = ITRF97
+*** and  IERS values for ITRF97 -> ITRF2000
+      tx1(11)     = -0.00670d0
+      ty1(11)     = -0.00430d0
+      tz1(11)     =  0.02270d0
+      dtx1(11)    =  0.00000d0
+      dty1(11)    =  0.00060d0
+      dtz1(11)    =  0.00140d0
+      rx1(11)     =  0.0d0        / rhosec
+      ry1(11)     =  0.0d0        / rhosec
+      rz1(11)     =  0.00006000d0 / rhosec
+      drx1(11)    =  0.0d0        / rhosec
+      dry1(11)    =  0.0d0        / rhosec
+      drz1(11)    =  0.00002000d0 / rhosec
       scale1(11)  = -1.58000d-9
       dscale1(11) = -0.01000d-9
       refepc1(11) = 2000.0d0
 
 *** From ITRF94 to PACP00
-*** use PA/ITRF00 rotation rates from Beavan et al., (2002)
-      tx1(12)     = 0.9035d0
+*** use PA/ITRF2000 rotation rates from Beavan et al., (2002)
+      tx1(12)     =  0.9035d0
       ty1(12)     = -2.0202d0
       tz1(12)     = -0.5417d0
-      dtx1(12)    = 0.00000d0
-      dty1(12)    = 0.00060d0
-      dtz1(12)    = 0.0014d0
-      rx1(12)     = 0.027741d0 / rhosec
-      ry1(12)     = 0.013469d0 / rhosec
-      rz1(12)     = 0.002712d0 / rhosec
-      drx1(12)    = -.000384d0 / rhosec
-      dry1(12)    = 0.001007d0 / rhosec
-      drz1(12)    = -.002166d0 / rhosec
+      dtx1(12)    =  0.0d0
+      dty1(12)    =  0.00060d0
+      dtz1(12)    =  0.0014d0
+      rx1(12)     =  0.027741d0 / rhosec
+      ry1(12)     =  0.013469d0 / rhosec
+      rz1(12)     =  0.002712d0 / rhosec
+      drx1(12)    = -0.000384d0 / rhosec
+      dry1(12)    =  0.001007d0 / rhosec
+      drz1(12)    = -0.002166d0 / rhosec
       scale1(12)  = -1.55000d-9
       dscale1(12) = -0.010000d-9
       refepc1(12) = 1997.0d0
@@ -4287,8 +4168,8 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
       dtx1(13) = -0.00000d0
       dty1(13) = 0.00060d0
       dtz1(13) = 0.00140d0
-      rx1(13) = .028971d0 / rhosec
-      ry1(13) = .01042d0 / rhosec
+      rx1(13) = 0.028971d0 / rhosec
+      ry1(13) = 0.01042d0 / rhosec
       rz1(13) = 0.008928d0 / rhosec
       drx1(13) = -0.00002d0 / rhosec
       dry1(13) =  0.000105d0 / rhosec
@@ -4297,9 +4178,9 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
       dscale1(13) = -0.01000d-9
       refepc1(13) = 1997.00d0
 
-*** From ITRF94 to ITRF2005
-*** assumes that         ITRF94   = ITRF96
-*** uses IERS values for ITRF96   -> ITRF97
+*** From ITRF94 to ITRF2005 (also IGS05)
+*** assumes that         ITRF94 = ITRF96
+*** uses IERS convention ITRF96 = ITRF97
 *** uses IERS values for ITRF97   -> ITRF2000
 *** uses IERS values for ITRF2000 -> ITRF2005
       tx1(14)     = -0.00680d0
@@ -4308,70 +4189,61 @@ C  Parameters computed with the IERS values of ITRF96==>ITRF97
       dtx1(14)    =  0.00020d0
       dty1(14)    =  0.00050d0
       dtz1(14)    =  0.00320d0
-      rx1(14)     = 0.00000000d0 / rhosec
-      ry1(14)     = 0.00000000d0 / rhosec
-      rz1(14)     = +0.00006000d0 / rhosec
-      drx1(14)    = 0.00000000d0 / rhosec
-      dry1(14)    = 0.00000000d0 / rhosec
-      drz1(14)    = +0.00002000d0 / rhosec
+      rx1(14)     =  0.0d0        / rhosec
+      ry1(14)     =  0.0d0        / rhosec
+      rz1(14)     =  0.00006000d0 / rhosec
+      drx1(14)    =  0.0d0        / rhosec
+      dry1(14)    =  0.0d0        / rhosec
+      drz1(14)    =  0.00002000d0 / rhosec
       scale1(14)  = -1.98000d-9
       dscale1(14) = -0.09000d-9
       refepc1(14) = 2000.0d0
 
-*** From ITRF94 to ITRF2008 (also IGS08 and IGB08)
+*** From ITRF94 to ITRF2008 (also IGS08 and IGb08)
 *** assumes that ITRF94 = ITRF96
-*** uses IERS values for ITRF96 -> ITRF97
+*** uses IERS convention ITRF96 = ITRF97
 *** uses IERS values for ITRF97 -> ITRF2000
-*** uses IERS values for ITRF2000-> ITRF2005
-*** uses IERS values for ITRF2005 -> ITRF2008 (and IGS08 and IGB08)
+*** uses IERS values for ITRF2000 -> ITRF2005
+*** uses IERS values for ITRF2005 -> ITRF2008
       tx1(15)     = -0.00480d0
       ty1(15)     = -0.00260d0
       tz1(15)     =  0.03320d0
       dtx1(15)    = -0.00010d0
       dty1(15)    =  0.00050d0
       dtz1(15)    =  0.00320d0
-      rx1(15)     =  0.00000000d0 / rhosec
-      ry1(15)     =  0.00000000d0 / rhosec
-      rz1(15)     = +0.00006000d0 / rhosec
-      drx1(15)    = -0.00000000d0 / rhosec
-      dry1(15)    =  0.00000000d0 / rhosec
-      drz1(15)    = +0.00002000d0 / rhosec
+      rx1(15)     =  0.0d0        / rhosec
+      ry1(15)     =  0.0d0        / rhosec
+      rz1(15)     =  0.00006000d0 / rhosec
+      drx1(15)    = -0.0d0        / rhosec
+      dry1(15)    =  0.0d0        / rhosec
+      drz1(15)    =  0.00002000d0 / rhosec
       scale1(15)  = -2.92d-9
       dscale1(15) = -0.09d-9
       refepc1(15) = 2000.0d0
 
-*** From ITRF94 to ITRF2014 
+*** From ITRF94 to ITRF2014 (also IGS14 and IGb14)
 *** assumes that ITRF94 = ITRF96
-*** uses IERS values for ITRF96 -> ITRF97
+*** uses IERS convention ITRF96 = ITRF97
 *** uses IERS values for ITRF97 -> ITRF2000
-*** uses IERS values for ITRF2000-> ITRF2005
-*** uses IERS values for ITRF2005 -> ITRF2008 (and IGS08 and IGB08)
+*** uses IERS values for ITRF2000 -> ITRF2005
+*** uses IERS values for ITRF2005 -> ITRF2008
 *** uses IERS values for ITRF2008 -> ITRF2014
 
-c     tx1(16)     = -0.00640d0                       !Differ from ITRF2008
       tx1(16)     = -0.00740d0
-c     ty1(16)     = -0.00450d0                       !Differ from ITRF2008
       ty1(16)     =  0.00050d0
-c     tz1(16)     =  0.03080d0                       !Differ from ITRF2008
       tz1(16)     =  0.06280d0
-
-      dtx1(16)    = -0.00010d0                       !Like ITRF2008
-      dty1(16)    =  0.00050d0                       !Like ITRF2008
-      dtz1(16)    =  0.00330d0                       !Differ from ITRF2008
-
-      rx1(16)     =  0.00000000d0 / rhosec           !Like ITRF2008
-      ry1(16)     =  0.00000000d0 / rhosec           !Like ITRF2008
-c     rz1(16)     = +0.00006000d0 / rhosec           !Like ITRF2008
-      rz1(16)     = +0.00026000d0 / rhosec
-      drx1(16)    = -0.00000000d0 / rhosec           !Like ITRF2008
-      dry1(16)    =  0.00000000d0 / rhosec           !Like ITRF2008
-      drz1(16)    = +0.00002000d0 / rhosec           !Like ITRF2008
-
-c     scale1(16)  = -2.90d-9                         !Differ from ITRF2008, but only insignificantly
-      scale1(16)  = -3.80d-9 
-      dscale1(16) = -0.12d-9                         !Differ from ITRF2008, but only insignificantly
-
-      refepc1(16) = 2010.0d0                         !Differ from ITRF2008
+      dtx1(16)    = -0.00010d0
+      dty1(16)    =  0.00050d0
+      dtz1(16)    =  0.00330d0
+      rx1(16)     =  0.0d0        / rhosec
+      ry1(16)     =  0.0d0        / rhosec
+      rz1(16)     =  0.00026000d0 / rhosec
+      drx1(16)    =  0.0d0        / rhosec
+      dry1(16)    =  0.0d0        / rhosec
+      drz1(16)    =  0.00002000d0 / rhosec
+      scale1(16)  = -3.80d-9
+      dscale1(16) = -0.12d-9
+      refepc1(16) = 2010.0d0
 
       return
       end
@@ -4656,9 +4528,9 @@ c     nframe(10)= 'PNEOS_90 or NEOS_90     '
       iframe(22)= 14
       nframe(22)= 'ITRF2005 or IGS05       '
       iframe(23)= 15
-      nframe(23)= 'ITRF2008 or IGS08/IGB08 '
+      nframe(23)= 'ITRF2008 or IGS08/IGb08 '
       iframe(24)= 16
-      nframe(24)= 'ITRF2014 or IGS14       '
+      nframe(24)= 'ITRF2014 or IGS14/IGb14 '
 
       write(luout, 100)
   100 format(
@@ -4674,10 +4546,10 @@ c    1'  4...WGS_72                              '/
      1'  9...WGS_84(G1674) (ITRF2008 used)        19...ITRF96 '/
 c    1' 10...PNEOS_90 or NEOS_90  (ITRF90 used)   20...ITRF97 or IGS97'/
      1' 10...WGS_84(G1762) (IGb08 used)           20...ITRF97 or IGS97'/
-     1' 11...SIO/MIT_92 (ITRF91 used)     21...ITRF2000 or IGS00/IGb00'/
-     1' 12...ITRF88                       22...ITRF2005 or IGS05 '/
-     1' 13...ITRF89                       23...ITRF2008 or IGS08/IGb08'/
-     1' 14...ITRF90 or (PNEOS90/NEOS90)   24...ITRF2014 or IGS14   '/ )
+     1' 11...SIO/MIT_92 (ITRF91 used)    21...ITRF2000 or IGS00/IGb00'/
+     1' 12...ITRF88                      22...ITRF2005 or IGS05 '/
+     1' 13...ITRF89                      23...ITRF2008 or IGS08/IGb08'/
+     1' 14...ITRF90 or (PNEOS90/NEOS90)  24...ITRF2014 or IGS14/IGb14'/)
 c    1' 14...ITRF90                              '/ )
 
       read (luin, *,err=50,iostat=ios) iopt
@@ -4712,17 +4584,17 @@ c    1' 14...ITRF90                              '/ )
       CHARACTER    OPT*1,ANSWER*1,BBTYPE*1,VOPT*1
       CHARACTER    LATDIR*1, LONDIR*1, LATDR*1, LONDR*1
       character    frame1*24, frame2*24
-      character    HTDP_version*10
+      character    HTDP_version*8
       LOGICAL      TEST
       LOGICAL      Is_iopt_NAD83
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
-      COMMON /CAUTION/MONTH2,IDAY2,IYEAR2,DATE2,frame1
+      COMMON /CAUTION/ MONTH2,IDAY2,IYEAR2,DATE2,frame1
 
       WRITE(LUOUT,20)
    20 FORMAT(' ********************************************'/
      1   ' Please enter the time to which the updated'/     
-     1   ' positions and/or observations are to correspond.')
+     1   ' positions and/or observations are to correspond:')
    15 CALL GETMDY(MONTH2,IDAY2,IYEAR2,DATE2,MIN2,TEST)
       IF(TEST) then
          write(luout,*) ' Do you wish to re-enter the time? (y/n)'
@@ -4735,8 +4607,7 @@ c    1' 14...ITRF90                              '/ )
 ** Choosing reference frame for positions
    35 WRITE(LUOUT,30)
    30 FORMAT(' **************************************************'/
-     1   ' Select the reference frame to be used for specifying'/
-     2   ' positions. '/)
+     1   ' Specify the reference frame of the input positions:'/)
       call MENU1( iopt, frame1)
       IF(IOPT .LT. 1 .OR. IOPT .GT. numref) THEN
            WRITE(LUOUT,40)
@@ -4757,15 +4628,15 @@ c    1' 14...ITRF90                              '/ )
      8              ' stations'/
      9   '          and the values for blue book',
      9              ' observations.'/
-     9   '     5...Update positions contained in batch file '/
-     9   '         of delimited records of the form: '/
-     9   '         LAT,LON,EHT,"TEXT" ' /
-     9   '         LAT = latitude in degrees (positive north/DBL PREC)'/
-     9   '         LON = longitude in degrees (positive west/DBL PREC)'/
-     9   '         EHT = ellipsoid height in meters (DBL PREC)'/
-     9   '         TEXT = Descriptive text (CHARACTER*24) '/
-     9   '         Example:  '/
-     9   '         40.731671553,112.212671753,34.241,"SALT AIR" '/)
+     9   '     5...Update positions for multiple points contained'/
+     9   '         in a file in Lat-Lon-Ht format:'/
+     9   '         LAT,LON,EHT,TEXT'/
+     9   '         LAT = latitude in degrees (positive north)'/
+     9   '         LON = longitude in degrees (positive west)'/
+     9   '         EHT = ellipsoid height in meters'/
+     9   '         TEXT = Descriptive text (up to 24 characters)'/
+     9   '         Example:'/
+     9   '         40.731671553,112.212671753,34.241,SALT AIR'/)
       READ(LUIN,'(A1)',err=501,iostat=ios) OPT
       if (ios /= 0) goto 501
       IF(OPT .eq. '0') THEN
@@ -4774,7 +4645,7 @@ c    1' 14...ITRF90                              '/ )
          WRITE(LUOUT,1020)
  1020    FORMAT(' ************************************'/
      1       ' Enter the time',
-     2       ' to which the input positions will correspond.  ')
+     2       ' to which the input positions will correspond:  ')
  1025    CALL GETMDY(MONTH1,IDAY1,IYEAR1,DATE1,MIN1,TEST)
          IF(TEST) then
             write(luout,*) ' Do you wish to re-enter the time? (y/n)'
@@ -4902,7 +4773,7 @@ c    1' 14...ITRF90                              '/ )
              WRITE(LUOUT,122)
   122        FORMAT(' *********************************************'/
      1           ' Enter the time',
-     1           ' to which the input positions correspond.'/)
+     1           ' to which the input positions correspond:'/)
   123        CALL GETMDY(MONTH1,IDAY1,IYEAR1,DATE1,MIN1,TEST)
              IF(TEST) then
               write(luout,*) ' Do you wish to re-enter the time? (y/n)'
@@ -4927,7 +4798,7 @@ c    1' 14...ITRF90                              '/ )
 
          write (i2,127) HTDP_version
   127    format (' ***CAUTION: This file was processed using HTDP',
-     &           ' version ',a10, '***')
+     &           ' version ', a8, '***')
          write (i2,128) frame1       
   128    format (' ***CAUTION: Coordinates in this file are in ',    
      &           a24, '***')
@@ -4977,8 +4848,8 @@ c        ENDIF
         
   634        WRITE(LUOUT, 632)
   632        FORMAT(/' ***************************'/
-     *              ' To what reference frame should the GPS'/
-     *              ' vectors be transformed?'/
+     *              ' Specify the reference frame for the updated'
+     *              ' G-File vectors:'//
      *              '    -1...Do not transform GPS vectors.')
              CALL MENU1(kopt, frame2)
              IF(KOPT .LT. -1 .OR. KOPT .GT. numref) THEN
@@ -4990,7 +4861,7 @@ c        ENDIF
      1                 ' have been transformed to ', a24, ' ***')
                write( I2, 641) HTDP_version
   641          format(' ***CAUTION: Observations were transformed using'
-     1                ,' HTDP version ', a10, ' ***')
+     1                ,' HTDP version ', a8, ' ***')
              ENDIF
          
              IF(BBTYPE .EQ. '1') THEN
@@ -5304,7 +5175,7 @@ C        HT(ISN) = HT(ISN) + GH
 
       END
 ******************************************************************
-      SUBROUTINE UPBB4(MIN1,MIN2,OPT,IOPT)
+      SUBROUTINE UPBB4(MIN1,MIN2,OPT)
 
 *** Update blue book
 
@@ -5360,7 +5231,7 @@ C***    classical observation records contain only a 2-digit year
      1      TYPE .EQ. '*85*' .OR.
      1      TYPE .EQ. '*86*' .OR.
      1      TYPE .EQ. '*90*') THEN
-	      CONTINUE
+      CONTINUE
 
       ELSEIF (TYPE .EQ. '*12*') THEN
          IF( CARD(11:14) .EQ. '    ' .OR.
@@ -5636,7 +5507,7 @@ c           WRITE(LUOUT,500) TYPE
 
       END
 ***************************************************************
-      SUBROUTINE UPBB5(MIN1,MIN2,OPT,IOPT)
+      SUBROUTINE UPBB5(MIN1,MIN2,OPT)
 
 *** Update 5-digit blue book
 
@@ -6234,10 +6105,10 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
          if (ios /= 0) goto 301
   110    FORMAT(1X,I4,I2,I2,4X,I4,I2,I2,30X,I2)
 C        CALL TOTIME(IYEAR1,MONTH1,IDAY1,MINO1)
-C	 CALL TOTIME(IYEAR1, 1, 1, MIN00)
-C	 DECYR1 = DBLE(IYEAR1) + DBLE(MINO1 - MIN00)/525600.D0
+C        CALL TOTIME(IYEAR1, 1, 1, MIN00)
+C        DECYR1 = DBLE(IYEAR1) + DBLE(MINO1 - MIN00)/525600.D0
 C        CALL TOTIME(IYEAR2,MONTH2,IDAY2,MINO2)
-C 	 CALL TOTIME(IYEAR2, 1, 1, MIN00)
+C        CALL TOTIME(IYEAR2, 1, 1, MIN00)
          CALL IYMDMJ(IYEAR1,MONTH1,IDAY1,MJD1)
          MINO1 = MJD1 * 24 * 60
          CALL IYMDMJ(IYEAR1, 1, 1, MJD0)
@@ -6246,7 +6117,7 @@ C 	 CALL TOTIME(IYEAR2, 1, 1, MIN00)
          MINO2 = MJD2 * 24 * 60
          CALL IYMDMJ(IYEAR2, 1, 1, MJD0)
          DECYR2 = DBLE(IYEAR2) + DBLE(MJD2 - MJD0)/365.D0
-C	 DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
+C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
          MINO = (MINO1 + MINO2) / 2
          DECYR = (DECYR1 + DECYR2) / 2.D0
          CALL RFCON(IBBREF, JREF)
@@ -6385,7 +6256,7 @@ C	 DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
 
       IMPLICIT INTEGER*4 (I-N)
       parameter ( numref = 16 )
-      COMMON /REFCON/ IRFCON(36), JRFCON(numref)
+      COMMON /REFCON/ IRFCON(37), JRFCON(numref)
 
 *** From blue book identifier to HTDP indentifier
 *** WGS 72 Precise
@@ -6393,7 +6264,7 @@ c     IRFCON(1) = 10
       IRFCON(1) = 1
 C HTDP no longer supports WGS 72. Hence, if a BlueBook
 C file contains WGS 72 coordinates, HTDP treats these
-C coordinates as if they were NAD 83(2011)coordinates.
+C coordinates as if they were NAD 83(2011) coordinates.
 
 *** WGS 84 (orig) Precise (set  equal to NAD 83)
       IRFCON(2) = 1
@@ -6456,7 +6327,7 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** IGS97
       IRFCON(20) = 9
 
-*** ITRF00
+*** ITRF2000
       IRFCON(21) = 11
 
 *** IGS00
@@ -6477,7 +6348,7 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** IGS08
       IRFCON(27) = 15
 
-*** IGB08
+*** IGb08
       IRFCON(28) = 15
 
 *** ITRF2008
@@ -6492,7 +6363,7 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** ITRF2014
       IRFCON(32) = 16
 
-*** IGB14
+*** IGS14
       IRFCON(33) = 16
 
 *** NAD83 (2011/2007/CORS96/FBN/HARN)
@@ -6503,6 +6374,10 @@ C coordinates as if they were NAD 83(2011)coordinates.
 
 *** NAD83 (MA11)
       IRFCON(36) = 13
+
+*** IGb14
+      IRFCON(37) = 16
+      
 
 *** From HTDP identifier to blue book identifier
 *** NAD 83 (set equal to WGS 84 (transit))
@@ -6536,7 +6411,7 @@ c     JRFCON(1) = 2
 *** WGS 72
       JRFCON(10) = 1
 
-*** ITRF00
+*** ITRF2000
       JRFCON(11) = 21
 
 *** NAD 83 (PACP00) or NAD 83 (PA11)
@@ -6561,11 +6436,14 @@ C  coordinates in the Bluebook context
 *** ITRF2008 or IGS08
       JRFCON(15) = 27
 
-*** IGB08
+*** IGb08
       JRFCON(15) = 28
 
 *** ITRF2014 or IGS14
       JRFCON(16) = 33
+
+*** IGb14
+      JRFCON(16) = 37
 
       RETURN
       END
@@ -6578,9 +6456,9 @@ C  coordinates in the Bluebook context
 
       IMPLICIT INTEGER*4 (I-N)
       parameter ( numref = 16 )
-      COMMON /REFCON/ IRFCON(36), JRFCON(numref)
+      COMMON /REFCON/ IRFCON(37), JRFCON(numref)
 
-      IF (1 .LE. IBBREF .AND. IBBREF .LE. 36) THEN
+      IF (1 .LE. IBBREF .AND. IBBREF .LE. 37) THEN
           JREF = IRFCON(IBBREF)
       ELSE
           WRITE(6, 10) IBBREF
@@ -6601,7 +6479,7 @@ C  coordinates in the Bluebook context
 
       IMPLICIT INTEGER*4 (I-N)
       parameter ( numref = 16 )
-      COMMON /REFCON/ IRFCON(36), JRFCON(numref)
+      COMMON /REFCON/ IRFCON(37), JRFCON(numref)
 
       IF (JREF .EQ. 0) THEN
         I = 1
@@ -7250,7 +7128,7 @@ c        write (*,*) "From PREDV ",VN, VE, VU
      1   16X, ' INPUT VELOCITIES      OUTPUT VELOCITIES'/)
 
   130 write( luout, 140)
-  140 format( /'**********************************'/
+  140 format(' ************************************************'/
      1  ' Velocities will be transformed at each specified point.'/
      1  ' Please indicate how you wish to input points.'/
      1  '    0...No more points.  Return to main menu.'/
@@ -7491,13 +7369,13 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       if (iprint .eq. 1) then
       write( luout, 100) vn1, ve1, vu1, vx1, vy1, vz1
-  100 format( ' ****************************************'/
+  100 format(' ************************************************'/
      1  ' New northward velocity = ', f8.2, ' mm/yr' /
      1  ' New eastward velocity  = ', f8.2, ' mm/yr'/
      1  ' New upward velocity    = ', f8.2, ' mm/yr'/
      1  ' New x velocity         = ', f8.2, ' mm/yr'/
      1  ' New y velocity         = ', f8.2, ' mm/yr'/
-     1  ' New z velocity         = ', f8.2, ' mm/yr'/)
+     1  ' New z velocity         = ', f8.2, ' mm/yr')
       endif 
 
       write( i2, 200) name24, xlat, xlon,
@@ -7519,12 +7397,12 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
        IMPLICIT DOUBLE PRECISION (A-H, O-Z)
        IMPLICIT INTEGER*4 (I-N)
-       character  HTDP_version*10
+       character  HTDP_version*8
        COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
        COMMON /VERSION/ HTDP_version                        
 
        WRITE(I2, 10) HTDP_version
-   10  FORMAT(' HTDP (VERSION ',a,') OUTPUT' / )
+   10  FORMAT(' HTDP OUTPUT, VERSION ',a / )
        RETURN
        END
 *********************************************
@@ -8068,7 +7946,7 @@ C-------------------------------------------------------------------------------
 
          implicit none
 
-         integer*4   i,j,length
+         integer*4   i,length
          real*8      x,y,z
          character   name*80,record*120,record1*120,chars*120
          character   xxxx*80,yyyy*80,zzzz*80
@@ -8183,7 +8061,7 @@ C-------------------------------------------------------------------------------
 
          implicit none
 
-         integer*4   i,j,length
+         integer*4   i,length
          real*8      x,y,z,Vx,Vy,Vz
          character   name*80,record*120,record1*120,chars*120
          character   xxxx*80,yyyy*80,zzzz*80
@@ -8381,10 +8259,10 @@ C-------------------------------------------------------------------------------
 
          implicit none
 
-         integer*4   i,j,length
-         real*8      x,y,z
+         integer*4   i,length
+         real*8      x,y
          character   name*24,record*120,record1*120,chars*120
-         character   xxxx*80,yyyy*80,zzzz*80
+         character   xxxx*80,yyyy*80
 
          record1 = trim(adjustl(record))
          length = len_trim(record1)
@@ -8468,7 +8346,7 @@ C-------------------------------------------------------------------------------
 
          implicit none
 
-         integer*4   i,j,length
+         integer*4   i,length
          real*8      x,y,vn,ve,vu
          character   name*80,record*120,record1*120,chars*120
          character   xxxx*80,yyyy*80,vnnn*80,veee*80,vuuu*80
@@ -8634,490 +8512,8 @@ C  Done
          return 
          end
 C-----------------------------------------------------------------------------------
-        logical function am_I_in_or_near_CONUS (fi,la)
-
-        implicit none
-
-        integer*4         nrows,ncols,xcell,ycell,rec_num
-        integer*2         sea,code,code_UL,code_UR,code_LL,code_LR
-        real*8            fi,la,fi_max,la_min,dlamda,dfi,fi_min
-        real*8            fi1,la1,fi2,la2,la_max
-
-        character         grid*80                              
-c       logical           am_I_in_or_near_CONUS,CONUS_on_land
-        logical           CONUS_on_land
-
-C  Constants
-
-        parameter (fi_max = 50.d0,
-     &             fi_min = 23.5d0,
-     &             la_min = 235.d0, 
-     &             la_max = 295.d0, 
-     &             sea    = 0)
-
-C  Initialize this function
-
-        am_I_in_or_near_CONUS = .false.
-
-C  If clearly outside Conus
-
-        if (fi>fi_max.or.fi<fi_min.or.la>la_max.or.la<la_min) then
-          return
-        else
-          am_I_in_or_near_CONUS = .true.   
-          return
-        endif
-
-        return
-        end
-C-----------------------------------------------------------------------------------------------------------
-        logical function am_I_in_or_near_AK(fi,la)
-
-C  Given your latitude and longitude, this little routine tells you if you  
-C  are in Alaska (AK) or within 10 km of its boundaries.                 
-
-C  "AK_direct_cell_by_cell_1min" is an unformatted direct access file of nowrs*ncols records
-C  each record is of length 2 bytes (integer*2), which contains a geographic code defined as follows:
-
-C  1) The AK code is 278 
-C  2) The codes for Canada are 265 to 276
-C  4) The code for sea is 0
-
-C  Geographic conditions to be in or near AK:          
-
-C  1) The point is on land in AK    
-
-C            a) code is 278
-
-C  2) In the Canada near the AK:                      
-
-C            a) code = 265 to 276
-C            c) Point is no more than 10km from AK                          
-
-C  3) In the sea near AK:                        
-
-C            a) code = 0
-C            c) Point is no more than 10km from AK                          
-
-        implicit none
-
-        integer*4         nrows,ncols,xcell,ycell,rec_num
-        integer*2         sea,code,code_UL,code_UR,code_LL,code_LR
-        real*8            fi,la,fi_max,dlamda,dfi,la_max
-        real*8            fi1,la1,fi2,la2,la_min,fi_min
-
-        character         grid*27,path*46                
-c       logical           am_I_in_or_near_AK,AK_on_land
-        logical           AK_on_land
-
-C  Constants
-
-        parameter (nrows     = 1291, 
-     &             ncols     = 3511,     
-     &             dfi       = 1.d0/60.d0,
-     &             dlamda    = 1.d0/60.d0,
-     &             fi_max    = 71.5d0,
-     &             fi_min    = 50.d0, 
-     &             la_min    = 172.d0, 
-     &             la_max    = 230.5d0,
-     &             sea       = 0)
-
-C  Initialize this function
-
-        am_I_in_or_near_AK = .false.
-
-C  When it is clearly not AK
-
-        if (fi>fi_max.or.fi<fi_min.or.la>la_max.or.la<la_min) then
-          return
-        else
-          am_I_in_or_near_AK = .true.    
-          return
-        endif
-
-C  On 1/22/2016 I disabled the following code following Giovanni's suggestion    
-C  and for simplicity and portability
-
-        return
-        end
-C----------------------------------------------------------------------------------------------
-        logical function am_I_in_or_near_HI(fi,la)
-
-C  Given your latitude and longitude, this little routine tells you if you  
-C  are in the Hawaian Islands (Hawaii, Kahoolawe,Kauai,Lanai,Maui,Molokai, Nihau and Oahu)
-C  or within 5 km of their coastlines.                 
-
-C  "HI_Hawaii.gmt", "HI_Kahoolawe.gmt", "HI_Kauai.gmt", "HI_Lanai.gmt", "HI_Maui.gmt", "HI_Molokai.gmt",
-C  "HI_Nihau.gmt" and "HI_Oahu.gmt" are ASCII files that contain coastline polygons for the islands.
-C  Each polygon is closed, starts and ends at the same point. 
-C  File format: (East) longitude and latitude in decimal degrees.
-
-        implicit none
-
-        integer*4    i,NPC,n_Hawaii,n_Kahoolawe,n_Kauai,n_Lanai,n_Maui
-        integer*4    n_Molokai,n_Nihau,n_Oahu
-        
-        real*8       fi,la,fi1,la1,fi2,la2,fi_max,fi_min,la_max,la_min
-c       logical      am_I_in_or_near_HI,Hawaii,Kahoolawe,Kauai,Lanai
-        logical      Hawaii,Kahoolawe,Kauai,Lanai
-        logical      Maui,Molokai,Nihau,Oahu
-        logical      UL,UR,LL,LR
-
-C  Constants
-
-        parameter (n_Hawaii    = 329,
-     &             n_Kahoolawe = 143,
-     &             n_Kauai     = 107,
-     &             n_Lanai     =  52,
-     &             n_Maui      = 205,
-     &             n_Molokai   = 114,
-     &             n_Nihau     =  68,
-     &             n_Oahu      = 123,
-     &             fi_max    = 24.d0,
-     &             fi_min    = 18.d0, 
-     &             la_min    = 199.d0, 
-     &             la_max    = 207.d0)
-
-        real*8            X1(n_Hawaii)    ,Y1(n_Hawaii) !I am not sure the cheap compilers in subversion can handle dynamic memory
-        real*8            X2(n_Kahoolawe) ,Y2(n_Kahoolawe)
-        real*8            X3(n_Kauai)     ,Y3(n_Kauai)
-        real*8            X4(n_Lanai)     ,Y4(n_Lanai)
-        real*8            X5(n_Maui)      ,Y5(n_Maui)
-        real*8            X6(n_Molokai)   ,Y6(n_Molokai)
-        real*8            X7(n_Nihau)     ,Y7(n_Nihau)
-        real*8            X8(n_Oahu)      ,Y8(n_Oahu)
-
-C  Initialize this function
-
-        am_I_in_or_near_HI = .false.
-
-C  When it is clearly not HI
-
-        if (fi>fi_max.or.fi<fi_min.or.la>la_max.or.la<la_min) then
-          return
-        else
-          am_I_in_or_near_HI = .true.    
-          return
-        endif
-
-C  On 1/22/2016 I disabled the following code following Giovanni's suggestion
-C  and to simplify.    
-
-        return
-        end
-C-------------------------------------------------------------------------------------------------
-        logical function am_I_in_or_near_PR(fi,la)
-
-C  Given your latitude and longitude, this little routine tells you if you  
-C  are in Puerto Rico Islands (the main Island, Culebra, Desecheo, Mona or Viequez) 
-C  or within 10 km of their coastlines.                 
-
-C  "PR_PuertoRico.gmt", "PR_Culebra", "PR_Mona.gmt", "PR_Viequez.gmt", and PR_"Desecheo.gmt" 
-C  are ASCII files that contain coastline polygons for each one of the 5 PR islands.
-C  Each polygon is closed, starts and ends at the same point. 
-C  File format: (East) longitude and latitude in decimal degrees.
-
-
-        implicit none
-
-        integer*4    i,NPC,n_PR,n_Culebra,n_Mona,n_Desecheo,n_Viequez
-        
-        real*8       fi,la,fi1,la1,fi2,la2,fi_max,fi_min,la_max,la_min
-c       logical      am_I_in_or_near_PR,PR
-        logical      PR
-        logical      Culebra,Mona,Desecheo,Viequez
-        logical      UL,UR,LL,LR
-
-C  Constants
-
-        parameter (n_PR       = 228,
-     &             n_Culebra  = 185,
-     &             n_Mona     =  52,
-     &             n_Desecheo =  34,
-     &             n_Viequez  = 309,
-     &             fi_max     =  19.d0,
-     &             fi_min     =  17.d0,
-     &             la_max     = 295.d0,
-     &             la_min     = 292.d0)
-
-        real*8            X1(n_PR)      ,Y1(n_PR)   !I am not sure the cheap compilers in subversion can handle dynamic memory
-        real*8            X2(n_Culebra) ,Y2(n_Culebra)
-        real*8            X3(n_Mona)    ,Y3(n_Mona)
-        real*8            X4(n_Desecheo),Y4(n_Desecheo)
-        real*8            X5(n_Viequez) ,Y5(n_Viequez)
-
-C  Initialize this function
-
-        am_I_in_or_near_PR = .false.
-
-C  When it is clearly not PR
-
-        if (fi>fi_max.or.fi<fi_min.or.la>la_max.or.la<la_min) then
-          return
-        else
-          am_I_in_or_near_PR = .true.    
-          return
-        endif
-
-C  On 1/22/2016 I disabled the following code following Giovanni's suggestion
-C  and for simplicity.
-
-        return
-        end
-C-------------------------------------------------------------------------------------------------------------
-        logical function am_I_in_or_near_VQ(fi,la)
-
-C  Given your latitude and longitude, this little routine tells you if you are in
-C  the Virgin  Islands (St. Croix, St John and St Thomas) or within 10 km of their coastlines.                 
-
-C  "VQ_StCroix.gmt", "VQ_StJohn.gmt" and  "VQ_StThomas.gmt" are ASCII files that
-C  contain coastline polygons for each one of the 3 VQ islands.
-C  Each polygon is closed, starts and ends at the same point. 
-C  File format: (East) longitude and latitude in decimal degrees.
-
-
-        implicit none
-
-        integer*4    i,NPC,n_VQ,n_StCroix,n_StJohn,n_StThomas
-        
-        real*8       fi,la,fi1,la1,fi2,la2,fi_max,fi_min,la_max,la_min
-c       logical      am_I_in_or_near_VQ
-        logical      StCroix,StJohn,StThomas       
-        logical      UL,UR,LL,LR
-
-C  Constants
-
-        parameter (n_StCroix  = 142,
-     &             n_StJohn   = 356,
-     &             n_StThomas = 304,
-     &             fi_max     = 18.4d0,
-     &             fi_min     = 15.5d0,
-     &             la_max     = 295.6d0,
-     &             la_min     = 295.d0)
-
-        real*8            X1(n_StCroix) ,Y1(n_StCroix)  !I am not sure the cheap compilers in subversion can handle dynamic memory
-        real*8            X2(n_StJohn ) ,Y2(n_StJohn )
-        real*8            X3(n_StThomas),Y3(n_StThomas)
-
-C  Initialize this function
-
-        am_I_in_or_near_VQ = .false.
-
-C  When it is clearly not VQ
-
-        if (fi>fi_max.or.fi<fi_min.or.la>la_max.or.la<la_min) then
-          return
-        else
-          am_I_in_or_near_VQ = .true.    
-          return
-        endif
-
-C  On 1/22/2016 the following code was disabled following Giovanni's suggestion
-C  and for simplicity
-
-        return
-        end
-C-------------------------------------------------------------------------------------------
-        logical function am_I_in_or_near_CQ (fi,la)
-
-C  Given your latitude and longitude, this little routine tells you if you are in
-C  the North Mariana Islands (Saipan, Tinian and Rota) or within 10 km of their coastlines.                 
-
-C  "CQ_Rota.gmt", "CQ_Saipan.gmt" and "CQ_Tinian.gmt" are ASCII files that
-C  contain coastline polygons for each one of the 3 CQ islands.
-C  Each polygon is closed, starts and ends at the same point. 
-C  File format: (East) longitude and latitude in decimal degrees.
-
-
-        implicit none
-
-        integer*4    i,NPC,n_CQ,n_Saipan ,n_Tinian,n_Rota     
-        
-        real*8       fi,la,fi1,la1,fi2,la2,fi_max,fi_min,la_max,la_min
-c       logical      am_I_in_or_near_CQ
-        logical      Saipan,Tinian,Rota            
-        logical      UL,UR,LL,LR
-
-C  Constants
-
-        parameter (n_Saipan   = 122,
-     &             n_Tinian   =  70,
-     &             n_Rota     =  80,
-     &             fi_max     =  15.6d0,
-     &             fi_min     =  13.8d0,
-     &             la_max     = 146.d0,
-     &             la_min     = 144.8d0)
-
-        real*8            X1(n_Saipan ),Y1(n_Saipan ) !I am not sure the cheap compilers in subversion can handle dynamic memory
-        real*8            X2(n_Tinian ),Y2(n_Tinian )
-        real*8            X3(n_Rota   ),Y3(n_Rota   )
-
-C  Initialize this function
-
-        am_I_in_or_near_CQ = .false.
-
-C  When it is clearly not CQ
-
-        if (fi>fi_max.or.fi<fi_min.or.la>la_max.or.la<la_min) then
-          return
-        else
-          am_I_in_or_near_CQ = .true.    
-          return
-        endif
-
-C  On 1/22/2016 the following code was disabled following Giovanni's suggestion
-C  and for simplicity
-
-        return
-        end
-C-------------------------------------------------------------------------------------------
-        logical function am_I_in_or_near_AS(fi,la)
-
-C  Given your latitude and longitude, this little routine tells you if you are in
-C  the American Samoa Islands (Ofu, Rose, Tau and Tutila) or within 10 km of their coastlines.                 
-
-C  "AS_Ofu.gmt", "AS_Rose.gmt" and  " AS_Tau.gmt" and "AS_Tutila.gmt" are ASCII files that
-C  contain coastline polygons for each one of the 4 AS islands.
-C  Each polygon is closed, starts and ends at the same point. 
-C  File format: (East) longitude and latitude in decimal degrees.
-
-
-        implicit none
-
-        integer*4    i,NPC,n_AS,n_Ofu,n_Rose,n_Tau,n_Tutila
-        
-        real*8       fi,la,fi1,la1,fi2,la2,fi_max,fi_min,la_max,la_min
-c       logical      am_I_in_or_near_AS
-        logical      Ofu,Rose,Tau,Tutila           
-        logical      UL,UR,LL,LR
-
-C  Constants
-
-        parameter (n_Ofu      =  64,
-     &             n_Rose     =   8,
-     &             n_Tau      =  76,
-     &             n_Tutila   = 239,
-     &             fi_max     = -13.7d0,
-     &             fi_min     = -14.7d0,
-     &             la_max     = 190.8d0,
-     &             la_min     = 189.d0)
-
-        real*8            X1(n_Ofu )  ,Y1(n_Ofu )      !not sure the cheap compilers in subversion can handle dynamic memory
-        real*8            X2(n_Rose)  ,Y2(n_Rose)
-        real*8            X3(n_Tau )  ,Y3(n_Tau )
-        real*8            X4(n_Tutila),Y4(n_Tutila)
-
-C  Initialize this function
-
-        am_I_in_or_near_AS = .false.
-
-C  When it is clearly not AS
-
-        if (fi>fi_max.or.fi<fi_min.or.la>la_max.or.la<la_min) then
-          return
-        else
-          am_I_in_or_near_AS = .true.    
-          return
-        endif
-
-C  On 1/22/2016 the following code was disabled following Giovanni's suggestion
-C  and for simplicity
-
-        return
-        end
-C-------------------------------------------------------------------------------------------------
-        logical function am_I_in_or_near_Guam(fi,la)
-
-C  Given your latitude and longitude, this little routine tells you if you are in
-C  the Guam Island or within 5 km of its coastlines.                 
-
-C  "GQ_Guam.gmt", is an ASCII file that contains coastline polygons Guam.                             
-C  This polygon is closed, starts and ends at the same point. 
-C  File format: (East) longitude and latitude in decimal degrees.
-
-
-        implicit none
-
-        integer*4    i,NPC,n_GQ
-        real*8       fi,la,fi1,la1,fi2,la2,fi_max,fi_min,la_max,la_min
-c       logical      am_I_in_or_near_Guam
-        logical      GQ                            
-        logical      UL,UR,LL,LR
-
-C  Constants
-
-        parameter (n_GQ   = 300,
-     &             fi_max = 13.7d0, 
-     &             fi_min = 13.d0,
-     &             la_max = 145.d0,
-     &             la_min = 144.5d0)
-
-        real*8            X1(n_GQ) ,Y1(n_GQ)              !I am not sure the cheap compilers in subversion can handle dynamic memory
-
-C  Initialize this function
-
-        am_I_in_or_near_Guam = .false.
-
-C  When it is clearly not Guam
-
-        if (fi>fi_max.or.fi<fi_min.or.la>la_max.or.la<la_min) then
-          return
-        else
-          am_I_in_or_near_Guam = .true.    
-          return
-        endif
-
-C  On 1/22/2016 the following code was disabled following Giovanni's suggestion
-C  and for simplicity
-
-        return
-        end
-C----------------------------------------------------------------------------------------------
-        logical function am_I_in_or_near_KW(fi,la)
-
-C  Given your latitude and longitude, this little routine tells you if you are in
-C  the a little square around Kwajalein of the Marshal islands       
-
-C  "Kwajalein.gmt", is an ASCII file that contains a rectangle around Kwajalein.                             
-C  This polygon is closed, starts and ends at the same point. 
-C  File format: (East) longitude and latitude in decimal degrees.
-
-
-        implicit none
-
-        integer*4    i,NPC,n_KW
-        
-        real*8       fi,la,fi1,la1,fi2,la2,fi_max,fi_min,la_max,la_min
-
-c       logical      am_I_in_or_near_KW   
-        logical      KW                            
-        logical      UL,UR,LL,LR
-
-C  Constants
-
-        parameter (n_KW   = 5,
-     &             fi_max = 10.5d0,
-     &             fi_min =  5.d0 ,
-     &             la_max = 174.d0,
-     &             la_min = 165.7d0)
-
-        real*8            X1(n_KW) ,Y1(n_KW)              !I am not sure the cheap compilers in subversion can handle dynamic memory
-
-C  Initialize this function
-
-        am_I_in_or_near_KW = .false.
-
-C  When it is clearly not KW   
-
-        if (fi>fi_max.or.fi<fi_min.or.la>la_max.or.la<la_min) then
-          return
-        else
-          am_I_in_or_near_KW = .true.    
-          return
-        endif
-
-C  On 1/22/2016 the following code was disabled following Giovanni's suggestion
-C  and for simplicity
-
-        return
-        end
+C  On 5/10/2020 removed all code and comments entered on 7/22/2015 that limited use
+C  of HTDP to US and its territories. That functionality was disabled on 5/11/2017.
+C  The removed code still exists in HTDP v3.2.8 and 3.2.7, commented out to disable.
+C  But functions remained in those previous versions, causing numerous warnings when 
+C  program compiled.

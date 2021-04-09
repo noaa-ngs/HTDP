@@ -2,13 +2,13 @@
 
 dir
 121793
-https://source.ngs.noaa.gov/svn/repos/NGSIDBAPI/AnalysisApi/htdp/tags/release-3.2.9/web/HTDP-download/input
+https://source.ngs.noaa.gov/svn/repos/NGSIDBAPI/AnalysisApi/htdp/tags/release-3.3.0/web/HTDP-download/input
 https://source.ngs.noaa.gov/svn/repos
 
 
 
-2020-05-18T00:13:26.379714Z
-115868
+2021-01-08T21:58:14.347615Z
+120349
 michael.dennis
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2021-04-09T01:01:26.242847Z
-9a066d287a6d16c8de0bf972f21836cb
-2020-05-18T00:13:26.379714Z
-115868
+2021-04-09T01:01:50.706873Z
+dc5a540eab2dfa16caf8a49b6731b696
+2021-01-08T21:58:14.347615Z
+120349
 michael.dennis
 
 
@@ -58,7 +58,7 @@ michael.dennis
 
 
 
-79
+41
 
 wa.bfile.txt
 file
@@ -66,7 +66,7 @@ file
 
 
 
-2021-04-09T01:01:26.363843Z
+2021-04-09T01:01:50.745847Z
 0c483b04973db4dfac02b76754f27048
 2020-05-18T00:13:26.379714Z
 115868
@@ -100,7 +100,7 @@ file
 
 
 
-2021-04-09T01:01:26.384845Z
+2021-04-09T01:01:50.749852Z
 6175fca73065b218c55eb17466db284d
 2020-05-18T00:13:26.379714Z
 115868
@@ -134,10 +134,10 @@ file
 
 
 
-2021-04-09T01:01:26.387838Z
-feb966a03604612993b1a251a9596935
-2020-05-18T00:13:26.379714Z
-115868
+2021-04-09T01:01:50.753853Z
+158c8f5f623921628c4b3c54a10aa662
+2021-01-08T21:58:14.347615Z
+120349
 michael.dennis
 
 
@@ -160,7 +160,7 @@ michael.dennis
 
 
 
-91
+51
 
 test_NAmerica.txt
 file
@@ -168,10 +168,10 @@ file
 
 
 
-2021-04-09T01:01:26.390834Z
-d103923b908cfd55d8600ee30559fb82
-2020-05-18T00:13:26.379714Z
-115868
+2021-04-09T01:01:50.758841Z
+bc3d45dc0edf593c6b8bd8c153525ed4
+2021-01-08T21:58:14.347615Z
+120349
 michael.dennis
 
 
@@ -194,5 +194,5 @@ michael.dennis
 
 
 
-173
+133
 

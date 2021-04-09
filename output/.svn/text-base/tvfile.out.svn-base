@@ -1,15 +1,15 @@
- HTDP OUTPUT, VERSION 3.2.9   
+ HTDP OUTPUT, VERSION 3.3.0   
 
- TRANSFORMING VELOCITIES FROM ITRF2000 or IGS00/IGb00  TO NAD_83(2011/CORS96/2007)
+ TRANSFORMING VELOCITIES FROM ITRF2014 or IGS14/IGb14  TO NAD_83(2011/CORS96/2007)
 
                  INPUT VELOCITIES      OUTPUT VELOCITIES
 
  gamma                   
  latitude =   38.000000000  longitude =  123.000000000
-     northward velocity   -12.00          2.70 mm/yr
-     eastward velocity    -10.00          3.55 mm/yr
-     upward velocity        2.00          1.34 mm/yr
-     x velocity           -13.27          3.31 mm/yr
-     y velocity            -2.07         -1.42 mm/yr
-     z velocity            -8.22          2.95 mm/yr
+     northward velocity    25.00         38.29 mm/yr
+     eastward velocity    -38.00        -24.42 mm/yr
+     upward velocity        1.00         -0.24 mm/yr
+     x velocity           -23.92         -7.54 mm/yr
+     y velocity            32.94         33.23 mm/yr
+     z velocity            20.32         30.02 mm/yr
 

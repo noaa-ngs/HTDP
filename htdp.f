@@ -24,8 +24,8 @@
 
 C  You must change HTDP version and date here, if necessary
 
-      HTDP_version = '3.2.9'
-      Version_date = 'May 17, 2020'
+      HTDP_version = '3.3.0'
+      Version_date = 'January 15, 2021'
 
 *** Introduce variables for file id's
 
@@ -73,8 +73,9 @@ C    1      FORM='UNFORMATTED')
       WRITE(LUOUT,501) 
   501 FORMAT(
      1 '   AUTHORS: Richard Snay, Chris Pearson, Jarir Saleh,   '/
-     1 '            and Michael Dennis                          '/
-     1 '            Email: ngs.cors.htdp@noaa.gov               '/
+     1 '            and Michael Dennis                          '//
+     1 '   Web: https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml  '/
+     1 '   Email: ngs.cors.htdp@noaa.gov                        '/
      1 '********************************************************'/)
       WRITE(LUOUT,10)
    10 FORMAT( 
@@ -84,13 +85,13 @@ C    1      FORM='UNFORMATTED')
       WRITE(LUOUT,11)
    11 FORMAT(
      5 ' The User Guide contains additional information and a set'/
-     5 ' of exercises to familiarize users with the software.'//
+     5 ' of exercises to familiarize users with the software.'/
      5 ' Hit ENTER or RETURN to continue.  ')
       read(luin, '(a5)',err=51,iostat=ios) cont
       if (ios /= 0) goto 51
 
    25 WRITE(LUOUT,26)
-   26 FORMAT(' ***************************************'/
+   26 FORMAT('********************************************************'/
      1 ' MAIN MENU:',/
      6 '    0... Exit software.',/
      7 '    1... Estimate horizontal displacements between two dates.'/
@@ -129,7 +130,7 @@ C     CLOSE(I5, STATUS = 'DELETE')
       write (*,*) 'You did not hit enter      : ios = ',ios
       write (*,*) "ABNORMAL TERMINATION"
       STOP
-
+      
    52 write (*,'(/)')
       write (*,*) 'Problem with reading OPTION: ios = ',ios
       write (*,*) "ABNORMAL TERMINATION"
@@ -175,7 +176,7 @@ C*** Set default reference epoch to Jan. 1, 2010
 *** that correspond to the boundaries for the regions.       
 *** Region 1 is the San Andreas fault in central California         
 *** Region 2 is southern California
-*** Region 3 is Northern California
+*** Region 3 is northern California
 *** Region 4 is the Pacific Northwest
 *** Region 5 is western CONUS
 *** Region 6 is CONUS
@@ -183,19 +184,38 @@ C*** Set default reference epoch to Jan. 1, 2010
 *** Region 8 is south-central Alaska
 *** Region 9 is southeast Alaska
 *** Region 10 is All Mainland Alaska
-*** Region 11 is the North American plate 
-*** Region 12 is the Caribbean plate
-*** Region 13 is the Pacific plate
-*** Region 14 is the Juan de Fuca plate
-*** Region 15 is the Cocos plate
-*** Region 16 is the Mariana plate
-*** Region 17 is the Philippine Sea plate
+
+* Placeholder regions inserted to make compatible with new initbd.f
+* that contains tectonic plates added in December 2020 (v3.3.0).
+*** Region 11 is a placeholder region
+*** Region 12 is a placeholder region
+*** Region 13 is a placeholder region
+
+*** Region 14 is the North America plate 
+*** Region 15 is the Caribbean plate
+*** Region 16 is the Pacific plate
+*** Region 17 is the Juan de Fuca plate
+*** Region 18 is the Cocos plate
+*** Region 19 is the Mariana plate
+*** Region 20 is the Philippine Sea plate
+
+* Plates added in December 2020 (v3.3.0).
+*** Region 21 is the South America plate
+*** Region 22 is the Nazca plate
+*** Region 23 is the Panama plate
+*** Region 24 is the North Andes plate
+*** Region 25 is the Africa plate
+*** Region 26 is the Eurasia plate
+*** Region 27 is the Rivera plate
+*** Region 28 is the Galapagos plate
+*** Region 29 is the Tonga plate
+*** Region 30 is the Niuafo'ou plate
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (NMREGN = 17)
+      parameter (NMREGN = 30)
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
-      COMMON /BNDRY/ X(4000), Y(4000), NPOINT(30)
+      COMMON /BNDRY/ X(7000), Y(7000), NPOINT(40)
  
       IEND = NPOINT(NMREGN + 1) - 1  
       DO 10 J = 1, IEND              
@@ -211,8 +231,8 @@ C*** Set default reference epoch to Jan. 1, 2010
 
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (NMREGN = 17)
-      COMMON /BNDRY/ X(4000), Y(4000), NPOINT(30)
+      parameter (NMREGN = 30)
+      COMMON /BNDRY/ X(7000), Y(7000), NPOINT(40)
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
       COMMON /CONST/ A, F, E2, EPS, AF, PI, TWOPI, RHOSEC
 
@@ -232,8 +252,11 @@ C*** Set default reference epoch to Jan. 1, 2010
 
       RETURN
       END
+
 ********************************************************
-      SUBROUTINE  POLYIN (X0,Y0,X,Y,N,NPC)
+      SUBROUTINE POLYIN (X0,Y0,X,Y,N,NPC)
+* This version of subroutine is from TRANS4D v0.3.1 and replaces
+* version in HTDP v3.2.9.
 C     SUBROUTINE TO DETERMINE IF A POINT AT (X0,Y0) IS INSIDE OR
 C     OUTSIDE OF A CLOSED FIGURE DESCRIBED BY A SEQUENCE OF CONNECTED
 C     STRAIGHT LINE SEGMENTS WITH VERTICES AT X, Y.
@@ -266,20 +289,18 @@ C     MAINTAINS FULL ACCURACY OF INPUT COORDINATES.
 C
       IMPLICIT INTEGER*4 (I-N)
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
       DIMENSION X(N),Y(N)
-      DATA I6/6/
+
       IS=0
       NPC=0
 C
 C     FIND STARTING POINT WHERE X(I).NE.X0
       IP=0
    10 IP=IP+1
-      IF ((X(IP)-X0) == 0) goto 12 
-      IF ((X(IP)-X0)  < 0) goto 15 
-      IF ((X(IP)-X0)  > 0) goto 16 
-c     IF (X(IP)-X0) 15,12,16
+      IF(X(IP)-X0) 15,12,16
    12 IF(IP.LE.N) GO TO 10
-      WRITE(I6,6001)
+      WRITE(LUOUT,6001)
  6001 FORMAT('0  POLYGON INPUT ERROR - ALL POINTS ON LINE X = X0')
       STOP
    15 IL=-1
@@ -295,67 +316,29 @@ C
       DO 100 II=IP1,IPN
       I=II
       IF(I.GT.N) I=I-N
-      IF(IL == 0) goto 50
-      IF(IL  < 0) goto 30
-      IF(IL  > 0) goto 40
-c     IF(IL) 30,50,40
-
-   30 IF(X(I)-X0 == 0) goto 32
-      IF(X(I)-X0  < 0) goto 90
-      IF(X(I)-X0  > 0) goto 34
-c  30 IF(X(I)-X0) 90,32,34
+      IF(IL) 30,50,40
+   30 IF(X(I)-X0) 90,32,34
    32 IS=-1
       GO TO 60
    34 IL=1
       GO TO 80
-   40 IF(X(I)-X0 == 0) goto 44
-      IF(X(I)-X0  < 0) goto 42
-      IF(X(I)-X0  > 0) goto 90
-c  40 IF(X(I)-X0) 42,44,90
+   40 IF(X(I)-X0) 42,44,90
    42 IL=-1
       GO TO 80
    44 IS=1
       GO TO 60
-   50 IF(X(I)-X0 == 0) goto 55
-      IF(X(I)-X0  < 0) goto 52
-      IF(X(I)-X0  > 0) goto 54
-c  50 IF(X(I)-X0) 52,55,54
+   50 IF(X(I)-X0) 52,55,54
    52 IL=-1
-      IF(IS == 0) goto 140
-      IF(IS  < 0) goto 90
-      IF(IS  > 0) goto 80
-c     IF(IS) 90,140,80
+      IF(IS) 90,140,80
    54 IL=1
-      IF(IS == 0) goto 140
-      IF(IS  < 0) goto 80
-      IF(IS  > 0) goto 90
-c     IF(IS) 80,140,90
-
-   55 IF(Y(I)-Y0 == 0) goto 120
-      IF(Y(I)-Y0  < 0) goto 57
-      IF(Y(I)-Y0  > 0) goto 58
-c  55 IF(Y(I)-Y0) 57,120,58
-
-   57 IF(YL-Y0 == 0) goto 120
-      IF(YL-Y0  < 0) goto 90
-      IF(YL-Y0  > 0) goto 120
-c  57 IF(YL-Y0) 90,120,120
-
-   58 IF(YL-Y0 == 0) goto 120
-      IF(YL-Y0  < 0) goto 120
-      IF(YL-Y0  > 0) goto  90
-c  58 IF(YL-Y0) 120,120,90
+      IF(IS) 80,140,90
+   55 IF(Y(I)-Y0) 57,120,58
+   57 IF(YL-Y0) 90,120,120
+   58 IF(YL-Y0) 120,120,90
 C
    60 IL=0
-      IF(Y(I)-Y0 == 0) goto 120
-      IF(Y(I)-Y0  < 0) goto 90
-      IF(Y(I)-Y0  > 0) goto 90
-c     IF(Y(I)-Y0) 90,120,90
-
-   80 IF(YL-Y0+(Y(I)-YL)*(X0-XL)/(X(I)-XL) == 0) goto 120
-      IF(YL-Y0+(Y(I)-YL)*(X0-XL)/(X(I)-XL)  < 0) goto 90
-      IF(YL-Y0+(Y(I)-YL)*(X0-XL)/(X(I)-XL)  > 0) goto 85
-c  80 IF(YL-Y0+(Y(I)-YL)*(X0-XL)/(X(I)-XL)) 90,120,85
+      IF(Y(I)-Y0) 90,120,90
+   80 IF(YL-Y0+(Y(I)-YL)*(X0-XL)/(X(I)-XL)) 90,120,85
    85 NPC=NPC+1
    90 XL=X(I)
       YL=Y(I)
@@ -364,11 +347,12 @@ c  80 IF(YL-Y0+(Y(I)-YL)*(X0-XL)/(X(I)-XL)) 90,120,85
       RETURN
   120 NPC=2
       RETURN
- 140  WRITE(I6,6002)
+ 140  WRITE(LUOUT,6002)
  6002 FORMAT('0  POLYGON LOGIC ERROR - PROGRAM SHOULD NOT REACH THIS',
      .              ' POINT')
       RETURN
       END
+
 *****************************************************************
       SUBROUTINE RADR8T (YLAT,VN,VE,VNR,VER)
 
@@ -393,7 +377,7 @@ C Compute the NAD_83(CORS96) velocity at a point in mm/yr    !Not anymore since 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
       parameter (NUMGRD = 10)
-      parameter (NMREGN = 17)
+      parameter (NMREGN = 30)
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /FILES/ LUIN, LUOUT, I1,I2,I3,I4,I5,I6
       COMMON /VGRID/ B(210000)
@@ -406,6 +390,10 @@ c1001 FORMAT( 'JREGN = ', I6)
 *** Use tectonic plate model to compute velocity relative
 ***    to ITRF2008
         IPLATE = JREGN - NUMGRD
+        
+*** Subtract the number of placeholder regions
+        IPLATE = IPLATE - 3
+        
         ELON = - YLON
         HT = 0.D0
         CALL TOXYZ(YLAT, ELON, HT, X, Y, Z)
@@ -470,33 +458,62 @@ c       ENDIF
 ****************************************
       SUBROUTINE PLATVL(IPLATE, X, Y, Z, VX, VY, VZ)
 *** Compute the ITRF2008 velocity at point on plate = IPLATE
-***    with coordinates X, Y, Z (in meters)
-***    The resulting velocities--VX, VY, and VZ--will be in meters/yr
-***    References 
-***     Altamimi et al. 2012 = JGR (Paper on ITRF2008 plate motion)
-***     DeMets et al. 2010 = Geophysical Journal Int'l, vol 181, 
-***     Snay 2003 = SALIS, Vol 63, No 1 (Paper on Frames for Pacific)
+*** with coordinates X, Y, Z (in meters)
+*** The resulting velocities--VX, VY, and VZ--will be in meters/yr
+*** References: 
+***   Altamimi et al. 2012 = JGR (Paper on ITRF2008 plate motion).
+***   Altamimi et al. 2017. "ITRF2014 plate motion model." Geophys. J. Int, 209.
+***   Bird 2003. "An updated digital model of plate boundaries." Geochem. Geophys. Geosyst., 4(3), 1027
+***   DeMets et al. 2010. "Geologically current plate motions." Geophys. J. Int., 181.
+***   Kreemer et al. 2014. "A geodetic plate motion and global strain rate model." Geochem. Geophys. Geosyst., 15.
+***   Mora-Páez et al. 2018. "Crustal deformation in the northern Andes – A new GPS velocity field." J. S. Amer. Earth Sci, 2018.
+***   Snay 2003 = SALIS, Vol 63, No 1 (Paper on Frames for Pacific).
 
       IMPLICIT DOUBLE PRECISION (A-H, O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      DIMENSION WX(7), WY(7), WZ(7)
+      PARAMETER (NUMPLATE = 17)
+      
+      DIMENSION WX(NUMPLATE), WY(NUMPLATE), WZ(NUMPLATE)
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
+      
+*** All plate boundaries are from Bird 2003 with minor topological corrections.
 
 *** IPLATE = 1 --> North America (from Altamimi et al. 2012)
 ***          2 --> Caribbean (from Altamimi et al. 2012)
 ***          3 --> Pacific (from Altamimi et al. 2012)
 ***          4 --> Juan de Fuca (from DeMets et al. 2010)
 ***          5 --> Cocos (from DeMets et al. 2010)
-***          6 --> Mariana (from Snay, 2003)
+***          6 --> Mariana (from Snay 2003)
 ***          7 --> Philippine Sea (from DeMets et al. 2010)
-      DATA WX /0.170D-9, 0.238D-9, -1.993D-9, 
-     1         6.626D-9, -10.390D-9, -.097D-9, -0.841D-9/
-      DATA WY /-3.209D-9, -5.275D-9, 5.023D-9,
-     1         11.708D-9, -14.954D-9,  .509D-9, 3.989D-9/
-      DATA WZ /-0.485D-9, 3.219D-9,-10.501D-9, 
-     1        -10.615D-9,  9.148D-9,-1.682D-9, -10.626D-9/
+***  New plates added in December 2020 (v3.3.0):
+***          8 --> South America (from Altamimi et al. 2017)
+***          9 --> Nazca (from Altamimi et al. 2017)
+***         10 --> Panama (from Kreemer et al. 2014)
+***         11 --> North Andes (from Mora-Paez, 2018)
+***         12 --> Africa (from Altamimi et al. 2017)
+***         13 --> Eurasia (from Altamimi et al. 2017)
+***         14 --> Rivera (from DeMets et al. 2010)
+***         15 --> Galapagos (from Bird 2003)
+***         16 --> Tonga (from Kreemer et al. 2014)
+***         17 --> Niuafo'ou (from Bird 2003)
 
-      IF (IPLATE .LE. 0 .OR. IPLATE .GT. 7) THEN
+* Plate rotation rates in radians per year. Existing plates (1-7) have ITRF2008 rates 
+* (except for plate 6, the Mariana plate referenced to ITRF2000). The new plates added
+* in December 2020 have ITRF2014 rates (plates 8 thorugh 17).
+      DATA WX / 0.170D-9, 0.238D-9, -1.993D-9, 6.626D-9, -10.390D-9, 
+     &         -0.097D-9, -0.841D-9, -1.309D-9, -1.614D-9, 2.088D-9,
+     &         -1.964D-9, 0.480D-9, -0.412D-9, -21.933D-9, 14.273D-9,
+     &        137.841D-9, -57.324D-9 /
+      DATA WY /-3.209D-9, -5.275D-9, 5.023D-9, 11.708D-9, -14.954D-9,
+     &          0.509D-9, 3.989D-9, -1.459D-9,-7.486D-9, -23.037D-9, 
+     &         -1.518D-9, -2.977D-9, -2.574D-9, -70.432D-9, 94.440D-9, 
+     &         10.447D-9, -5.814D-9 /
+      DATA WZ /-0.485D-9, 3.219D-9,-10.501D-9, -10.615D-9, 9.148D-9,
+     &         -1.682D-9, -10.626D-9, -0.679D-9, 7.869D-9, 6.729D-9,
+     &          0.400D-9, 3.554D-9, 3.733D-9, 27.071D-9, 4.520D-9, 
+     &         68.458D-9, -3.722D-9 /
+
+      IF (IPLATE .LE. 0 .OR. IPLATE .GT. NUMPLATE) THEN
           WRITE (LUOUT, 1) IPLATE
     1     FORMAT(' Improper plate ID in PLATVL = ', I6)
           STOP
@@ -519,8 +536,21 @@ c       ENDIF
          VX = VX/1000.d0
          VY = VY/1000.d0
          VZ = VZ/1000.d0
+
+*** The rotation rates for plates added in Dec 2020 refer to ITRF2014
+*** (plates 8 through 17). The following code converts the rates to 
+*** ITRF2008 velocities for these plates.
+      ELSEIF (IPLATE .GE. 8) THEN
+         VX = VX*1000.d0
+         VY = VY*1000.d0
+         VZ = VZ*1000.d0
+         CALL VTRANF(X, Y, Z, VX, VY, VZ, 16, 15)
+         VX = VX/1000.d0
+         VY = VY/1000.d0
+         VZ = VZ/1000.d0
+
 *** The following translations rates are added per Altamimi et al. (2012)
-*** for the other six plates
+*** for the other six plates referenced to ITRF2008.
       ELSE
          VX = 0.00041d0 + VX
          VY = 0.00022d0 + VY
@@ -1424,9 +1454,11 @@ C
       U3DS = U3DS + C3DS
       RETURN
       END
-*************************************************************
-      SUBROUTINE OKADAW(PSI,ETA,Q,SDIP,CDIP,RATIO,TWOPI,
-     1           VERT,U1SS,U2SS,U3SS,U1DS,U2DS,U3DS)
+
+C********1*********2*********3*********4*********5*********6*********7**
+      SUBROUTINE OKADAW(PSI,ETA,Q,SDIP,CDIP,RATIO,TWOPI,VERT,U1SS,U2SS,
+     &                  U3SS,U1DS,U2DS,U3DS)
+
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
       LOGICAL VERT   
@@ -1444,68 +1476,59 @@ C
       IF(VERT) THEN
          F5 = -RATIO*PSI*SDIP/(R + DBAR)
          F4 = -RATIO*Q/(R + DBAR)
-         F3 = 0.5D0*RATIO*(ETA/(R + DBAR)
-     1          + YBAR*Q/((R + DBAR)*(R + DBAR))
-     2          - DLOG(R + ETA))
-         F1 = -0.5D0*RATIO*PSI*Q/
-     1        ((R + DBAR)*(R + DBAR))
+         F3 = 0.5D0*RATIO*(ETA/(R + DBAR) + YBAR*Q/
+     &        ((R + DBAR)*(R + DBAR)) - DLOG(R + ETA))
+         F1 = -0.5D0*RATIO*PSI*Q/((R + DBAR)*(R + DBAR))
       ELSE
          IF(DABS(PSI) .LE. 0.1D0) then
             F5 = 0.d0
          ELSE
-            F5 = 2.D0*RATIO*
-     1      DATAN((ETA*(X+Q*CDIP)+X*(R+X)*SDIP)/(PSI*(R+X)*CDIP))
-     2          /CDIP
+            F5 = 2.D0*RATIO*DATAN((ETA*(X+Q*CDIP)+X*(R+X)*SDIP)/
+     &           (PSI*(R+X)*CDIP))/CDIP
          ENDIF
          F4 = RATIO*(DLOG(R+DBAR)-SDIP*DLOG(R+ETA))/CDIP
-         F3 = RATIO*(YBAR/(CDIP*(R+DBAR)) - DLOG(R+ETA))
-     1         + SDIP*F4/CDIP
+         F3 = RATIO*(YBAR/(CDIP*(R+DBAR)) - DLOG(R+ETA)) + SDIP*F4/CDIP
          F1 = -RATIO*(PSI/(CDIP*(R+DBAR))) - SDIP*F5/CDIP
       ENDIF
-         F2 = -RATIO*DLOG(R+ETA) - F3
+      F2 = -RATIO*DLOG(R+ETA) - F3
 
-      U1SS = -(PSI*Q/(R*(R+ETA))
-     1         + TERM + F1*SDIP)/TWOPI
-      U2SS = -(YBAR*Q/(R*(R+ETA))
-     1         + Q*CDIP/(R+ETA)
-     2         + F2*SDIP)/TWOPI
-      U3SS = -(DBAR*Q/(R*(R+ETA))
-     1         + Q*SDIP/(R+ETA)
-     2         + F4*SDIP)/TWOPI
+      U1SS = -(PSI*Q/(R*(R+ETA)) + TERM + F1*SDIP)/TWOPI
+      U2SS = -(YBAR*Q/(R*(R+ETA)) + Q*CDIP/(R+ETA) + F2*SDIP)/TWOPI
+      U3SS = -(DBAR*Q/(R*(R+ETA)) + Q*SDIP/(R+ETA) + F4*SDIP)/TWOPI
       U1DS = -(Q/R - F3*SDIP*CDIP)/TWOPI
-      U2DS = -(YBAR*Q/(R*(R+PSI))
-     1         + CDIP*TERM - F1*SDIP*CDIP)/TWOPI
-      U3DS = -(DBAR*Q/(R*(R+PSI))
-     1         + SDIP*TERM - F5*SDIP*CDIP)/TWOPI
+
+* Following part of subroutine modified based on changes provided by 
+* Jarir Saleh on 11/19/2020 to avoid floating point exceptions when a 
+* point is located on the extension of a fault plane.  
+* Two conditional statements added to avoid floating point exception
+* using variables TERM1 and TERM2: 
+      TERM1 = YBAR*Q
+      IF (ABS(TERM1) < 1D-3) THEN
+        U2DS1 = 0.D0
+      ELSE
+        U2DS1 = -YBAR*Q/R/(R+PSI)/TWOPI
+      ENDIF      
+
+      U2DS2 = -CDIP*TERM/TWOPI
+      U2DS3 = F1*SDIP*CDIP/TWOPI
+      U2DS  = U2DS1 + U2DS2 + U2DS3
+      
+      TERM2 = DBAR*Q
+      IF (ABS(TERM2) < 1D-3) THEN
+        U3DS1 = 0.D0
+      ELSE
+        U3DS1 = -DBAR*Q/R/(R+PSI)/TWOPI
+      ENDIF
+      
+      U3DS2 = -SDIP*TERM/TWOPI
+      U3DS3 = F5*SDIP*CDIP/TWOPI
+      U3DS  = U3DS1 + U3DS2 + U3DS3
+* End of changes provided by Jarir
+
       RETURN
       END
-*******************************************************************
-
-C     SUBROUTINE GRDCHK (POSX, POSY, INSIDE)
-
-C
-C ROUTINE CHECKS IF THE POINT HAVING COORDINATES (POSX, POSY)
-C IS WITHIN THE REGION SPANNED BY THE GRID
-C
-C     IMPLICIT DOUBLE PRECISION (A-H,O-Z)
-C     IMPLICIT INTEGER*4 (I-N)
-C     LOGICAL INSIDE
-C     COMMON /CDGRID/ GRDLX, GRDUX, GRDLY, GRDUY, ICNTX, ICNTY
-
-C     INSIDE = .TRUE.
-
-C     IF (POSX .LT. GRDLX .OR. POSX .GT. GRDUX) THEN
-C        INSIDE = .FALSE.
-C     ENDIF
-C     IF (POSY .LT. GRDLY .OR. POSY .GT. GRDUY) THEN
-C        INSIDE = .FALSE.
-C     ENDIF
-
-C     RETURN
-C     END
-
-*******************************************************************
-
+      
+C********1*********2*********3*********4*********5*********6*********7**
       SUBROUTINE GRDWEI (YLON, YLAT, JREGN, I, J, WEI)
 
 C
@@ -1713,6 +1736,7 @@ C***************************************************
 C*********************************************************
 C
       SUBROUTINE TOMNT( IYR, IMON, IDAY, IHR, IMN, MINS )
+*** This subroutine is not called; apparently replaced by IYMDMJ.
 C
 C********1*********2*********3*********4*********5*********6*********7**
 C
@@ -1785,13 +1809,22 @@ C
 C
 C........  1.0  CALCULATION
 C
-      A=  IYRP*0.01D0
-      B=  2 - A + DINT( A*0.25D0 )
-      C=  365.25D0*IYRP
-      D=  30.6001D0*(IMOP + 1)
+*** Following 4 lines edited in v3.3.0 to address compiler issue with
+*** real to integer conversion.
+C      A=  IYRP*0.01D0
+C      B=  2 - A + DINT( A*0.25D0 )
+C      C=  365.25D0*IYRP
+C      D=  30.6001D0*(IMOP + 1)
+      
+      A = IDINT(DBLE(IYRP)*0.01D0)
+      B = 2 - A + IDINT(DBLE(A)*0.25D0)
+      C = IDINT(365.25D0*DBLE(IYRP))
+      D = IDINT(30.6001D0*(DBLE(IMOP + 1)))
+      
       MINS =  (B + C + D + IDAY - 679006) * (24 * 60)
      &       + (60 * IHR) + IMN
-C      
+
+
       RETURN
       END
 *****************************************************
@@ -1842,7 +1875,7 @@ C
       COMMON /FILES/ LUIN,LUOUT, I1, I2, I3, I4, I5, I6
       CHARACTER   CARD*80
       CHARACTER   record*120
-      CHARACTER   NAMEF*30,NAME*30,NAMEBB*30, NAMEIF*30
+      CHARACTER   NAMEF*80, NAME*80, NAMEBB*80, NAMEIF*80
       CHARACTER   NAME24*24
       CHARACTER   BLAB*17
       CHARACTER   NAMEG*10
@@ -1884,7 +1917,7 @@ C
      2    ' the predicted displacements.  ')
       READ(LUIN,50,err=601,iostat=ios) NAMEF
       if (ios /= 0) goto 601
-   50 FORMAT(A30)
+   50 FORMAT(A80)
       OPEN(I2,FILE=NAMEF,STATUS='UNKNOWN')
       CALL HEADER
 
@@ -1912,7 +1945,7 @@ C
      2  ' FROM ',F8.3, ' TO ',F8.3, ' (decimal years)'//
      3  'NAME OF SITE             LATITUDE          LONGITUDE    ',
      4        '        NORTH    EAST    UP ')
-   75 WRITE(LUOUT,80)
+      WRITE(LUOUT,80)                  !Remove label 75 (v3.3.0)
    80 FORMAT(' ********************************'/
      1   ' Displacements will be predicted at each point whose',/
      2   ' horizontal position is specified.',/
@@ -1939,7 +1972,7 @@ C
       ELSEIF(OPTION .EQ. '1') THEN
         CALL GETPNT(LATD,LATM,SLAT,LATDIR,LOND,LONM,SLON,
      1        LONDIR,NAME24, X,Y,Z,YLAT,YLON,EHT)
-        ELON = - YLON
+        ELON = -YLON
           call GETVLY(YLAT,ELON,VX,VY,VZ,VN,VE,VU,VOPT,210)
         if (vopt .eq. '0') then
           call PREDV( ylat, ylon, eht, date1, iopt,
@@ -1957,11 +1990,11 @@ C
      2         ' For additional displacements, please indicate how'/
      3         ' you wish to supply the horizontal coordinates.'/)
         WRITE(LUOUT,150) DN, DE,DU
-  150   FORMAT(' *************************************'/
-     1         ' Northward displacement = ',F7.3,' meters.'/
-     1         ' Eastward displacement  = ',F7.3,' meters.'/
-     1         ' Upward displacement    = ',F7.3,' meters.'/
-     1         ' ****************************************'//
+  150   FORMAT(' *****************************************'/
+     1         ' Northward displacement = ',F7.3,' meters'/
+     1         ' Eastward displacement  = ',F7.3,' meters'/
+     1         ' Upward displacement    = ',F7.3,' meters'/
+     1         ' *****************************************'//
      2         ' For additional displacements, please indicate how'/
      3         ' you wish to supply the horizontal coordinates.'/)
         WRITE(I2,160) NAME24,LATD,LATM,SLAT,LATDIR,
@@ -2015,7 +2048,7 @@ C
   300   FORMAT(' Enter name of blue-book file  ')
         READ(LUIN,310,err=603,iostat=ios) NAMEBB
         if (ios /= 0) goto 603
-  310   FORMAT(A30)
+  310   FORMAT(A80)
         OPEN(I1,FILE=NAMEBB,STATUS='OLD')
   320   READ(I1,330,END=350,err=604,iostat=ios) CARD
         if (ios /= 0) goto 604
@@ -2107,16 +2140,29 @@ C         IF(JN.EQ.'S' .OR. JW.EQ.'E')GO TO 320
   450   format(' Enter name of batch file ')
         read(luin, 451,err=606,iostat=ios) NAMEIF
         if (ios /= 0) goto 606
-  451   format(a30)
+  451   format(A80)
+ 
         open(I1,FILE=NAMEIF,STATUS='OLD')
+        LINE = 0  !Inititalize line number of input file.
   455   read(I1,'(a)',END=460,err=607,iostat=ios) record
         if (ios /= 0) goto 607
-c       write(i2, 457) record
         call interprate_latlon_record (record,XLAT,XLON,name24)
-c       write (i2,456) xlat, xlon
-c       write(i2,457) record
-c 457   format (a50)
-c 456   format(1x,' xlat = ', f15.3, 'xlon = ', f15.3)
+        LINE = LINE + 1   !Increment line number of input file.
+        
+*** If latitude magnitudes > 90 degrees or longitude magnitude > 360 degrees,
+*** write error message and terminate program (added for v3.3.0).
+        IF ((DABS(XLAT) .GT. 90).OR.(DABS(XLON) .GT. 360)) THEN
+          WRITE(*,*)'***********************************************'
+          WRITE(*,*)'Invalid latitude or longitude in input file'
+          WRITE(*,4551)'on line', LINE, ':'
+          WRITE(*,4552) XLAT, XLON, name24 
+          WRITE(*,*)'Please check your input file and try again.'
+          WRITE(*,*)'***********************************************'
+ 4551     FORMAT (1X, A, I8, A/)
+ 4552     FORMAT (1X, 2F17.10, 2X, A/)
+          STOP
+        ENDIF
+        
         YLAT = (XLAT*3600.D0)/RHOSEC
         YLON = (XLON*3600.D0)/RHOSEC
         CALL TODMSS(YLAT,LATD,LATM,SLAT,ISIGN)
@@ -2154,6 +2200,7 @@ c 456   format(1x,' xlat = ', f15.3, 'xlon = ', f15.3)
         WRITE(LUOUT,500)
   500   FORMAT(' Improper entry--select again.  ')
       ENDIF
+      
       GO TO 85
   510 CONTINUE
       CLOSE(I2, STATUS = 'KEEP')
@@ -2220,7 +2267,7 @@ c 456   format(1x,' xlat = ', f15.3, 'xlon = ', f15.3)
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /FILES/ LUIN,LUOUT, I1, I2, I3, I4, I5, I6
       CHARACTER   CARD*80
-      CHARACTER   NAMEF*30,NAME*30,NAMEBB*30,PVFILE*30
+      CHARACTER   NAMEF*80,NAME*80,NAMEBB*80,PVFILE*80
       CHARACTER   NAME24*24
       CHARACTER   BLAB*17
       CHARACTER   NAMEG*10
@@ -2230,11 +2277,12 @@ c 456   format(1x,' xlat = ', f15.3, 'xlon = ', f15.3)
       character   frame1*24
       character   record*120
 
+*** Commented out following temporary code (v3.3.0).
 *** temporary code to plot results ****************
-      character TEMPNA
-
-      TEMPNA = '        '
-      DUMMY = 0.0D0
+C       character TEMPNA*8   !Added string length to match string below.
+C
+C       TEMPNA = '        '
+C       DUMMY = 0.0D0
 *** end of temporary code *************************
 
       BLAB = 'OUTSIDE OF REGION'
@@ -2244,7 +2292,7 @@ c 456   format(1x,' xlat = ', f15.3, 'xlon = ', f15.3)
      1       ' predicted velocities.  ')
       READ(LUIN,20,err=700,iostat=ios) NAMEF
       if (ios /= 0) goto 700
-   20 FORMAT(A30)
+   20 FORMAT(A80)
       OPEN(I2,FILE=NAMEF,STATUS='UNKNOWN')
       CALL HEADER
 
@@ -2260,7 +2308,7 @@ c 456   format(1x,' xlat = ', f15.3, 'xlon = ', f15.3)
             WRITE(LUOUT,22)
    22       FORMAT(' Enter name for the file that is to contain'/
      1          ' the PV records.  ')
-            READ(LUIN,'(A30)',err=702,iostat=ios) PVFILE
+            READ(LUIN,'(A80)',err=702,iostat=ios) PVFILE
             if (ios /= 0) goto 702
             OPEN(I3,FILE = PVFILE, STATUS = 'UNKNOWN')
          ENDIF
@@ -2434,26 +2482,27 @@ c    6   '         a specified point having a specified velocity.')
      1                1X,F8.5,1X,A1, 1X,A17)
        ELSE
 
+*** Commented out following temporary code (v3.3.0).
 *** temporary code to plot results
-         ZLAT = DBLE(LATD) + DBLE(LATM)/60.D0 + SLAT/3600.D0
-         ZLON = DBLE(LOND) + DBLE(LONM)/60.D0 + SLON/3600.D0
-         ZLON = 360.D0 - ZLON
-         TOTVEL = DSQRT(VN*VN + VE*VE)
-
+C         ZLAT = DBLE(LATD) + DBLE(LATM)/60.D0 + SLAT/3600.D0
+C         ZLON = DBLE(LOND) + DBLE(LONM)/60.D0 + SLON/3600.D0
+C         ZLON = 360.D0 - ZLON
+C         TOTVEL = DSQRT(VN*VN + VE*VE)
+C
 *** code to create vectors to be plotted
-c            IF (TOTVEL .GE. 5.0D0 .AND. TOTVEL .LE. 50.D0) THEN
-c              TVE = VE/10.D0
-c              TVN = VN/10.D0
-c              WRITE(I2,129) ZLON,ZLAT,TVE,TVN,DUMMY,DUMMY,DUMMY,
-c    1                   TEMPNA
-c 129      FORMAT(F10.6, 2x, F9.6, 2X, 5(F7.2, 2x), A8)
-c            ENDIF
-
+C            IF (TOTVEL .GE. 5.0D0 .AND. TOTVEL .LE. 50.D0) THEN
+C              TVE = VE/10.D0
+C              TVN = VN/10.D0
+C              WRITE(I2,129) ZLON,ZLAT,TVE,TVN,DUMMY,DUMMY,DUMMY,
+C    1                   TEMPNA
+C 129      FORMAT(F10.6, 2x, F9.6, 2X, 5(F7.2, 2x), A8)
+C            ENDIF
+C
 *** code to create contour plots
 C            WRITE(I2,129) ZLON, ZLAT, TOTVEL
 C 129    FORMAT(F6.2, 1X, F6.2, 1X, F5.1)
- 
 *** end of temporary code
+
 
 *** beginning of original code
          WRITE(I2,130)NAMEG,I,J,LATD,LATM,SLAT,LATDIR,
@@ -2479,7 +2528,7 @@ C 129    FORMAT(F6.2, 1X, F6.2, 1X, F5.1)
   200   FORMAT(' Enter name of blue-book file.  ')
         READ(LUIN,210,err=705,iostat=ios) NAMEBB
         if (ios /= 0) goto 705
-  210   FORMAT(A30)
+  210   FORMAT(A80)
         OPEN(I1,FILE=NAMEBB,STATUS='OLD')
   220   READ(I1,230,END=250,err=706,iostat=ios) CARD
         if (ios /= 0) goto 706
@@ -2571,11 +2620,29 @@ C 129    FORMAT(F6.2, 1X, F6.2, 1X, F5.1)
   400      FORMAT(' Enter name of input file.  ')
            READ(LUIN,410,err=708,iostat=ios) NAMEBB
            if (ios /= 0) goto 708
-  410      FORMAT(A30)
+  410      FORMAT(A80)
+
            OPEN(I1,FILE=NAMEBB,STATUS='OLD')
+           LINE = 0  !Inititalize line number of input file.
   420      READ(I1,'(a)',END=450,err=709,iostat=ios) record
            call interprate_latlon_record (record,XLAT,XLON,NAME24)
            if (ios /= 0) goto 709
+           LINE = LINE + 1   !Increment line number of input file.
+        
+*** If latitude magnitudes > 90 degrees or longitude magnitude > 360 degrees,
+*** write error message and terminate program (added for v3.3.0).
+           IF ((DABS(XLAT) .GT. 90).OR.(DABS(XLON) .GT. 360)) THEN
+             WRITE(*,*)'***********************************************'
+             WRITE(*,*)'Invalid latitude or longitude in input file'
+             WRITE(*,4201)'on line', LINE, ':'
+             WRITE(*,4202) XLAT, XLON, name24 
+             WRITE(*,*)'Please check your input file and try again.'
+             WRITE(*,*)'***********************************************'
+ 4201        FORMAT (1X, A, I8, A/)
+ 4202        FORMAT (1X, 2F17.10, 2X, A/)
+             STOP
+           ENDIF
+
            YLAT = (XLAT*3600.D0)/RHOSEC
            YLON = XLON*3600.d0/RHOSEC
            CALL TODMSS(YLAT, LATD, LATM, SLAT, ISIGN)
@@ -2692,14 +2759,21 @@ C 129    FORMAT(F6.2, 1X, F6.2, 1X, F5.1)
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
       logical  Is_iopt_NAD83
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       Is_iopt_NAD83 = (IOPT == 1)
 
 *** Get reference latitude RLAT and reference longitude RLON in NAD 83
-c     IF(IOPT .EQ. 0 .OR. IOPT .EQ. 1) THEN   !Not NAD83 antmore
+c     IF(IOPT .EQ. 0 .OR. IOPT .EQ. 1) THEN   !Not NAD83 anymore
       IF(IOPT .EQ. 15) THEN
           RLAT = YLAT
-          RLON = YLON
+***     Added conditional statement to get rid of out-of-region error when
+***     YLON is negative for reference frame (v3.3.0):
+          IF(YLON .GE. 0.D0) THEN
+            RLON = YLON
+          ELSE
+            RLON = YLON + TWOPI
+          ENDIF
       ELSE
           ELON = -YLON
           CALL TOXYZ(YLAT,ELON,EHT,X,Y,Z)
@@ -2819,7 +2893,7 @@ c     write (*,*) "FROM XT08 ",RLAT*180.d0/pi,WLON*180.d0/pi,EHT08
 
       character    card*80,namebb*80,nameif*80,name24*80
       character    record*120                    
-      character    namef*30
+      character    NAMEF*80
       character    frame1*24, frame2*24
       character    jn*1,jw*1,LATDIR*1,LONDIR*1
       character    option*1, answer*1, vopt*1
@@ -2840,7 +2914,7 @@ c     write (*,*) "FROM XT08 ",RLAT*180.d0/pi,WLON*180.d0/pi,EHT08
    80 format(
      1  ' Please enter the name for the file to contain'/
      2  ' the transformed positions.  ')
-      read(luin,'(a30)',err=600,iostat=ios) namef
+      read(luin,'(A80)',err=600,iostat=ios) namef
       if (ios /= 0) goto 600
       open(i2, file = namef, status = 'unknown')
       CALL HEADER
@@ -2864,7 +2938,7 @@ c     write (*,*) "FROM XT08 ",RLAT*180.d0/pi,WLON*180.d0/pi,EHT08
          write(luout,*) ' Improper selection -- try again.  '
          go to 105
       endif
-      Is_out_NAD83    = (iopt2 == 1 .and. frame1(1:3) /= "WGS")
+      Is_out_NAD83    = (iopt2 == 1 .and. frame2(1:3) /= "WGS")   !Changed from frame1 in v3.3.0.
       Is_out_NAD83PAC = (iopt2 == 12)
       Is_out_NAD83MAR = (iopt2 == 13)
 
@@ -3070,10 +3144,10 @@ c        open (i6,file='transformed_'//namebb)
 C  write some comments in the transformed files
 
          call extract_name (namebb,iii)
-c        write (I2,1309) namebb(1:iii)
-c        write (I2,1309) trim(namebb)
- 1309    format (/'The file, transformed_',a,
-     &   ', contains the transformed input file.'/)
+
+*** Commented out due to unused label (v3.3.0).
+*1309     format (/'The file, transformed_',a,
+*     &   ', contains the transformed input file.'/)
 
          write (i2,1310) HTDP_version
  1310    format (' ***CAUTION: This file was processed using HTDP',
@@ -3093,15 +3167,16 @@ c        write (I2,1309) trim(namebb)
   310    read(i1, '(a80)', end = 390,err=604,iostat=ios) card
          if (ios /= 0) goto 604
          if (card(7:10) .eq. '*80*') then
-c          write (*,'(a80)'                              ) card
            read(card,320,err=605,iostat=ios) isn,name24(1:30),latd,
      &                           latm,slat,jn,lond, lonm, slon, jw
-c          write (*,321) latd, latm, slat, jn, lond, lonm, slon, jw
 
            if (ios /= 0) goto 605
   320      format(10x, i4, a30, i2, i2, f7.5, a1,
      &            i3, i2, f7.5, a1)
-  321      format(i2, i2, f7.5, a1,3x, i3, i2, f7.5, a1)
+
+*** Commented out due to unused label (v3.3.0).
+*  321      format(i2, i2, f7.5, a1,3x, i3, i2, f7.5, a1)
+
            ylat = (dble((latd*60 + latm)*60) + slat) / rhosec
            ylon = (dble((lond*60 + lonm)*60) + slon) / rhosec
            if (jn .eq. 'S') ylat = -ylat
@@ -3223,16 +3298,30 @@ C        open (i6,file='transformed_'//nameif)
 C  write some comments in the transformed files
 
          call extract_name (nameif,iii)
-c        write (I2,1309) nameif(1:iii)
-c        write (I2,1309) trim(nameif)
          write (i2,1310) HTDP_version
          write (i2,1311) frame2       
          WRITE (I2, 1312) MONTH2, IDAY2, IYEAR2, DATE2
-c        const = 180.d0/PI
 
+         LINE = 0  !Inititalize line number of input file.
   410    read (i1,'(a)',end=450,err=607,iostat=ios) record
          if (ios /= 0) goto 607
          call interprate_XYZ_record (record,xlat,xlon,eht,name24)
+         LINE = LINE + 1   !Increment line number of input file.
+        
+*** If latitude magnitudes > 90 degrees or longitude magnitude > 360 degrees,
+*** write error message and terminate program (added for v3.3.0).
+         IF ((DABS(xlat) .GT. 90).OR.(DABS(xlon) .GT. 360)) THEN
+           WRITE(*,*)'***********************************************'
+           WRITE(*,*)'Invalid latitude or longitude in input file'
+           WRITE(*,4101)'on line', LINE, ':'
+           WRITE(*,4102) xlat, xlon, eht, name24 
+           WRITE(*,*)'Please check your input file and try again.'
+           WRITE(*,*)'***********************************************'
+ 4101      FORMAT (1X, A, I8, A/)
+ 4102      FORMAT (1X, 2F17.10, F11.3, 2X, A)
+           STOP
+         ENDIF
+         
          ylat = (xlat*3600.d0) / rhosec
          ylon = (xlon*3600.d0) / rhosec
          elon = -ylon
@@ -3299,7 +3388,7 @@ c    1      name24,0,vxsave,vysave,vzsave,vnsave,vesave,vusave)
          write (i2,449) outlat,outlon,ehtnew,name24(1:iii)
 
 c        write (i6,449) outlat,outlon,ehtnew,trim(name24)
- 449     format (2f16.10,f10.3,4x,a)
+  449    format (2f16.10,f10.3,4x,a)
          go to 410
       
   450    close(i1, status = 'keep')
@@ -3314,7 +3403,7 @@ c        close(i6, status = 'keep')
          vesave = 0.d0
          vusave = 0.d0
          write (luout, 4001)
-4001     format (' Enter name of input file: ')
+ 4001    format (' Enter name of input file: ')
          read (luin, '(a)',err=600,iostat=ios) nameif
          if (ios /= 0) goto 600
          open (i1, file = nameif, status = 'old')
@@ -3323,12 +3412,6 @@ c        open (i6,file='transformed_'//nameif)
 C  write some comments in the transformed files
 
          call extract_name (nameif,iii)
-c        write (i2,1309) nameif(1:iii)
-c        write (i2,1309) trim(nameif)
-c        write (i6,1310) HTDP_version
-c        write (i6,1311) frame2       
-c        WRITE (i6, 1312) MONTH2, IDAY2, IYEAR2, DATE2
-c        const = 180.d0/PI
   411    read (i1,'(a)',end=451,err=607,iostat=ios) record         
          if (ios /= 0) goto 607
          call interprate_XYZ_record (record,x,y,z,name24)
@@ -3420,12 +3503,6 @@ c        open (i6,file='transformed_'//nameif)
 C  write some comments in the transformed files
 
          call extract_name (nameif,iii)
-c        write (i2,1309) nameif(1:iii)
-c        write (i2,1309) trim(nameif)
-c        write (i6,1310) HTDP_version
-c        write (i6,1311) frame2       
-c        WRITE (i6, 1312) MONTH2, IDAY2, IYEAR2, DATE2
-c        const = 180.d0/PI
   511    read (i1,'(a)',end=551,err=607,iostat=ios) record         
          if (ios /= 0) goto 607
          call interprate_XYZVxVyVz_record (record,x,y,z,Vx,Vy,Vz,name24)
@@ -3630,7 +3707,7 @@ C  Important note:
 C  The parameters in common block tranpa are computed using the IGS convention ITRF96 <> ITRF97.
 C  The parameters in common block tranpa1 are computed using the IERS convention ITRF96 = ITRF97.
 C  The latter parameters were added to HTDP in 09/2014. They will be used to transform between
-C  ITRF systems. They will not be used if the transformation involves NAD83 or WGS84 (transit).
+C  ITRF systems. They will not be used if the transformation involves NAD83 or WGS84 (original/transit).
 C  However, the NAD 83 Pacific frames use the IERS convention ITRF96 = ITRF97.
 
 
@@ -3670,6 +3747,7 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       refepc(1) = 1997.0d0
 
 *** From ITRF94 to ITRF88
+***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx(2) = 0.018d0
       ty(2) = 0.000d0
       tz(2) = -0.092d0
@@ -3682,11 +3760,12 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       drx(2) = 0.0d0                  
       dry(2) = 0.0d0              
       drz(2) = 0.0d0                   
-      scale(2) = 0.74d-8
+      scale(2) = 0.749d-8    !Previous scale = 0.74d-8 (prior to v3.3.0)
       dscale(2) = 0.0d0
       refepc(2) = 1988.0d0
 
 *** From ITRF94 to ITRF89
+***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx(3) = 0.023d0
       ty(3) = 0.036d0
       tz(3) = -0.068d0
@@ -3699,11 +3778,12 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       drx(3) = 0.0d0                  
       dry(3) = 0.0d0              
       drz(3) = 0.0d0                   
-      scale(3) = 0.43d-8
+      scale(3) = 0.439d-8    !Previous scale = 0.43d-8 (prior to v3.3.0)
       dscale(3) = 0.0d0
       refepc(3) = 1988.0d0
 
 *** From ITRF94 to ITRF90
+***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx(4) = 0.018d0
       ty(4) = 0.012d0
       tz(4) = -0.030d0
@@ -3716,11 +3796,12 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       drx(4) = 0.0d0                  
       dry(4) = 0.0d0              
       drz(4) = 0.0d0                   
-      scale(4) = 0.09d-8
+      scale(4) = 0.099d-8    !Previous scale = 0.09d-8 (prior to v3.3.0)
       dscale(4) = 0.0d0
       refepc(4) = 1988.0d0
 
 *** From ITRF94 to ITRF91
+***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx(5) = 0.020d0
       ty(5) = 0.016d0
       tz(5) = -0.014d0
@@ -3733,11 +3814,12 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       drx(5) = 0.0d0                  
       dry(5) = 0.0d0              
       drz(5) = 0.0d0                   
-      scale(5) = 0.06d-8
+      scale(5) = 0.069d-8    !Previous scale = 0.06d-8 (prior to v3.3.0)
       dscale(5) = 0.0d0
       refepc(5) = 1988.0d0
 
 *** From ITRF94 to ITRF92
+***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx(6) = 0.008d0
       ty(6) = 0.002d0
       tz(6) = -0.008d0
@@ -3750,11 +3832,20 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       drx(6) = 0.0d0                  
       dry(6) = 0.0d0              
       drz(6) = 0.0d0                   
-      scale(6) = -0.08d-8
+      scale(6) = -0.071d-8   !Previous scale = -0.08d-8 (prior to v3.3.0)
       dscale(6) = 0.0d0
       refepc(6) = 1988.0d0
 
 *** From ITRF94 to ITRF93
+***   Update scale in v3.3.0 to match current value published by IERS 
+***   (https://itrf.ign.fr/trans_para.php). Supersedes scale in file 
+***   "ITRF94.TX" at ftp://itrf-ftp.ign.fr/pub/itrf/itrf94/.  
+***   Previous link under “Other transformation parameters” at 
+***   https://itrf.ign.fr/ITRF_solutions/94/ITRF94.php?page=2 currently 
+***   does not work (as of 1/15/2021).
+***   This update also affects the scale for transformations from ITRF94 
+***   to all earlier ITRFs.
+***   Note that this transformation is not published in IERS TN20 (1996).
       tx(7) = 0.006d0
       ty(7) = -0.005d0
       tz(7) = -0.015d0
@@ -3767,7 +3858,7 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       drx(7) = 0.00011d0 / rhosec
       dry(7) = 0.00019d0 / rhosec
       drz(7) = -0.00005d0 / rhosec
-      scale(7) = 0.04d-8
+      scale(7) = 0.049d-8    !Previous scale = 0.040d-8 (prior to v3.3.0)
       dscale(7) = 0.0d0
       refepc(7) = 1988.0d0
 
@@ -3968,6 +4059,7 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       refepc1(1) = 1997.0d0
 
 *** From ITRF94 to ITRF88
+***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx1(2) = 0.018d0
       ty1(2) = 0.000d0
       tz1(2) = -0.092d0
@@ -3980,11 +4072,12 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       drx1(2) = 0.0d0                  
       dry1(2) = 0.0d0              
       drz1(2) = 0.0d0                   
-      scale1(2) = 0.74d-8
+      scale1(2) = 0.749d-8   !Previous scale = 0.74d-8 (prior to v3.3.0)
       dscale1(2) = 0.0d0
       refepc1(2) = 1988.0d0
 
 *** From ITRF94 to ITRF89
+***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx1(3) = 0.023d0
       ty1(3) = 0.036d0
       tz1(3) = -0.068d0
@@ -3997,11 +4090,12 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       drx1(3) = 0.0d0                  
       dry1(3) = 0.0d0              
       drz1(3) = 0.0d0                   
-      scale1(3) = 0.43d-8
+      scale1(3) = 0.439d-8   !Previous scale = 0.43d-8 (prior to v3.3.0)
       dscale1(3) = 0.0d0
       refepc1(3) = 1988.0d0
 
 *** From ITRF94 to ITRF90
+***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx1(4) = 0.018d0
       ty1(4) = 0.012d0
       tz1(4) = -0.030d0
@@ -4014,11 +4108,12 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       drx1(4) = 0.0d0                  
       dry1(4) = 0.0d0              
       drz1(4) = 0.0d0                   
-      scale1(4) = 0.09d-8
+      scale1(4) = 0.099d-8   !Previous scale = 0.09d-8 (prior to v3.3.0)
       dscale1(4) = 0.0d0
       refepc1(4) = 1988.0d0
 
 *** From ITRF94 to ITRF91
+***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx1(5) = 0.020d0
       ty1(5) = 0.016d0
       tz1(5) = -0.014d0
@@ -4031,11 +4126,12 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       drx1(5) = 0.0d0                  
       dry1(5) = 0.0d0              
       drz1(5) = 0.0d0                   
-      scale1(5) = 0.06d-8
+      scale1(5) = 0.069d-8   !Previous scale = 0.06d-8 (prior to v3.3.0)
       dscale1(5) = 0.0d0
       refepc1(5) = 1988.0d0
 
 *** From ITRF94 to ITRF92
+***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx1(6) = 0.008d0
       ty1(6) = 0.002d0
       tz1(6) = -0.008d0
@@ -4048,11 +4144,20 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       drx1(6) = 0.0d0                  
       dry1(6) = 0.0d0              
       drz1(6) = 0.0d0                   
-      scale1(6) = -0.08d-8
+      scale1(6) = -0.071d-8  !Previous scale = -0.08d-8 (prior to v3.3.0)
       dscale1(6) = 0.0d0
       refepc1(6) = 1988.0d0
 
 *** From ITRF94 to ITRF93
+***   Update scale in v3.3.0 to match current value published by IERS 
+***   (https://itrf.ign.fr/trans_para.php). Supersedes scale in file 
+***   "ITRF94.TX" at ftp://itrf-ftp.ign.fr/pub/itrf/itrf94/.  
+***   Previous link under “Other transformation parameters” at 
+***   https://itrf.ign.fr/ITRF_solutions/94/ITRF94.php?page=2 currently 
+***   does not work (as of 1/15/2021).
+***   This update also affects the scale for transformations from ITRF94 
+***   to all earlier ITRFs.
+***   Note that this transformation is not published in IERS TN20 (1996).
       tx1(7)     =  0.006d0
       ty1(7)     = -0.005d0
       tz1(7)     = -0.015d0
@@ -4065,7 +4170,7 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       drx1(7)    =  0.00011d0 / rhosec
       dry1(7)    =  0.00019d0 / rhosec
       drz1(7)    = -0.00005d0 / rhosec
-      scale1(7)  = 0.04d-8
+      scale1(7)  = 0.049d-8  !Previous scale = 0.04d-8 (prior to v3.3.0)
       dscale1(7) = 0.0d0
       refepc1(7) = 1988.0d0
 
@@ -4489,7 +4594,7 @@ c     write (*,*) "TO TIIT94_IERS ",x2,y2,z2
       iframe(4) = 10
       nframe(4) = 'WGS_72                  '
       iframe(5) = 1
-      nframe(5) = 'WGS_84(transit)         '
+      nframe(5) = 'WGS_84(original)        '
 c     iframe(6) = 6 (This was incorrect in all versions of HTDP)
       iframe(6) = 5
       nframe(6) = 'WGS_84(G730)            '
@@ -4532,14 +4637,14 @@ c     nframe(10)= 'PNEOS_90 or NEOS_90     '
       iframe(24)= 16
       nframe(24)= 'ITRF2014 or IGS14/IGb14 '
 
-      write(luout, 100)
+      write(luout, 100)  
   100 format(
      1'  1...NAD_83(2011/CORS96/2007)  (North American plate fixed) '/
      1'  2...NAD_83(PA11/PACP00)       (Pacific plate fixed) '/
      1'  3...NAD_83(MA11/MARP00)       (Mariana plate fixed) '/
      1'                                                   '/
 c    1'  4...WGS_72                              '/
-     1'  5...WGS_84(transit) (NAD_83(2011) used)  15...ITRF91 '/
+     1'  5...WGS_84(original) (NAD_83(2011) used) 15...ITRF91 '/
      1'  6...WGS_84(G730) (ITRF91 used)           16...ITRF92 '/
      1'  7...WGS_84(G873) (ITRF94 used)           17...ITRF93 '/
      1'  8...WGS_84(G1150) (ITRF2000 used)        18...ITRF94 '/
@@ -4561,6 +4666,7 @@ c    1' 14...ITRF90                              '/ )
         mframe = '                '
         kopt = iopt
       endif
+
       return
 
  50   write (*,*) 'Failed to read option in MENU1:ios=',ios
@@ -4579,9 +4685,9 @@ c    1' 14...ITRF90                              '/ )
       IMPLICIT INTEGER*4 (I-N)
       parameter (numref = 16)
       parameter (nbbdim = 10000)
-      CHARACTER    OLDBB*30,NEWBB*30, NAMEIF*30
+      CHARACTER    OLDBB*80, NEWBB*80, NAMEIF*80
       CHARACTER    NAME24*24
-      CHARACTER    OPT*1,ANSWER*1,BBTYPE*1,VOPT*1
+      CHARACTER    OPT*1, ANSWER*1, BBTYPE*1, VOPT*1
       CHARACTER    LATDIR*1, LONDIR*1, LATDR*1, LONDR*1
       character    frame1*24, frame2*24
       character    HTDP_version*8
@@ -4589,7 +4695,6 @@ c    1' 14...ITRF90                              '/ )
       LOGICAL      Is_iopt_NAD83
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
-      COMMON /CAUTION/ MONTH2,IDAY2,IYEAR2,DATE2,frame1
 
       WRITE(LUOUT,20)
    20 FORMAT(' ********************************************'/
@@ -4656,7 +4761,7 @@ c    1' 14...ITRF90                              '/ )
          ENDIF
          WRITE(LUOUT,1030)
  1030    FORMAT(' ENTER file to save updated positions.  ')
-         READ(LUIN,'(A30)',err=502,iostat=ios) NEWBB
+         READ(LUIN,'(A80)',err=502,iostat=ios) NEWBB
          if (ios /= 0) goto 502
          OPEN(I2,FILE=NEWBB,STATUS='UNKNOWN')
          CALL HEADER
@@ -4729,6 +4834,7 @@ c    1' 14...ITRF90                              '/ )
      1             f8.2, ' mm/yr',f8.3, ' m'/
      1   1X, 'Z         ',2(6X,F13.3),
      1             f8.2, ' mm/yr',F8.3,' m'/)
+
  1075    WRITE(LUOUT,1080)
  1080    FORMAT(' Update more positions? (y/n)  ')
          READ(LUIN,'(A1)',err=500,iostat=ios) ANSWER
@@ -4758,7 +4864,7 @@ c    1' 14...ITRF90                              '/ )
   100     FORMAT(' Enter name of the blue book file to be updated.'/)
           READ(LUIN,110,err=502,iostat=ios) OLDBB
           if (ios /= 0) goto 502
-  110     FORMAT(A30)
+  110     FORMAT(A80)
           WRITE(LUOUT,120)
   120     FORMAT(' Enter name for the new blue book file that is to '/
      1       'contain the updated information.'/)
@@ -4815,9 +4921,9 @@ c    *     'updated to ',I2,'-',I2.2,'-',I4, ' = (',F8.3,') ***')
 c        ENDIF
 
          IF(BBTYPE .EQ. '1') THEN
-           CALL UPBB4(MIN1,MIN2,OPT,IOPT)
+           CALL UPBB4(MIN1,MIN2,OPT)
          ELSEIF(BBTYPE .EQ. '2') THEN
-           CALL UPBB5(MIN1,MIN2,OPT,IOPT)
+           CALL UPBB5(MIN1,MIN2,OPT)
          ENDIF
          CLOSE(I1, STATUS = 'KEEP')
          CLOSE(I2, STATUS = 'KEEP')
@@ -4834,11 +4940,11 @@ c        ENDIF
            ELSEIF(ANSWER .eq. 'Y' .or. ANSWER .eq. 'y')THEN
              WRITE(LUOUT,620)
   620        FORMAT(' Enter name of old G-FILE to be updated.  ')
-             READ(LUIN,'(A30)',err=502,iostat=ios) OLDBB
+             READ(LUIN,'(A80)',err=502,iostat=ios) OLDBB
              if (ios /= 0) goto 502
              WRITE(LUOUT,630)
   630        FORMAT(' Enter name for the new updated G-FILE.  ')
-             READ(LUIN,'(A30)',err=502,iostat=ios) NEWBB
+             READ(LUIN,'(A80)',err=502,iostat=ios) NEWBB
              if (ios /= 0) goto 502
              OPEN(I1,FILE=OLDBB,STATUS='OLD')
              OPEN(I2,FILE=NEWBB,STATUS='UNKNOWN')
@@ -4897,7 +5003,7 @@ c        ENDIF
             RETURN
          endif
          write(luout, 1030)
-         read(luin, '(a30)',err=502,iostat=ios)NEWBB
+         read(luin, '(A80)',err=502,iostat=ios)NEWBB
          if (ios /= 0) goto 502
          open(I2, FILE=NEWBB, STATUS='UNKNOWN')
          CALL HEADER
@@ -5433,12 +5539,8 @@ C    1          YLATT,YLONT,EHTNEW,DN,DE,DU,IOPT)
             ENDIF
 
 *** Unrecognized blue book record
+*** Associated ELSE statement with label 500 deleted in v3.3.0.
 
-      ELSE
-c           WRITE(LUOUT,500) TYPE
-  500       FORMAT(' This software does not recognize an ',A4,/
-     1       ' record.  The record will be copied to the new'/
-     2       ' file without change.')
       ENDIF
       WRITE(I2,175) CARD
       GO TO 170
@@ -5617,7 +5719,7 @@ C 200      FORMAT(BZ, 9X,I5,T40,A6,T51,I5,T64,I3,I2,F3.1)
              ENDIF
              ANGLE = DABS(DA)
              CALL TODMSS(ANGLE,IDEG,MIN,SEC,ISIGN)
-             ISEC1 = SEC
+             ISEC1 = IDINT(SEC)           !Convert SEC to integer (v3.3.0)
              ISEC2 = IDNINT((SEC - DBLE(ISEC1)) * 100.D0)
              WRITE(CARD(152:162),211)SIGN,IDEG,MIN,ISEC1,ISEC2
   211        FORMAT(A1,I3.3,I2.2,I2.2,'.',I2.2)
@@ -5679,7 +5781,7 @@ C 220       FORMAT(BZ, 9X,I5,I2,T40,A6,T51,I5)
            ENDIF
            ANGLE = DABS(DA - DA0)
            CALL TODMSS(ANGLE,IDEG,MIN,SEC,ISIGN)
-           ISEC1 = SEC
+           ISEC1 = IDINT(SEC)             !Convert SEC to integer (v3.3.0)
            ISEC2 = IDNINT((SEC-DBLE(ISEC1))*100.D0)
            WRITE(CARD(132:142),251) SIGN,IDEG,MIN,ISEC1,ISEC2
   251      FORMAT(A1,I3.3,I2.2,I2.2,'.',I2.2)
@@ -5762,12 +5864,6 @@ C    1          YLATT,YLONT,EHTNEW,DN,DE,DU,IOPT)
       write (*,*) "PLEASE CHECK YOUR INPUT FILE AND TRY AGAIN"
       stop
 
-  701 write (*,'(/)') 
-      write (*,*) "Failed to read card *12* in UPBB4:ios=",ios
-      write (*,*) "ABNORMAL TERMINATION"
-      write (*,*) "PLEASE CHECK YOUR INPUT FILE AND TRY AGAIN"
-      stop
-
   702 write (*,'(/)') 
       write (*,*) "Failed to read *50,51,52* in UPBB4:ios=",ios
       write (*,*) "ABNORMAL TERMINATION"
@@ -5794,12 +5890,6 @@ C    1          YLATT,YLONT,EHTNEW,DN,DE,DU,IOPT)
 
   706 write (*,'(/)') 
       write (*,*) "Failed to read *53,54* in UPBB4:ios=",ios
-      write (*,*) "ABNORMAL TERMINATION"
-      write (*,*) "PLEASE CHECK YOUR INPUT FILE AND TRY AGAIN"
-      stop
-
-  707 write (*,'(/)') 
-      write (*,*) "Failed to read *30,32* in UPBB4:ios=",ios
       write (*,*) "ABNORMAL TERMINATION"
       write (*,*) "PLEASE CHECK YOUR INPUT FILE AND TRY AGAIN"
       stop
@@ -6188,12 +6278,6 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
       write (*,*) "PLEASE CHECK YOUR INPUT FILE AND TRY AGAIN"
       stop
 
-  302 write (*,'(/)') 
-      write (*,*) "Failed to read C card in UPGFIG:ios=",ios
-      write (*,*) "ABNORMAL TERMINATION"
-      write (*,*) "PLEASE CHECK YOUR INPUT FILE AND TRY AGAIN"
-      stop
-
   303 write (*,'(/)') 
       write (*,*) "Failed to read F card in UPGFIG:ios=",ios
       write (*,*) "ABNORMAL TERMINATION"
@@ -6379,8 +6463,8 @@ C coordinates as if they were NAD 83(2011)coordinates.
       IRFCON(37) = 16
       
 
-*** From HTDP identifier to blue book identifier
-*** NAD 83 (set equal to WGS 84 (transit))
+*** From HTDP identifier to blue book identifier.
+*** NAD 83 (2011/2007/CORS96/...) referenced to North America plate.
 c     JRFCON(1) = 2
       JRFCON(1) = 34
 
@@ -6418,17 +6502,11 @@ c     JRFCON(1) = 2
 c     JRFCON(12) = 0
 c     JRFCON(12) = 2
       JRFCON(12) = 35
-C  Michael Dennis requested that HTDP identify
-C  NAD 83 (PA11) coordinates as WGS 84(transit)
-C  coordinates in the Bluebook context
 
 *** NAD 83 (MARP00) or NAD 83 (MA11)
 c     JRFCON(13) = 0
 c     JRFCON(13) = 2 
       JRFCON(13) = 36
-C  Michael Dennis requested that HTDP identify
-C  NAD 83 (MA11) coordinates as WGS 84(transit)
-C  coordinates in the Bluebook context
 
 *** ITRF2005 or IGS05
       JRFCON(14) = 26
@@ -6675,8 +6753,88 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
      2    ' with north being positive. For example,    35,17,28.3  '/
      2    ' For a point in the southern hemisphere, enter a minus sign'/
      3    ' before each value. For example, -35,-17,-28.3')
+     
         READ(LUIN,*,err=202,iostat=ios) LATD, LATM, SLAT
         if (ios /= 0) goto 202
+
+*** START insertion of new code and comments for v3.3.0 to handle 
+*** incorrect input latitude and longitude.
+***
+*** Test whether latitude magnitude is > 90 degrees. If it is, prompt 
+*** for re-entry.
+        TEST = DBLE(ABS(LATD)) + DBLE(ABS(LATM))/60.D0 
+     &         + DABS(SLAT)/3600.D0
+        DO WHILE (DABS(TEST) .GT. 90.D0)
+          WRITE(*,*)'  Latitude magnitude (degrees) =', TEST
+          WRITE(*,*)
+     &      '  Magnitude cannot exceed 90. Please re-enter all values.'
+          READ(LUIN,*,err=202,iostat=ios) LATD, LATM, SLAT
+          if (ios /= 0) goto 202
+          TEST = DBLE(ABS(LATD)) + DBLE(ABS(LATM))/60.D0 
+     &           + DABS(SLAT)/3600.D0
+        END DO
+
+*** Non-zero latitude minutes and seconds must be the same sign, and
+*** if latitude degrees is non-zero, minutes and seconds must be the 
+*** same sign as latitude degrees. Otherwise prompt for re-entry.
+        IF (LATD .EQ. 0) THEN
+          IF (DBLE(LATM)*SLAT .LT. 0.D0) THEN
+            WRITE(*,*)'  Minutes and seconds must be the same sign.',
+     &        ' Please re-enter minutes and seconds.'
+            READ(LUIN,*,err=202,iostat=ios) LATM, SLAT
+            if (ios /= 0) goto 202
+          ENDIF
+        ENDIF
+        IF (LATD .GT. 0) THEN
+          IF ((LATM .LT. 0).OR.(SLAT .LT. 0.D0))
+     &       WRITE(*,*)'  Latitude degrees are positive.'
+          DO WHILE (LATM .LT. 0)
+              WRITE(*,*)
+     &     '  Minutes must also be positive. Please re-enter minutes.'
+            READ(LUIN,*,err=202,iostat=ios) LATM
+            if (ios /= 0) goto 202
+          END DO
+          DO WHILE (SLAT .LT. 0.D0)
+            WRITE(*,*)
+     &     '  Seconds must also be positive. Please re-enter seconds.'
+            READ(LUIN,*,err=202,iostat=ios) SLAT
+            if (ios /= 0) goto 202
+          END DO
+        ENDIF
+
+        IF (LATD .LT. 0) THEN
+          IF ((LATM .GT. 0).OR.(SLAT .GT. 0.D0))
+     &       WRITE(*,*)'  Latitude degrees are negative.'
+          DO WHILE (LATM .GT. 0)
+            WRITE(*,*)
+     &     '  Minutes must also be negative. Please re-enter minutes.'
+            READ(LUIN,*,err=202,iostat=ios) LATM
+            if (ios /= 0) goto 202
+          END DO
+          DO WHILE (SLAT .GT. 0.D0)
+            WRITE(*,*)
+     &     '  Seconds must also be negative. Please re-enter seconds.'
+            READ(LUIN,*,err=202,iostat=ios) SLAT
+            if (ios /= 0) goto 202
+          END DO
+        ENDIF
+
+*** Test whether latitude minute or second magnitudes are >= 60. 
+*** If either is, prompt for re-entry.
+        DO WHILE (ABS(LATM) .GE. 60)
+          WRITE(*,*)'  Minutes magnitude must be < 60.',
+     &              ' Please re-enter latitude minutes.'
+          READ(LUIN,*,err=202,iostat=ios) LATM
+          if (ios /= 0) goto 202
+        END DO
+
+        DO WHILE (DABS(SLAT) .GE. 60.D0)
+          WRITE(*,*)'  Seconds magnitude must be < 60.',
+     &              ' Please re-enter latitude seconds.'
+          READ(LUIN,*,err=202,iostat=ios) SLAT
+          if (ios /= 0) goto 202
+        END DO
+        
         WRITE(LUOUT,120)
   120   FORMAT(
      1    ' Enter longitude degrees-minutes-seconds in free format'/,
@@ -6684,30 +6842,112 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
      3    ' eastward, enter a minus sign before each value.')
         READ(LUIN,*,err=203,iostat=ios) LOND, LONM, SLON
           if (ios /= 0) goto 203
-          WRITE(LUOUT, 125)
-  125     FORMAT(
-     1    ' Enter ellipsoid height in meters. (Note that'/,
-     1    ' predicted motions are independent of this height.)  ')
-          READ(LUIN,*,err=204,iostat=ios) EHT
-          if (ios /= 0) goto 204
-          XLAT =  (DBLE((LATD*60 + LATM)*60) + SLAT)/RHOSEC
-          LATDIR = 'N'
-          IF (XLAT .lt. 0.0D0) then
-            LATD = - LATD
-            LATM = - LATM
-            SLAT = - SLAT
-            LATDIR = 'S'
+          
+*** Test whether longitude magnitude is > 360 degrees. If it is, prompt 
+*** for re-entry.
+        TEST = DBLE(ABS(LOND)) + DBLE(ABS(LONM))/60.D0 
+     &         + DABS(SLON)/3600.D0
+        DO WHILE (DABS(TEST) .GT. 360.D0)
+          WRITE(*,*)'  Longitude magnitude (degrees) =', TEST
+          WRITE(*,*)
+     &      '  Magnitude cannot exceed 360. Please re-enter all values.'
+          READ(LUIN,*,err=203,iostat=ios) LOND, LONM, SLON
+          if (ios /= 0) goto 203
+          TEST = DBLE(ABS(LOND)) + DBLE(ABS(LONM))/60.D0 
+     &           + DABS(SLON)/3600.D0
+        END DO
+
+*** Non-zero longitude minutes and seconds must be the same sign, and
+*** if longitude degrees is non-zero, minutes and seconds must be the 
+*** same sign as longitude degrees. Otherwise prompt for re-entry.
+        IF (LOND .EQ. 0) THEN
+          IF (DBLE(LONM)*SLON .LT. 0.D0) THEN
+            WRITE(*,*)'  Minutes and seconds must be the same sign.',
+     &        ' Please re-enter minutes and seconds.'
+            READ(LUIN,*,err=203,iostat=ios) LONM, SLON
+            if (ios /= 0) goto 203
           ENDIF
-          XLON = (DBLE((LOND*60 + LONM)*60) + SLON)/RHOSEC
-          ELON = -XLON
-          CALL TOXYZ(XLAT,ELON,EHT,X,Y,Z)
-          LONDIR = 'W'
-          IF (XLON .lt. 0.0D0) then
-            LOND   = -LOND
-            LONM   = -LONM
-            SLON   = -SLON
-            LONDIR = 'E'
-          ENDIF
+        ENDIF
+
+        IF (LOND .GT. 0) THEN
+          IF ((LONM .LT. 0).OR.(SLON .LT. 0.D0))
+     &      WRITE(*,*)'  Longitude degrees are negative.'
+          DO WHILE (LONM .LT. 0)
+            WRITE(*,*)
+     &     '  Minutes must also be positive. Please re-enter minutes.'
+            READ(LUIN,*,err=203,iostat=ios) LONM
+            if (ios /= 0) goto 203
+          END DO
+          DO WHILE (SLON .LT. 0.D0)
+            WRITE(*,*)
+     &     '  Seconds must also be positive. Please re-enter seconds.'
+            READ(LUIN,*,err=203,iostat=ios) SLON
+            if (ios /= 0) goto 203
+          END DO
+        ENDIF
+
+        IF (LOND .LT. 0) THEN
+          IF ((LONM .GT. 0).OR.(SLON .GT. 0.D0))
+     &       WRITE(*,*)'  Longitude degrees are negative.'
+          DO WHILE (LONM .GT. 0)
+            WRITE(*,*)
+     &     '  Minutes must also be negative. Please re-enter minutes.'
+            READ(LUIN,*,err=203,iostat=ios) LONM
+            if (ios /= 0) goto 203
+          END DO
+          DO WHILE (SLON .GT. 0.D0)
+            WRITE(*,*)
+     &     '  Seconds must also be negative. Please re-enter seconds.'
+            READ(LUIN,*,err=203,iostat=ios) SLON
+            if (ios /= 0) goto 203
+          END DO
+        ENDIF
+          
+*** Test whether longitude minute or second magnitudes are >= 60. 
+*** If either is, prompt for re-entry.
+        DO WHILE (ABS(LONM) .GE. 60)
+          WRITE(*,*)'  Minutes magnitude must be < 60.',
+     &              ' Please re-enter longitude minutes.'
+          READ(LUIN,*,err=203,iostat=ios) LONM
+          if (ios /= 0) goto 203
+        END DO
+
+        DO WHILE (DABS(SLON) .GE. 60.D0)
+          WRITE(*,*)'  Seconds magnitude must be < 60.',
+     &              ' Please re-enter longitude seconds.'
+          READ(LUIN,*,err=203,iostat=ios) SLON
+          if (ios /= 0) goto 203
+        END DO
+
+*** END insertion of new code and comments for v3.3.0 to handle 
+*** incorrect input latitude and longitude.
+
+        WRITE(LUOUT, 125)
+  125   FORMAT(
+     1  ' Enter ellipsoid height in meters. (Note that'/,
+     1  ' predicted motions are independent of this height.)  ')
+        READ(LUIN,*,err=204,iostat=ios) EHT
+        if (ios /= 0) goto 204
+          
+        XLAT =  (DBLE((LATD*60 + LATM)*60) + SLAT)/RHOSEC
+        LATDIR = 'N'
+        IF (XLAT .lt. 0.0D0) then
+          LATD = - LATD
+          LATM = - LATM
+          SLAT = - SLAT
+          LATDIR = 'S'
+        ENDIF
+          
+        XLON = (DBLE((LOND*60 + LONM)*60) + SLON)/RHOSEC
+        ELON = -XLON
+        CALL TOXYZ(XLAT,ELON,EHT,X,Y,Z)
+        LONDIR = 'W'
+        IF (XLON .lt. 0.0D0) then
+          LOND   = -LOND
+          LONM   = -LONM
+          SLON   = -SLON
+          LONDIR = 'E'
+        ENDIF
 
       ELSEIF(COPT .EQ. '2') THEN
           WRITE(LUOUT,130)
@@ -7027,9 +7267,9 @@ c     write (*,*) "FROM NEWCOR ",YLAT3*180.d0/pi,YLON3*180.d0/pi,HTNEW
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
       logical  Is_iopt_NAD83
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
 ** Get reference latitude (RLAT) and reference longitude (RLON)
-
 C  The following 2 lines were added on 07/22/2015 after Rich found this bug
          elon = -ylon
          call TOXYZ(ylat, elon, eht, x, y, z)
@@ -7037,7 +7277,13 @@ C  The following 2 lines were added on 07/22/2015 after Rich found this bug
 c        IF(IOPT .EQ. 0 .OR. IOPT .EQ. 1) THEN   !Velocity grids are No longer in NAD83
          IF(IOPT .EQ. 15) THEN                   !They are in ITRF2008
             RLAT = YLAT
-            RLON = YLON
+***     Added conditional statement to get rid of out-of-region error when
+***     YLON is negative for reference frame (v3.3.0):
+            IF(YLON .GE. 0.D0) THEN
+              RLON = YLON
+            ELSE
+              RLON = YLON + TWOPI
+            ENDIF
          ELSE
 c            elon = -ylon                         !Was a bug, commented out on 07222015
 c            call TOXYZ(ylat, elon, eht, x, y, z) !Was a bug, commented out on 07222015
@@ -7085,7 +7331,7 @@ c        write (*,*) "From PREDV ",VN, VE, VU
       implicit integer*4 (i-n)
       parameter (numref = 16)
       character    nameif*80,name24*80
-      character    namef*30
+      character    NAMEF*80
       character    frame1*24, frame2*24
       character    option*1
       character    vopt*1, LATDIR*1,LONDIR*1
@@ -7098,7 +7344,7 @@ c        write (*,*) "From PREDV ",VN, VE, VU
   100 format(
      1  ' Please enter the name of the file to contain '/
      1  ' the transformed velocities. ')
-      read( luin, '(a30)',err=600,iostat=ios) namef
+      read( luin, '(A80)',err=600,iostat=ios) namef
       if (ios /= 0) goto 600
       
       open( i2, file = namef, status = 'unknown')
@@ -7176,11 +7422,27 @@ c        write (*,*) "From PREDV ",VN, VE, VU
          if (ios /= 0) goto 602
 
          open (i1, file = nameif, status = 'old')
+         LINE = 0   !Inititalize line number of input file.
   210    read(i1,'(a)',end = 220,err=603,iostat=ios) record          
-c 210    read(i1, *, end = 220,err=603,iostat=ios) xlat, xlon,vn,ve,vu, name24
-         call interprate_velocity_record (record,xlat,xlon,vn,ve,
-     &                                    vu,name24)
+         call interprate_velocity_record (record,xlat,xlon,vn,ve,vu,
+     &                                    name24)
          if (ios /= 0) goto 603
+         LINE = LINE + 1   !Increment line number of input file.
+        
+*** If latitude magnitudes > 90 degrees or longitude magnitude > 360 degrees,
+*** write error message and terminate program (added for v3.3.0).
+         IF ((DABS(xlat) .GT. 90).OR.(DABS(xlon) .GT. 360)) THEN
+           WRITE(*,*)'***********************************************'
+           WRITE(*,*)'Invalid latitude or longitude in input file'
+           WRITE(*,2101)'on line', LINE, ':'
+           WRITE(*,2102) xlat, xlon, vn, ve, vu, name24 
+           WRITE(*,*)'Please check your input file and try again.'
+           WRITE(*,*)'***********************************************'
+ 2101      FORMAT (1X, A, I8, A/)
+ 2102      FORMAT (1X, 2F17.10, 3F8.2, 2X, A)
+           STOP
+         ENDIF
+
          ylat = (xlat*3600.d0) / rhosec
          ylon = (xlon*3600.d0) / rhosec
          elon = -ylon
@@ -7499,10 +7761,8 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
              TEST = .TRUE.
              RETURN
           ENDIF
-**** add small increment to circumvent round-off error
-c         DATE = DATE + 0.0004D0
-****
-          IYEAR = DATE
+
+          IYEAR = IDINT(DATE)   !Convert DATE to integer (v3.3.0)
           CALL IYMDMJ(IYEAR, 1, 1, MJD0)
           IYEAR1 = IYEAR + 1
           CALL IYMDMJ(IYEAR1, 1, 1, MJD1)
@@ -7513,7 +7773,7 @@ c         DATE = DATE + 0.0004D0
           ITOTAL = 31
           IF (REMDAY .LT. ITOTAL) then
               MONTH = 1
-              IDAY = REMDAY - IBEGIN + 1
+              IDAY = IDINT(REMDAY) - IBEGIN + 1   !Convert REMDAY to integer (v3.3.0)
               CALL IYMDMJ(IYEAR,MONTH,IDAY,MJD)
               MINS = MJD * 24 * 60
               TEST = .FALSE.
@@ -7525,7 +7785,7 @@ c         DATE = DATE + 0.0004D0
              ITOTAL = ITOTAL + M(I)
              IF (REMDAY .LT. ITOTAL) then
                   MONTH = I
-                  IDAY = REMDAY - IBEGIN + 1
+                  IDAY = IDINT(REMDAY) - IBEGIN + 1   !Convert REMDAY to integer (v3.3.0)
                   TEST = .FALSE.
                   CALL IYMDMJ(IYEAR,MONTH,IDAY,MJD)
                   MINS = MJD * 24 * 60
@@ -7636,13 +7896,30 @@ C
       END IF
 C
 C........  1.0  CALCULATION
-C
-      A=  IYRP*0.01D0
-      B=  2 - A + DINT( A*0.25D0 )
-      C=  365.25D0*IYRP
-      D=  30.6001D0*(IMOP + 1)
-      MJD =  (B + C + D + IDAY - 679006) 
+C     
+*** Following 4 lines edited in v3.3.0 to address compiler issue with
+*** real to integer conversion.
+C      A=  IYRP*0.01D0
+C      B=  2 - A + DINT( A*0.25D0 )
+C      C=  365.25D0*IYRP
+C      D=  30.6001D0*(IMOP + 1)
+C      MJD =  (B + C + D + IDAY - 679006) 
 C      
+C      WRITE(*,*)'Old values:'
+C      WRITE(*,*)'A, B, C, D =', A, B, C, D
+C      WRITE(*,*)'MJD =', MJD
+      
+      A = IDINT(DBLE(IYRP)*0.01D0)
+      B = 2 - A + IDINT(DBLE(A)*0.25D0)
+      C = IDINT(365.25D0*DBLE(IYRP))
+      D = IDINT(30.6001D0*(DBLE(IMOP + 1)))
+      MJD = B + C + D + IDAY - 679006
+
+C      WRITE(*,*)'New values:'
+C      WRITE(*,*)'A, B, C, D =', A, B, C, D
+C      WRITE(*,*)'MJD =', MJD
+C      WRITE(*,*)
+ 
       RETURN
       END
 *****************************************************
@@ -8511,7 +8788,7 @@ C  Done
 
          return 
          end
-C-----------------------------------------------------------------------------------
+C-----------------------------------------------------------------------
 C  On 5/10/2020 removed all code and comments entered on 7/22/2015 that limited use
 C  of HTDP to US and its territories. That functionality was disabled on 5/11/2017.
 C  The removed code still exists in HTDP v3.2.8 and 3.2.7, commented out to disable.

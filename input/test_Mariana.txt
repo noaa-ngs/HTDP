@@ -1,3 +1,2 @@
 13.4,215.3,0,Guam
 15.2,214.25,0,Saipan
-0,0,0,Unmodeled location (near Africa)

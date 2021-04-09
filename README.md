@@ -1,6 +1,8 @@
 # HTDP
 Horizontal Time-Dependent Positioning (HTDP) is a utility that allows users to transform positional coordinates across time and between spatial reference frames.
 
+HTDP (Horizontal Time-Dependent Positioning) enables users to estimate horizontal displacements and/or horizontal velocities related to crustal motion in the United States and its territories.  The utility also enables users to update positional coordinates and/or geodetic observations to a user-specified date.  HTDP supports these activities for coordinates in the North American Datum of 1983 (NAD 83) as well as in all official realizations of the International Terrestrial Reference System (ITRS) and all official realizations of the World Geodetic System of 1984 (WGS 84).  Accordingly, HTDP may be used to transform positional coordinates between any pair of these reference frames in a manner that rigorously addresses differences in the definitions of their respective velocity fields.  HTDP may also be used to transform velocities between any pair of these reference frames.
+
 For additional information, contact:
 NOAA National Geodetic Survey,
 ngs.infocenter@noaa.gov

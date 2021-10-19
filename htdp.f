@@ -16,7 +16,6 @@
       character    HTDP_version*8
       character    Version_date*20
       CHARACTER    OPTION*1
-      character    cont*5
 
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
@@ -24,10 +23,10 @@
 
 C  You must change HTDP version and date here, if necessary
 
-      HTDP_version = '3.3.0'
-      Version_date = 'January 15, 2021'
+      HTDP_version = '3.4.0'
+      Version_date = 'October 12, 2021'
 
-*** Introduce variables for file id's
+*** Introduce variables for file IDs
 
       LUIN = 5
 *       interactive input
@@ -36,13 +35,13 @@ C  You must change HTDP version and date here, if necessary
       I1 = 11
 *       input of velocity grid in GETVEL      
 *       input of earthquake parameters in GETEQ
-*       input of blue-book BFILE in DLACE, VELOC, UPDATE and TRFPOS
-*       input of blue-book GFILE in UPDATE
+*       input of Bluebook BFILE in DLACE, VELOC, UPDATE and TRFPOS
+*       input of Bluebook GFILE in UPDATE
       I2 = 12
 *       output of predicted displacements in DLACE
 *       output of predicted velocities in VELOC
-*       output of updated blue-book BFILE in UPDATE
-*       output of updated blue-book GFILE in UPDATE
+*       output of updated Bluebook BFILE in UPDATE
+*       output of updated Bluebook GFILE in UPDATE
 *       output of updated coordinates in UPDATE
       I3 = 13
 *       output of point-velocity records in VELOC
@@ -53,7 +52,7 @@ C  You must change HTDP version and date here, if necessary
 C     OPEN(I5, FILE='TEMPQK' , ACCESS = 'DIRECT', RECL = 72,
 C    1      FORM='UNFORMATTED')
       I6 = 16
-*       output of transformed blue-book BFILE in TRFPOS
+*       output of transformed Bluebook BFILE in TRFPOS
 
 *** Obtain parameters defining crustal motion model
       CALL MODEL
@@ -76,7 +75,7 @@ C    1      FORM='UNFORMATTED')
      1 '            and Michael Dennis                          '//
      1 '   Web: https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml  '/
      1 '   Email: ngs.cors.htdp@noaa.gov                        '/
-     1 '********************************************************'/)
+     1 '********************************************************')
       WRITE(LUOUT,10)
    10 FORMAT( 
      1 ' This software incorporates numerical models that',/
@@ -85,10 +84,7 @@ C    1      FORM='UNFORMATTED')
       WRITE(LUOUT,11)
    11 FORMAT(
      5 ' The User Guide contains additional information and a set'/
-     5 ' of exercises to familiarize users with the software.'/
-     5 ' Hit ENTER or RETURN to continue.  ')
-      read(luin, '(a5)',err=51,iostat=ios) cont
-      if (ios /= 0) goto 51
+     5 ' of exercises to familiarize users with the software.')
 
    25 WRITE(LUOUT,26)
    26 FORMAT('********************************************************'/
@@ -124,12 +120,6 @@ C    1      FORM='UNFORMATTED')
       GO TO 25
    50 CONTINUE
       stop
-C     CLOSE(I5, STATUS = 'DELETE')
-
-   51 write (*,'(/)')
-      write (*,*) 'You did not hit enter      : ios = ',ios
-      write (*,*) "ABNORMAL TERMINATION"
-      STOP
       
    52 write (*,'(/)')
       write (*,*) 'Problem with reading OPTION: ios = ',ios
@@ -174,48 +164,91 @@ C*** Set default reference epoch to Jan. 1, 2010
 
 *** Obtain coordinates for vertices that form the polygons
 *** that correspond to the boundaries for the regions.       
-*** Region 1 is the San Andreas fault in central California         
-*** Region 2 is southern California
-*** Region 3 is northern California
-*** Region 4 is the Pacific Northwest
-*** Region 5 is western CONUS
-*** Region 6 is CONUS
-*** Region 7 is St. Elias, Alaska
-*** Region 8 is south-central Alaska
-*** Region 9 is southeast Alaska
-*** Region 10 is All Mainland Alaska
+*** Region 1: San Andreas fault in central California         
+*** Region 2: southern California
+*** Region 3: northern California
+*** Region 4: Pacific Northwest
+*** Region 5: western CONUS
+*** Region 6: CONUS
+*** Region 7: St. Elias, Alaska
+*** Region 8: south-central Alaska
+*** Region 9: southeast Alaska
+*** Region 10: all mainland Alaska
 
 * Placeholder regions inserted to make compatible with new initbd.f
 * that contains tectonic plates added in December 2020 (v3.3.0).
-*** Region 11 is a placeholder region
-*** Region 12 is a placeholder region
-*** Region 13 is a placeholder region
+*** Region 11: placeholder region
+*** Region 12: placeholder region
+*** Region 13: placeholder region
 
-*** Region 14 is the North America plate 
-*** Region 15 is the Caribbean plate
-*** Region 16 is the Pacific plate
-*** Region 17 is the Juan de Fuca plate
-*** Region 18 is the Cocos plate
-*** Region 19 is the Mariana plate
-*** Region 20 is the Philippine Sea plate
+*** Tectonic plates
+*** All plate boundaries are from Bird 2003 with minor topological corrections.
+*** Main four plates included through v3.2.9:
+***   Region 14: North America (NA)
+***   Region 15: Pacific (PA)
+***   Region 16: Caribbean (CA)
+***   Region 17: Mariana (MA)
+***
+*** Plates added or updated after v3.2.9
+*** Primary plates:
+***   Region 18: Africa (AF)
+***   Region 19: Antarctica (AN)
+***   Region 20: Australia (AU)
+***   Region 21: Eurasia (EU)
+***   Region 22: South America (SA)
 
-* Plates added in December 2020 (v3.3.0).
-*** Region 21 is the South America plate
-*** Region 22 is the Nazca plate
-*** Region 23 is the Panama plate
-*** Region 24 is the North Andes plate
-*** Region 25 is the Africa plate
-*** Region 26 is the Eurasia plate
-*** Region 27 is the Rivera plate
-*** Region 28 is the Galapagos plate
-*** Region 29 is the Tonga plate
-*** Region 30 is the Niuafo'ou plate
+*** Secondary plates:
+***   Region 23: Amur (AM)
+***   Region 24: Arabia (AR)
+***   Region 25: Cocos (CO)
+***   Region 26: India (IN)
+***   Region 27: Juan de Fuca (JF)
+***   Region 28: Nazca (NZ)
+***   Region 29: Philippine Sea (PS)
+***   Region 30: Scotia (SC)
+***   Region 31: Somalia (SO)
+***   Region 32: Sunda (SU)
+
+*** Tertiary plates:
+***   Region 33: Aegean Sea (AS)
+***   Region 34: Altiplano (AP)
+***   Region 35: Anatolia (AT)
+***   Region 36: Balmoral Reef (BR)
+***   Region 37: Banda Sea (BS)
+***   Region 38: Birds Head (BH)
+***   Region 39: Burma (BU)
+***   Region 40: Caroline (CL)
+***   Region 41: Conway Reef (CR)
+***   Region 42: Easter (EA)
+***   Region 43: Futuna (FT)
+***   Region 44: Galapagos (GP)
+***   Region 45: Juan Fernandez (JZ)
+***   Region 46: Kermadec (KE)
+***   Region 47: Manus (MN)
+***   Region 48: Maoke (MO)
+***   Region 49: Molucca Sea (MS)
+***   Region 50: New Hebrides (NH)
+***   Region 51: Niuafo'ou (NI)
+***   Region 52: North Andes (ND)
+***   Region 53: North Bismarck (NB)
+***   Region 54: Okhotsk (OK)
+***   Region 55: Okinawa (ON)
+***   Region 56: Panama (PM)
+***   Region 57: Rivera (RI)
+***   Region 58: Sandwich (SW)
+***   Region 59: Shetland (SL)
+***   Region 60: Solomon Sea (SS)
+***   Region 61: South Bismarck (SB)
+***   Region 62: Timor (TI)
+***   Region 63: Tonga (TO)
+***   Region 64: Woodlark (WL)
+***   Region 65: Yangtze (YA)
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (NMREGN = 30)
+      parameter (NMREGN = 65)
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
-      COMMON /BNDRY/ X(7000), Y(7000), NPOINT(40)
+      COMMON /BNDRY/ X(12000), Y(12000), NPOINT(70)
  
       IEND = NPOINT(NMREGN + 1) - 1  
       DO 10 J = 1, IEND              
@@ -231,8 +264,8 @@ C*** Set default reference epoch to Jan. 1, 2010
 
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (NMREGN = 30)
-      COMMON /BNDRY/ X(7000), Y(7000), NPOINT(40)
+      parameter (NMREGN = 65)
+      COMMON /BNDRY/ X(12000), Y(12000), NPOINT(70)
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
       COMMON /CONST/ A, F, E2, EPS, AF, PI, TWOPI, RHOSEC
 
@@ -255,10 +288,9 @@ C*** Set default reference epoch to Jan. 1, 2010
 
 ********************************************************
       SUBROUTINE POLYIN (X0,Y0,X,Y,N,NPC)
-* This version of subroutine is from TRANS4D v0.3.1 and replaces
-* version in HTDP v3.2.9.
-C     SUBROUTINE TO DETERMINE IF A POINT AT (X0,Y0) IS INSIDE OR
-C     OUTSIDE OF A CLOSED FIGURE DESCRIBED BY A SEQUENCE OF CONNECTED
+* This version is from TRANS4D v0.3.1 and replaces version in HTDP v3.2.9.
+C     DETERMINES IF A POINT AT (X0,Y0) IS INSIDE OR OUTSIDE 
+C     OF A CLOSED FIGURE DESCRIBED BY A SEQUENCE OF CONNECTED
 C     STRAIGHT LINE SEGMENTS WITH VERTICES AT X, Y.
 C
 C     INPUT -
@@ -369,15 +401,16 @@ c     write (*,*) "From RADR8T",VNR,VER
 
       RETURN
       END
+      
 *****************************************************************
       SUBROUTINE COMVEL(YLAT,YLON,JREGN,VN,VE,VU)
 C
-C Compute the NAD_83(CORS96) velocity at a point in mm/yr    !Not anymore since 09/12/2014
-                                                             !Now the velocity refer to ITRF2008
+C Compute the ITRF2008 velocity at a point in mm/yr
+
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
       parameter (NUMGRD = 10)
-      parameter (NMREGN = 30)
+      parameter (NMREGN = 65)
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /FILES/ LUIN, LUOUT, I1,I2,I3,I4,I5,I6
       COMMON /VGRID/ B(210000)
@@ -401,8 +434,6 @@ c1001 FORMAT( 'JREGN = ', I6)
         VX = VX * 1000.D0
         VY = VY * 1000.D0
         VZ = VZ * 1000.D0
-*** Convert ITRF2008 velocity to NAD_83(CORS96) velocity
-c       CALL VTRANF(X, Y, Z, VX, VY, VZ, 15, 1)          !No Do not. Leave the velocity in ITRF2008
         CALL TOVNEU(YLAT, ELON, VX, VY, VZ, VN, VE, VU)
 
       ELSEIF(JREGN .GE. 1 .AND. JREGN .LE. NUMGRD) THEN
@@ -410,8 +441,6 @@ c       CALL VTRANF(X, Y, Z, VX, VY, VZ, 15, 1)          !No Do not. Leave the v
 C*** Get indices for the lower left hand corner of the grid
 C*** and get the weights for the four corners
         CALL GRDWEI (YLON, YLAT, JREGN, I, J, WEI)
-c       write (*,*) 'HHHHHHHHHHHHHHHHHHHHHHHHH',JREGN,WEI
-c       write (*,*) 'HHHHHHHHHHHHHHHHHHHHHHHHH',i,j
 
 C*** Get the velocity vectors at the four corners
         CALL GRDVEC (JREGN, I, J, VEL, B)
@@ -423,30 +452,13 @@ C*** Get the velocity vectors at the four corners
      *     + WEI(2,1) * VEL(2,1,2) + WEI(2,2) * VEL(2,2,2)
   
         VU = WEI(1,1) * VEL(1,1,3) + WEI(1,2) * VEL(1,2,3)
-     *     + WEI(2,1) * VEL(2,1,3) + WEI(2,2) * VEL(2,2,3)
-
-c       write (*,*) 'From COMVEL   ',VN,VE,VU
-c       write (*,*) 'From COMVEL   ',I,J          
+     *     + WEI(2,1) * VEL(2,1,3) + WEI(2,2) * VEL(2,2,3)        
 
 C*** If the point in one of the four Alaskan regions,
 C*** then set its vertical velocity to 0.0
         IF(JREGN .GE. 7 .AND. JREGN .LE. 10) THEN
            VU = 0.D0
         ENDIF
-
-C*** If the point is in one of the first ten regions, then
-c*** the velocity grids contain the ITRF2008 velocity.
-c*** Hence, the following code transforms this ITRF2008 velocity
-c*** to the corresponding NAD 83 (CORS96) velocity. 
-C
-c       IF(JREGN .LE. NUMGRD) THEN                            !Starting09/12/2014, the velocities
-c          ELON = - YLON                                      !coming out of this routine are in ITRF2008
-c          HT = 0.D0
-c          CALL TOXYZ(YLAT, ELON, HT, X, Y, Z)
-c          CALL TOVXYZ(YLAT, ELON, VN, VE, VU, VX, VY, VZ)
-c          CALL VTRANF( X, Y, Z, VX, VY, VZ, 15, 1)
-c          CALL TOVNEU(YLAT, ELON, VX, VY, VZ, VN, VE, VU)
-c       ENDIF
 
       ELSE
         WRITE(LUOUT,100) JREGN
@@ -461,57 +473,129 @@ c       ENDIF
 *** with coordinates X, Y, Z (in meters)
 *** The resulting velocities--VX, VY, and VZ--will be in meters/yr
 *** References: 
-***   Altamimi et al. 2012 = JGR (Paper on ITRF2008 plate motion).
+***   Altamimi et al. 2012. "ITRF2008 plate motion model" J. Geophys. Res.
 ***   Altamimi et al. 2017. "ITRF2014 plate motion model." Geophys. J. Int, 209.
-***   Bird 2003. "An updated digital model of plate boundaries." Geochem. Geophys. Geosyst., 4(3), 1027
-***   DeMets et al. 2010. "Geologically current plate motions." Geophys. J. Int., 181.
-***   Kreemer et al. 2014. "A geodetic plate motion and global strain rate model." Geochem. Geophys. Geosyst., 15.
+***   Bird 2003. "An updated digital model of plate boundaries." Geochem. Geophys. Geosyst., 4(3), 1027.
+***   DeMets et al. 2010. "Geologically current plate motions." Geophys. J. Int., 181:1-80.
+***   Kreemer et al. 2014. "A geodetic plate motion and global strain rate model." Geochem. Geophys. Geosyst., 15, 3849-3889.
 ***   Mora-Páez et al. 2018. "Crustal deformation in the northern Andes – A new GPS velocity field." J. S. Amer. Earth Sci, 2018.
-***   Snay 2003 = SALIS, Vol 63, No 1 (Paper on Frames for Pacific).
+***   Snay 2003. "Introducing two spatial reference frames for regions of the Pacific Ocean." Surv. Land. Info. Sci., 63(1):5-12.
 
       IMPLICIT DOUBLE PRECISION (A-H, O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      PARAMETER (NUMPLATE = 17)
+      PARAMETER (NUMPLATE = 52)
       
       DIMENSION WX(NUMPLATE), WY(NUMPLATE), WZ(NUMPLATE)
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
       
-*** All plate boundaries are from Bird 2003 with minor topological corrections.
+* Main four plates included through version 3.2.9 (revised order):
+** Rates for first three plates referenced to ITRF2008, fourth (MA) referenced to ITRF2000.
+*** IPLATE = 1 (NA) North America (Altamimi et al. 2012)
+***          2 (PA) Pacific (Altamimi et al. 2012)
+***          3 (CA) Caribbean (Altamimi et al. 2012)
+***          4 (MA) Mariana (Snay 2003)
+***
+* Plates added or edited in version 3.4.0:
+** Rates for all plates referenced to ITRF2014.
+***   Primary plates
+***          5 (AF) Africa (Altamimi et al. 2017)
+***          6 (AN) Antarctica (Altamimi et al. 2017)
+***          7 (AU) Australia (Altamimi et al. 2017)
+***          8 (EU) Eurasia (Altamimi et al. 2017)
+***          9 (SA) South America (Altamimi et al. 2017)
+***
+***   Secondary plates
+***         10 (AM) Amur (Kreemer et al. 2014)
+***         11 (AR) Arabia (Altamimi et al. 2017)
+***         12 (CO) Cocos (DeMets 2010)
+***         13 (IN) India (Altamimi et al. 2017)
+***         14 (JF) Juan de Fuca (DeMets 2010)
+***         15 (NZ) Nazca (Altamimi et al. 2017)
+***         16 (PS) Philippine Sea (Kreemer et al. 2014)
+***         17 (SC) Scotia (DeMets 2010)
+***         18 (SO) Somalia (Altamimi et al. 2017)
+***         19 (SU) Sunda (Kreemer et al. 2014)
+***
+***   Tertiary plates
+***         20 (AS) Aegean Sea (Kreemer et al. 2014)
+***         21 (AP) Altiplano (Lamb 2000, in Bird 2003)
+***         22 (AT) Anatolia (McClusky et al. 2000, in Bird 2003)
+***         23 (BR) Balmoral Reef (Bird 2003)
+***         24 (BS) Banda Sea (Rangin et al. 1999, in Bird 2003)
+***         25 (BH) Birds Head (Bird 2003)
+***         26 (BU) Burma (Circum-Pacific Map Project 1986, in Bird 2003)
+***         27 (CL) Caroline (Seno et al. 1993, in Bird 2003)
+***         28 (CR) Conway Reef (Bird 2003)
+***         29 (EA) Easter (Engeln and Stein 1984, in Bird 2003)
+***         30 (FT) Futuna (Bird 2003)
+***         31 (GP) Galapagos (Lonsdale 1988, in Bird 2003)
+***         32 (JZ) Juan Fernandez (Anderson-Fontana et al. 1986, in Bird 2003)
+***         33 (KE) Kermadec (Bird 2003)
+***         34 (MN) Manus (Martinez and Taylor 1996, in Bird 2003)
+***         35 (MO) Maoke (Bird 2003)
+***         36 (MS) Molucca Sea (Rangin et al. 1999, in Bird 2003)
+***         37 (NH) New Hebrides (Bird 2003)
+***         38 (NI) Niuafo'ou (Zellmer and Taylor 2001, in Bird 2003)
+***         39 (ND) North Andes (Mora-Páez et al. 2018)
+***         40 (NB) North Bismarck (Kreemer et al. 2014)
+***         41 (OK) Okhotsk (Kreemer et al. 2014)
+***         42 (ON) Okinawa (Kreemer et al. 2014)
+***         43 (PM) Panama (Kreemer et al. 2014)
+***         44 (RI) Rivera (DeMets 2010)
+***         45 (SW) Sandwich (DeMets 2010)
+***         46 (SL) Shetland (Kreemer et al. 2014)
+***         47 (SS) Solomon Sea (Bird 2003)
+***         48 (SB) South Bismarck (Kreemer et al. 2014)
+***         49 (TI) Timor (Bird 2003)
+***         50 (TO) Tonga (Kreemer et al. 2014)
+***         51 (WL) Woodlark (Kreemer et al. 2014)
+***         52 (YA) Yangtze (Kreemer et al. 2014)
 
-*** IPLATE = 1 --> North America (from Altamimi et al. 2012)
-***          2 --> Caribbean (from Altamimi et al. 2012)
-***          3 --> Pacific (from Altamimi et al. 2012)
-***          4 --> Juan de Fuca (from DeMets et al. 2010)
-***          5 --> Cocos (from DeMets et al. 2010)
-***          6 --> Mariana (from Snay 2003)
-***          7 --> Philippine Sea (from DeMets et al. 2010)
-***  New plates added in December 2020 (v3.3.0):
-***          8 --> South America (from Altamimi et al. 2017)
-***          9 --> Nazca (from Altamimi et al. 2017)
-***         10 --> Panama (from Kreemer et al. 2014)
-***         11 --> North Andes (from Mora-Paez, 2018)
-***         12 --> Africa (from Altamimi et al. 2017)
-***         13 --> Eurasia (from Altamimi et al. 2017)
-***         14 --> Rivera (from DeMets et al. 2010)
-***         15 --> Galapagos (from Bird 2003)
-***         16 --> Tonga (from Kreemer et al. 2014)
-***         17 --> Niuafo'ou (from Bird 2003)
+* Plate rotation rates in radians per year. 
+*** Plates #1-4 were defined in v3.2.9, with #1-3 referenced to ITRF2008 and
+*** #4 referenced to ITRF2000. All other plates (#5-52) referenced to ITRF2014.
 
-* Plate rotation rates in radians per year. Existing plates (1-7) have ITRF2008 rates 
-* (except for plate 6, the Mariana plate referenced to ITRF2000). The new plates added
-* in December 2020 have ITRF2014 rates (plates 8 thorugh 17).
-      DATA WX / 0.170D-9, 0.238D-9, -1.993D-9, 6.626D-9, -10.390D-9, 
-     &         -0.097D-9, -0.841D-9, -1.309D-9, -1.614D-9, 2.088D-9,
-     &         -1.964D-9, 0.480D-9, -0.412D-9, -21.933D-9, 14.273D-9,
-     &        137.841D-9, -57.324D-9 /
-      DATA WY /-3.209D-9, -5.275D-9, 5.023D-9, 11.708D-9, -14.954D-9,
-     &          0.509D-9, 3.989D-9, -1.459D-9,-7.486D-9, -23.037D-9, 
-     &         -1.518D-9, -2.977D-9, -2.574D-9, -70.432D-9, 94.440D-9, 
-     &         10.447D-9, -5.814D-9 /
-      DATA WZ /-0.485D-9, 3.219D-9,-10.501D-9, -10.615D-9, 9.148D-9,
-     &         -1.682D-9, -10.626D-9, -0.679D-9, 7.869D-9, 6.729D-9,
-     &          0.400D-9, 3.554D-9, 3.733D-9, 27.071D-9, 4.520D-9, 
-     &         68.458D-9, -3.722D-9 /
+      DATA WX / 0.17000D-9, -1.99300D-9, 0.23800D-9, -0.09700D-9,     !North America-Mariana
+     &          0.47997D-9, -1.20234D-9, 7.32069D-9, -0.41209D-9,     !Africa-Eurasia
+     &         -1.30900D-9, -0.68964D-9, 5.59475D-9, -10.38028D-9,    !South America-Cocos
+     &          5.59475D-9, 6.63589D-9, -1.61443D-9, 9.22141D-9,      !India-Philippine Sea
+     &         -0.52297D-9, -0.58662D-9, -0.34003D-9, 1.26854D-9,     !Scotia-Aegean Sea
+     &          0.05864D-9, 13.71303D-9, -2.85343D-9, -21.10731D-9,   !Altiplano-Banda Sea
+     &         -1.79893D-9, 9.52310D-9, 1.73361D-9, -63.15807D-9,     !Birds Head-Conway Reef
+     &         68.15282D-9, -85.23370D-9, 14.27334D-9, 106.03040D-9,  !Easter-Juan Fernandez
+     &         31.33555D-9, -779.82645D-9, -0.46179D-9, 36.24013D-9,  !Kermadec-Molucca Sea
+     &         42.92984D-9, -57.32448D-9, -1.96421D-9, -13.09213D-9,  !New Hebrides-North Bismarck
+     &         -0.27495D-9, -15.50125D-9, 2.08835D-9, -21.93297D-9,   !Okhotsk-Rivera
+     &         16.58716D-9, -8.64703D-9, -19.17916D-9, 97.26078D-9,   !Sandwich-South Bismarck
+     &        -11.38292D-9, 137.84116D-9, -22.45705D-9, -1.01317D-9 / !Timor-Yangtze
+
+      DATA WY /-3.20900D-9, 5.02300D-9, -5.27500D-9, 0.50900D-9,      !North America-Mariana
+     &         -2.97676D-9, -1.57080D-9, 5.73050D-9, -2.57436D-9,     !Africa-Eurasia
+     &         -1.45929D-9, -2.18428D-9, -0.65935D-9, -14.90060D-9,   !South America-Cocos
+     &         -0.02424D-9, 11.76141D-9, -7.48552D-9, -4.96294D-9,    !India-Philippine Sea
+     &         -1.79239D-9, -3.84942D-9, -3.69407D-9, 2.71543D-9,     !Scotia-Aegean Sea
+     &         -8.07657D-9, 7.54290D-9, 2.80815D-9, 35.16250D-9,      !Altiplano-Banda Sea
+     &         10.23283D-9, -39.44962D-9, 1.28481D-9, 10.29152D-9,    !Birds Head-Conway Reef
+     &        165.61029D-9, 2.61244D-9, 94.43957D-9, 304.53677D-9,    !Easter-Juan Fernandez
+     &          3.26279D-9, 445.94761D-9, 12.81479D-9, -53.21492D-9,  !Kermadec-Molucca Sea
+     &         -4.47050D-9, -5.81369D-9, -1.51836D-9, 12.88081D-9,    !New Hebrides-North Bismarck
+     &         -3.05687D-9, 10.47202D-9, -23.03737D-9, -70.43203D-9,  !Okhotsk-Rivera
+     &        -11.88078D-9, 8.85561D-9, 22.26207D-9, -61.73877D-9,    !Sandwich-South Bismarck
+     &         28.13885D-9, 10.44750D-9, 26.05666D-9, -2.26006D-9 /   !Timor-Yangtze
+
+      DATA WZ /-0.48500D-9, -10.50100D-9, 3.21900D-9, -1.68200D-9,    !North America-Mariana
+     &          3.55368D-9, 3.27249D-9, 5.89049D-9, 3.73307D-9,       !Africa-Eurasia
+     &         -0.67874D-9, 4.19822D-9, 7.00071D-9, 9.13337D-9,       !South America-Cocos
+     &          7.04919D-9, -10.62984D-9, 7.86853D-9, -11.55438D-9,   !India-Philippine Sea
+     &          0.63488D-9, 4.28575D-9, 4.56571D-9, 3.07496D-9,       !Scotia-Aegean Sea
+     &         -1.65936D-9, 13.29303D-9, -8.00888D-9, -0.28835D-9,    !Altiplano-Banda Sea
+     &         -9.36606D-9, -3.31898D-9, -9.56706D-9, -24.27100D-9,   !Birds Head-Conway Reef
+     &         83.81255D-9, -25.43833D-9, 4.51959D-9, 220.01253D-9,   !Easter-Juan Fernandez
+     &         25.92570D-9, -57.95220D-9, 2.92132D-9, 3.16382D-9,     !Kermadec-Molucca Sea
+     &          0.08496D-9, -3.72208D-9, 0.40012D-9, -10.73837D-9,    !New Hebrides-North Bismarck
+     &          1.56236D-9, 14.79722D-9, 6.72874D-9, 27.07095D-9,     !Okhotsk-Rivera
+     &        -12.18588D-9, 27.07392D-9, -1.89243D-9, 13.80350D-9,    !Sandwich-South Bismarck
+     &         -1.68457D-9, 68.45806D-9, -1.16558D-9, 5.04044D-9 /    !Timor-Yangtze
 
       IF (IPLATE .LE. 0 .OR. IPLATE .GT. NUMPLATE) THEN
           WRITE (LUOUT, 1) IPLATE
@@ -523,12 +607,10 @@ c       ENDIF
       VY =  WZ(IPLATE) * X - WX(IPLATE) * Z
       VZ = -WY(IPLATE) * X + WX(IPLATE) * Y
 
-*** The parameters--WX, WY, and WZ--refer to ITRF2000
-*** for the Mariana Plate (Snay, 2003). Hence,
-*** for this plate, VX, VY, and VZ, correspond to ITRF2000.
-*** The following code converts these to ITRF2008 velocities for
-*** this plate.
-      IF (IPLATE .EQ. 6) THEN
+*** The parameters for plate #4 (Mariana plate) refer to ITRF2000 (Snay 2003).
+*** The following code converts  VX, VY, VZ from ITRF2000 to ITRF2008 velocities
+*** for this plate.
+      IF (IPLATE .EQ. 4) THEN
          VX = VX*1000.d0
          VY = VY*1000.d0
          VZ = VZ*1000.d0
@@ -537,10 +619,10 @@ c       ENDIF
          VY = VY/1000.d0
          VZ = VZ/1000.d0
 
-*** The rotation rates for plates added in Dec 2020 refer to ITRF2014
-*** (plates 8 through 17). The following code converts the rates to 
+*** The rotation rates for plates added after v3.2.9 refer to ITRF2014
+*** (plates 5 through 52). The following code converts the rates to 
 *** ITRF2008 velocities for these plates.
-      ELSEIF (IPLATE .GE. 8) THEN
+      ELSEIF (IPLATE .GE. 5) THEN
          VX = VX*1000.d0
          VY = VY*1000.d0
          VZ = VZ*1000.d0
@@ -550,7 +632,7 @@ c       ENDIF
          VZ = VZ/1000.d0
 
 *** The following translations rates are added per Altamimi et al. (2012)
-*** for the other six plates referenced to ITRF2008.
+*** for the first three plates referenced to ITRF2008.
       ELSE
          VX = 0.00041d0 + VX
          VY = 0.00022d0 + VY
@@ -697,61 +779,11 @@ C
      1    *C*A*R                                                        
       RETURN                                                            
       END
-*************************************************************************
 
-c     SUBROUTINE TODMSA(val,id,im,s)
- 
-*** convert position radians to deg,min,sec
-*** range is [-twopi to +twopi]
- 
-c     implicit double precision(a-h,o-z)
-c     IMPLICIT INTEGER*4 (I-N)
-c     common/CONST/A,F,E2,EP2,AF,PI,TWOPI,RHOSEC
- 
-c   1 if(val.gt.twopi) then
-c       val=val-twopi
-c       go to 1
-c     endif
- 
-c   2 if(val.lt.-twopi) then
-c       val=val+twopi
-c       go to 2
-c     endif
- 
-c     if(val.lt.0.d0) then
-c       isign=-1
-c     else
-c       isign=+1
-c     endif
- 
-c     s=dabs(val*RHOSEC/3600.D0)
-c     id=idint(s)
-c     s=(s-id)*60.d0
-c     im=idint(s)
-c     s=(s-im)*60.d0
- 
-*** account for rounding error
- 
-c     is=idnint(s*1.d5)
-c     if(is.ge.6000000) then
-c       s=0.d0
-c       im=im+1
-c     endif
-c     if(im.ge.60) then
-c       im=0
-c       id=id+1
-c     endif
- 
-c     id = isign*id
-c     im = isign*im
-c     s  = isign*s
-
-c     return
-c     end
 *********************************************************
       SUBROUTINE TRFDAT(CARD,DATE,IREC12,IYEAR1,IYEAR2,MINS)
 
-C Convert blue-book date to time in minutes
+C Convert Bluebook date to time in minutes
 
       IMPLICIT DOUBLE PRECISION (A-H, O-Z)
       IMPLICIT INTEGER*4 (I-N)
@@ -761,7 +793,7 @@ C Convert blue-book date to time in minutes
 
       IF (IREC12 .EQ. 0) THEN
          WRITE (LUOUT, 5)
-    5    FORMAT(' ABORT: The blue-book needs a valid *12* record.')
+    5    FORMAT(' ABORT: The Bluebook needs a valid *12* record.')
          STOP
       ENDIF
 
@@ -788,7 +820,7 @@ C Convert blue-book date to time in minutes
       IF (IYEAR .LE. 1906) THEN
          WRITE (LUOUT, 30)
    30    FORMAT(' ***WARNING***'/
-     1   ' The blue-book file contains an observation that'/
+     1   ' The Bluebook file contains an observation that'/
      1   ' predates 1906.  The TDP model may not be valid'/
      1   ' and the computed corrections may be erroneous.')
       ENDIF
@@ -800,7 +832,6 @@ C Convert blue-book date to time in minutes
          IDAY = 1
       ENDIF
 
-C     CALL TOTIME(IYEAR,MONTH,IDAY, MINS)
       CALL IYMDMJ(IYEAR,MONTH,IDAY, MJD)
       MINS = MJD * 24 * 60
       RETURN
@@ -816,7 +847,7 @@ C     CALL TOTIME(IYEAR,MONTH,IDAY, MINS)
 *********************************************************
       SUBROUTINE TNFDAT(DATE,MINS)
 
-C Convert blue-book date to time in years
+C Convert Bluebook date to time in years
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
@@ -827,7 +858,7 @@ C Convert blue-book date to time in years
       IF(IYEAR .LE. 1906) THEN
         WRITE(LUOUT,20)
    20     FORMAT(' ***WARNING***'/
-     1    ' The blue-book file contains an observation that'/
+     1    ' The Bluebook file contains an observation that'/
      2    ' predates 1906.  The TDP model is not valid and the'/
      3    ' computed correction may be erroneous.')
       ENDIF
@@ -836,58 +867,11 @@ C Convert blue-book date to time in years
          MONTH = 7
          IDAY = 1
       ENDIF
-C     CALL TOTIME(IYEAR,MONTH,IDAY,MINS)
+
       CALL IYMDMJ(IYEAR,MONTH,IDAY,MJD)
       MINS = MJD * 24 * 60
       RETURN
       END
-***************************************************************
-C     SUBROUTINE GETTIM(MONTH, IDAY, IYEAR, DATE, MINS, TEST)
-C
-*** Read month-day-year and convert to decimal years
-*** and Julian time in minutes      
-***    MONTH      input - number from 1 to 12
-***    IDAY       input - number from 1 to 31
-***    IYEAR      input - must be after 1906
-***    DATE       output - corresponding time in decimal years
-***    MINS       output - corresponding julian time in minutes
-***    TEST       output - if (true) then there is an error
-C
-C     IMPLICIT DOUBLE PRECISION (A-H,O-Z)
-C     IMPLICIT INTEGER*4 (I-N)
-C     LOGICAL TEST
-C     COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
-
-C     READ(LUIN,*) MONTH,IDAY,IYEAR
-    
-C     IF(IYEAR .le. 1906) THEN
-C         WRITE(LUOUT,10)
-C  10     FORMAT(' The model is not valid for dates prior ',
-C    1           'to 1906.'/)
-C         TEST = .TRUE.
-C         RETURN
-C     ENDIF
-
-C     IF(MONTH .le. 0 .or. MONTH .gt. 12) THEN
-C         WRITE(LUOUT,20)
-C  20     FORMAT(' Improper month specified.'/)
-C         TEST = .TRUE.
-C         RETURN
-C     ENDIF
-
-C     IF(IDAY .le. 0 .or. IDAY .gt. 31) THEN
-C         WRITE(LUOUT,30)
-C  30     FORMAT(' Improper day specified.'/)
-C         TEST = .TRUE.
-C         RETURN
-C     ENDIF
-
-C     CALL TOTIME(IYEAR, MONTH, IDAY, MINS)
-C     CALL TOTIME(IYEAR, 1, 1, MIN00)
-C     DATE = DBLE(IYEAR) + DBLE(MINS - MIN00)/525600.D0
-C     TEST = .FALSE.
-C     RETURN
-C     END
 
 C************************************************************************
       SUBROUTINE TOXYZ(glat,glon,eht,x,y,z)
@@ -909,6 +893,7 @@ C************************************************************************
  
       return
       end
+      
 C************************************************************************
       logical function FRMXYZ(x,y,z,glat,glon,eht)
  
@@ -1084,15 +1069,14 @@ C
   110 FORMAT(A10)
       WRITE(LUOUT,120)
   120 Format(' Specify the latitude for the origin of the line'/
-     1       ' in deg-min-sec in free format. For example'/
-     2       '         35 17 28.3'/
-     3       ' Positive is north.  ')
+     1       ' as deg-min-sec in free format (positive north).'/
+     2       ' For example 35 17 28.3 or 35,17,28.3 '/)
       READ(LUIN,*,err=51,iostat=ios) LATD,LATM,SLAT
       if (ios /= 0) goto 51
       XLAT = (DBLE(3600*LATD + 60*LATM)+SLAT)/RHOSEC
       WRITE(LUOUT,130)
   130 FORMAT(' Specify the longitude for the origin of the line'/
-     1       ' in free format with west being positive.  ')
+     1       ' as deg-min-sec in free format (west positive).')
       READ(LUIN,*,err=52,iostat=ios) LOND,LONM,SLON
       if (ios /= 0) goto 52
       XLON = (DBLE(3600*LOND+60*LONM)+SLON)/RHOSEC
@@ -1250,7 +1234,7 @@ C
       if (ios /= 0) goto 51
 
       CALL COMPSN(YLATI1,YLONI1,HTI1,GLATI,GLONI,HT(ISN),
-     1            MIN1,VNI, VEI, VUI)
+     1            MIN1, VNI, VEI, VUI)
       CALL COMPSN(YLATI2,YLONI2,HTI2,GLATI,GLONI,HT(ISN),
      1            MIN2, VNI, VEI, VUI)
       CALL COMPSN(YLATJ1,YLONJ1,HTJ1,GLATJ,GLONJ,HT(JSN),
@@ -1345,13 +1329,14 @@ C
 
       RETURN
       END
+      
 ****************************************************
       SUBROUTINE OKADA(X1,X2,XL,DU,W,DIP,
      1     U1SS,U2SS,U3SS,U1DS,U2DS,U3DS)
 
 ************************************************************
-*  This subroutine computes displacements at the point X1,X2
-*  on the Earth's surface due to 1.0 meter of right-lateral 
+*  Computes displacements at the point X1,X2 on the
+*  Earth's surface due to 1.0 meter of right-lateral 
 *  strike slip (SS) and 1.0 meter of normal dip slip (DS) 
 *  along a rectangular fault.
 *
@@ -1497,9 +1482,9 @@ C********1*********2*********3*********4*********5*********6*********7**
       U3SS = -(DBAR*Q/(R*(R+ETA)) + Q*SDIP/(R+ETA) + F4*SDIP)/TWOPI
       U1DS = -(Q/R - F3*SDIP*CDIP)/TWOPI
 
-* Following part of subroutine modified based on changes provided by 
-* Jarir Saleh on 11/19/2020 to avoid floating point exceptions when a 
-* point is located on the extension of a fault plane.  
+* Following part modified based on changes provided by Jarir Saleh 
+* on 11/19/2020 to avoid floating point exceptions when a point is
+* located on the extension of a fault plane.  
 * Two conditional statements added to avoid floating point exception
 * using variables TERM1 and TERM2: 
       TERM1 = YBAR*Q
@@ -1537,7 +1522,7 @@ C
 C NAME:        GRDWEI
 C VERSION:     9302.01   (YYMM.DD)
 C WRITTEN BY:  MR. C. RANDOLPH PHILIPP
-C PURPOSE:     THIS SUBROUTINE RETURNS THE INDICES OF THE LOWER-LEFT
+C PURPOSE:     RETURNS THE INDICES OF THE LOWER-LEFT
 C              HAND CORNER OF THE GRID CELL CONTAINING THE POINT
 C              AND COMPUTES NORMALIZED WEIGHTS FOR 
 C              BI-LINEAR INTERPOLATION OVER A PLANE
@@ -1629,7 +1614,7 @@ C
 C NAME:        GRDVEC
 C VERSION:     9302.01   (YYMM.DD)
 C WRITTEN BY:  MR. C. RANDOLPH PHILIPP
-C PURPOSE:     THIS SUBROUTINE RETRIEVES THE APPROXIMATE VALUES OF THE
+C PURPOSE:     RETRIEVES THE APPROXIMATE VALUES OF THE
 C              GRID NODE VELOCITIES FOR GRID (I,J) 
 C              
 C  INPUT PARAMETERS FROM ARGUMENT LIST:
@@ -1733,100 +1718,6 @@ C***************************************************
       RETURN
       END
      
-C*********************************************************
-C
-      SUBROUTINE TOMNT( IYR, IMON, IDAY, IHR, IMN, MINS )
-*** This subroutine is not called; apparently replaced by IYMDMJ.
-C
-C********1*********2*********3*********4*********5*********6*********7**
-C
-C NAME:       TOMNT (ORIGINALLY IYMDMJ)
-C VERSION:    9004.17
-C WRITTEN BY: M. SCHENEWERK
-C PURPOSE:    CONVERT DATE TO MODIFIED JULIAN DATE PLUS UT
-C
-C INPUT PARAMETERS FROM THE ARGUEMENT LIST:
-C -----------------------------------------
-C IDAY              DAY
-C IMON              MONTH
-C IYR               YEAR
-C
-C OUTPUT PARAMETERS FROM ARGUEMENT LIST:
-C --------------------------------------
-C MINS              MODIFIED JULIAN DATE IN MINUTES
-C
-C
-C LOCAL VARIABLES AND CONSTANTS:
-C ------------------------------
-C A                 TEMPORARY STORAGE
-C B                 TEMPORARY STORAGE
-C C                 TEMPORARY STORAGE
-C D                 TEMPORARY STORAGE
-C IMOP              TEMPORARY STORAGE
-C IYRP              TEMPORARY STORAGE
-C
-C GLOBAL VARIABLES AND CONSTANTS:
-C ------------------------------
-C
-C
-C       THIS MODULE CALLED BY: GENERAL USE
-C
-C       THIS MODULE CALLS:     DINT
-C
-C       INCLUDE FILES USED:
-C
-C       COMMON BLOCKS USED:       
-C
-C       REFERENCES:            DUFFETT-SMITH, PETER  1982, 'PRACTICAL
-C                              ASTRONOMY WITH YOUR CALCULATOR', 2ND
-C                              EDITION, CAMBRIDGE UNIVERSITY PRESS,
-C                              NEW YORK, P.9
-C
-C       COMMENTS:              THIS SUBROUTINE REQUIRES THE FULL YEAR,
-C                              I.E. 1992 RATHER THAN 92.  
-C
-C********1*********2*********3*********4*********5*********6*********7**
-C::LAST MODIFICATION
-C::8909.06, MSS, DOC STANDARD IMPLIMENTED
-C::9004.17, MSS, CHANGE ORDER YY MM DD
-C********1*********2*********3*********4*********5*********6*********7**
-C
-      IMPLICIT DOUBLE PRECISION(A-H, O-Z)
-      IMPLICIT INTEGER*4 (I-N)
-C
-      INTEGER*4     A, B, C, D
-
-      IYRP = IYR
-C
-C........  0.0  EXPLICIT INITIALIZATION
-C
-      IF( IMON .LT. 3 ) THEN
-        IYRP= IYRP - 1
-        IMOP= IMON + 12
-      ELSE
-        IMOP= IMON
-      END IF
-C
-C........  1.0  CALCULATION
-C
-*** Following 4 lines edited in v3.3.0 to address compiler issue with
-*** real to integer conversion.
-C      A=  IYRP*0.01D0
-C      B=  2 - A + DINT( A*0.25D0 )
-C      C=  365.25D0*IYRP
-C      D=  30.6001D0*(IMOP + 1)
-      
-      A = IDINT(DBLE(IYRP)*0.01D0)
-      B = 2 - A + IDINT(DBLE(A)*0.25D0)
-      C = IDINT(365.25D0*DBLE(IYRP))
-      D = IDINT(30.6001D0*(DBLE(IMOP + 1)))
-      
-      MINS =  (B + C + D + IDAY - 679006) * (24 * 60)
-     &       + (60 * IHR) + IMN
-
-
-      RETURN
-      END
 *****************************************************
       SUBROUTINE TOVNEU(GLAT,GLON,VX,VY,VZ,VN,VE,VU)
 
@@ -1846,6 +1737,7 @@ C      D=  30.6001D0*(IMOP + 1)
 
       RETURN
       END
+      
 ***************************************************
       SUBROUTINE TOVXYZ(GLAT,GLON,VN,VE,VU,VX,VY,VZ)
 *** Convert velocities from vn,ve,vu to vx,vy,vz
@@ -1863,6 +1755,7 @@ C      D=  30.6001D0*(IMOP + 1)
 
       RETURN
       END
+      
 *****************************************************
       SUBROUTINE DPLACE
 
@@ -1894,14 +1787,14 @@ C      D=  30.6001D0*(IMOP + 1)
       WRITE(LUOUT,* ) ' Please enter T1 '
    20 CALL GETMDY(MONTH1,IDAY1,IYEAR1,DATE1,MIN1,TEST)
       IF(TEST) then
-         write(luout,*) ' Do you wish to re-enter T1? (y/n)'
+         write(luout,*) 'Do you wish to re-enter T1? (y/n)'
          read (luin,21,err=600,iostat=ios) ANSWER
          if (ios /= 0) goto 600
    21    format( A1 )
          IF (ANSWER .eq. 'y' .or. ANSWER .eq. 'Y') GO TO 20
          RETURN
       ENDIF
-      WRITE(LUOUT,*) ' Please enter T2 '
+      WRITE(LUOUT,*) 'Please enter T2 '
    35 CALL GETMDY(MONTH2,IDAY2,IYEAR2,DATE2,MIN2,TEST)
       IF(TEST) then
          write(luout,*) ' Do you wish to re-enter T2? (y/n) '
@@ -1949,21 +1842,20 @@ C      D=  30.6001D0*(IMOP + 1)
    80 FORMAT(' ********************************'/
      1   ' Displacements will be predicted at each point whose',/
      2   ' horizontal position is specified.',/
-     4   ' Please indicate how you wish to supply positions.'/ )
+     3   ' Please indicate how you wish to supply positions.'/ )
    85 WRITE(LUOUT,86)
    86 FORMAT(
-     5   '    0. No more points. Return to main menu.'/
-     6   '    1. Individual points entered interactively.'/
-     7   '    2. Points on a specified grid.'/
-     8   '    3. The *80* records in a specified blue-book file.'/
-     9   '    4. Points on a specified line.  ' /
-     1   '    5. Batch file of delimited records of form: ' /
-     2   '       LAT,LON,TEXT ' /
-     4   '       LAT = latitude in degrees (positive north/DBL PREC)' /
-     5   '       LON = longitude in degrees (positive west/DBL PREC)' /
-     7   '       TEXT = Descriptive text (CHARACTER*24) ' /
-     8   '       Example:  ' /
-     9   '       40.731671553,112.212671753,SALT AIR '/)
+     1   '    0. No more points. Return to main menu.'/
+     2   '    1. Individual points entered interactively.'/
+     3   '    2. Points on a specified grid.'/
+     4   '    3. The position records in a specified Bluebook file.'/
+     5   '    4. Points on a specified line.  ' /
+     6   '    5. File of delimited records of form LAT,LON,TEXT: ' /
+     7   '       LAT = latitude in degrees (positive north)' /
+     8   '       LON = longitude in degrees (positive west)' /
+     9   '       TEXT = descriptive text (maximum 24 characters)' /
+     1   '       Example:  40.731671553,112.212671753,SALT AIR' /)
+     
       READ(LUIN,'(A1)',err=602,iostat=ios) OPTION
       if (ios /= 0) goto 602
 
@@ -2045,7 +1937,7 @@ C      D=  30.6001D0*(IMOP + 1)
       ELSEIF(OPTION .EQ. '3') THEN
         VOPT = '0'
         WRITE(LUOUT,300)
-  300   FORMAT(' Enter name of blue-book file  ')
+  300   FORMAT(' Enter name of Bluebook file  ')
         READ(LUIN,310,err=603,iostat=ios) NAMEBB
         if (ios /= 0) goto 603
   310   FORMAT(A80)
@@ -2085,7 +1977,7 @@ C         IF(JN.EQ.'S' .OR. JW.EQ.'E')GO TO 320
         WRITE(LUOUT,360)
   360   FORMAT(' ************************************'/
      1  ' Displacements have been calculated for the specified'/
-     2  ' blue-book file.  If you wish to calculate additional'/
+     2  ' Bluebook file.  If you wish to calculate additional'/
      3  ' displacements, please indicate how you will supply'/
      4  ' the horizontal coordinates.'/)
       ELSEIF(OPTION .EQ. '4') THEN
@@ -2137,7 +2029,7 @@ C         IF(JN.EQ.'S' .OR. JW.EQ.'E')GO TO 320
         VOPT = '0'
         EHT = 0.0D0
         write(luout,450)
-  450   format(' Enter name of batch file ')
+  450   format(' Enter name of input file ')
         read(luin, 451,err=606,iostat=ios) NAMEIF
         if (ios /= 0) goto 606
   451   format(A80)
@@ -2243,13 +2135,13 @@ C         IF(JN.EQ.'S' .OR. JW.EQ.'E')GO TO 320
       stop
 
   606 write (*,'(/)') 
-      write (*,*) 'Wrong batch file name in DPLACE:ios=',ios
+      write (*,*) 'Wrong input file name in DPLACE:ios=',ios
       write (*,*) "ABNORMAL TERMINATION"
       write (*,*) "PLEASE CHECK YOUR INPUT FILE AND TRY AGAIN"
       stop
 
   607 write (*,'(/)') 
-      write (*,*) 'Wrong record from batch in DPLACE:ios=',ios
+      write (*,*) 'Wrong record from input in DPLACE:ios=',ios
       write (*,*) "ABNORMAL TERMINATION"
       write (*,*) "PLEASE CHECK YOUR INPUT FILE AND TRY AGAIN"
       stop
@@ -2398,15 +2290,13 @@ c    6   '         a specified point having a specified velocity.')
      1 '    0... No more points. Return to main menu.'/
      2 '    1... Individual points entered interactively.'/
      3 '    2... Points on a specified grid.'/
-     4 '    3... The *80* records in a specified blue-book file.'/
+     4 '    3... The position records in a specified Bluebook file.'/
      5 '    4... Points on a specified line.  '/
-     6 '    5... Batch file of delimited records of form: '/
-     7 '         LAT,LON,TEXT '/
-     8 '         LAT = latitude in degrees (positive north/DBL PREC) '/
-     9 '         LON = longitude in degrees (positive west/DBL PREC) '/
-     1 '         TEXT = Descriptive text (CHARACTER*24) '/
-     1 '         Example:  '/
-     2 '         40.731671553,112.212671753,SALT AIR '/)
+     6 '    5... File of delimited records of form LAT,LON,TEXT:'/
+     7 '         LAT = latitude in degrees (positive north) '/
+     8 '         LON = longitude in degrees (positive west) '/
+     9 '         TEXT = Descriptive text (maximum 24 characters) '/
+     1 '         Example:  40.731671553,112.212671753,SALT AIR '/)
 
       READ(LUIN,60,err=704,iostat=ios) OPTION
       if (ios /= 0) goto 704
@@ -2525,7 +2415,7 @@ C 129    FORMAT(F6.2, 1X, F6.2, 1X, F5.1)
         EHT = 0.D0
         WRITE(I2,105)
         WRITE(LUOUT,200)
-  200   FORMAT(' Enter name of blue-book file.  ')
+  200   FORMAT(' Enter name of Bluebook file.  ')
         READ(LUIN,210,err=705,iostat=ios) NAMEBB
         if (ios /= 0) goto 705
   210   FORMAT(A80)
@@ -2564,7 +2454,7 @@ C 129    FORMAT(F6.2, 1X, F6.2, 1X, F5.1)
         WRITE(LUOUT,260)
   260      FORMAT(' ****************************************'/
      1     ' Velocities have been calculated for the specified '/
-     2     ' blue-book file.  If you wish to calculate additional'/
+     2     ' Bluebook file.  If you wish to calculate additional'/
      3     ' velocities, please indicate how you will supply the'/
      4     ' horizontal coordinates.'/)
       ELSEIF(OPTION .EQ. '4') THEN
@@ -2674,7 +2564,7 @@ C 129    FORMAT(F6.2, 1X, F6.2, 1X, F5.1)
            write(LUOUT, 460)
   460      format(' ********************************'/
      1     ' Velocities have been calculated for the specified'/
-     2     ' file.  if you wish to calculate additional velocities, '/
+     2     ' file.  If you wish to calculate additional velocities, '/
      3     ' please indicate how you will supply the coordinates.'/)
       ELSE
            WRITE(LUOUT,600)
@@ -2778,7 +2668,6 @@ c     IF(IOPT .EQ. 0 .OR. IOPT .EQ. 1) THEN   !Not NAD83 anymore
           ELON = -YLON
           CALL TOXYZ(YLAT,ELON,EHT,X,Y,Z)
           DATE = 2010.0d0
-c         CALL XTONAD(X,Y,Z,RLAT,RLON,EHTNAD,DATE,IOPT)   !Removed on 09/12/2014. The velocity grids are not converted to NAD83 anymore.
           CALL XTO08 (X,Y,Z,RLAT,RLON,EHT08,DATE,IOPT)   !They are in ITRF2008
       ENDIF
 
@@ -2820,7 +2709,6 @@ c         CALL VTRANF(X,Y,Z,VX,VY,VZ, 1, IOPT)  !No longer NAD83
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
 *** Convert to cartesian coordinates in ITRF2008   
-c     if (iopt .eq. 0 .or. iopt .eq. 1) then
       if (iopt .eq. 15) then
          x2 = x
          y2 = y
@@ -2842,41 +2730,6 @@ c     if (iopt .eq. 0 .or. iopt .eq. 1) then
           GO TO 100
       ENDIF
 
-c     write (*,*) "FROM XT08 ",RLAT*180.d0/pi,WLON*180.d0/pi,EHT08
-      RETURN
-      END
- 
-****************************************************************************
-      SUBROUTINE XTONAD (X,Y,Z,RLAT,WLON,EHTNAD,DATE,IOPT)
-
-*** Converts X,Y,Z in specified datum to latitude and
-*** longitude (in radians) and height (meters) in NAD 83 
-*** datum with longitude positive west.
-
-      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
-      IMPLICIT INTEGER*4 (I-N)
-      LOGICAL FRMXYZ
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
-
-*** Convert to cartesian coordinates in NAD 83
-      if (iopt .eq. 0 .or. iopt .eq. 1) then
-         x2 = x
-         y2 = y
-         z2 = z
-      else
-         call toit94(x,y,z,x1,y1,z1,date,iopt)
-         jopt = 1
-         call frit94(x1,y1,z1,x2,y2,z2,date,jopt)
-      endif
-
-***Convert to geodetic coordinates
-      IF(.NOT.FRMXYZ(X2,Y2,Z2,RLAT,ELON,EHTNAD))STOP 666
-
-      WLON = -ELON
- 100  IF(WLON .LT. 0.D0) THEN
-          WLON = WLON + TWOPI
-          GO TO 100
-      ENDIF
       RETURN
       END
  
@@ -2901,14 +2754,18 @@ c     write (*,*) "FROM XT08 ",RLAT*180.d0/pi,WLON*180.d0/pi,EHT08
       character    HTDP_version*8
       LOGICAL      FRMXYZ
       LOGICAL      TEST
-      LOGICAL      Is_inp_NAD83,Is_out_NAD83
-      LOGICAL      Is_inp_NAD83PAC,Is_out_NAD83PAC
-      LOGICAL      Is_inp_NAD83MAR,Is_out_NAD83MAR
+      LOGICAL      Is_inp_NAD83, Is_out_NAD83
+c      LOGICAL      Is_inp_NAD83PAC,Is_out_NAD83PAC    !Comment out v3.4.0
+c      LOGICAL      Is_inp_NAD83MAR,Is_out_NAD83MAR    !Comment out v3.4.0
 
       COMMON /CONST/ A, F, E2, EPS, AF, PI, TWOPI, RHOSEC
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
       COMMON /ARRAYS/ HT(nbbdim), LOC(nbbdim),PIDs(nbbdim)
       COMMON /VERSION/ HTDP_version
+
+C  Initialize NAD 83 input/poutput logical variables as false:
+      Is_inp_NAD83 = .FALSE.
+      Is_out_NAD83 = .FALSE.
 
       write(luout,80)
    80 format(
@@ -2927,9 +2784,12 @@ c     write (*,*) "FROM XT08 ",RLAT*180.d0/pi,WLON*180.d0/pi,EHT08
          write(luout,*) ' Improper selection -- try again.  '
          go to 95
       endif
-      Is_inp_NAD83    = (iopt1 == 1 .and. frame1(1:3) /= "WGS") 
-      Is_inp_NAD83PAC = (iopt1 == 12) 
-      Is_inp_NAD83MAR = (iopt1 == 13) 
+
+      IF(iopt1 .EQ. 1) Is_inp_NAD83 = .TRUE.
+
+c      Is_inp_NAD83    = (iopt1 == 1)     !Comment out v3.4.0
+c      Is_inp_NAD83PAC = (iopt1 == 12)    !Comment out v3.4.0
+c      Is_inp_NAD83MAR = (iopt1 == 13)    !Comment out v3.4.0
 
   105 write(luout,110)
   110 format (/' Enter the reference frame for the output positions')
@@ -2938,9 +2798,12 @@ c     write (*,*) "FROM XT08 ",RLAT*180.d0/pi,WLON*180.d0/pi,EHT08
          write(luout,*) ' Improper selection -- try again.  '
          go to 105
       endif
-      Is_out_NAD83    = (iopt2 == 1 .and. frame2(1:3) /= "WGS")   !Changed from frame1 in v3.3.0.
-      Is_out_NAD83PAC = (iopt2 == 12)
-      Is_out_NAD83MAR = (iopt2 == 13)
+
+      IF(iopt2 .EQ. 1) Is_out_NAD83 = .TRUE.
+
+c      Is_out_NAD83    = (iopt2 == 1)     !Comment out v3.4.0
+c      Is_out_NAD83PAC = (iopt2 == 12)    !Comment out v3.4.0
+c      Is_out_NAD83MAR = (iopt2 == 13)    !Comment out v3.4.0
 
       write(luout,120)
   120 format (/
@@ -2980,32 +2843,26 @@ c    1     4x, 'INPUT VELOCITY' /)
      1  ' Please indicate how you wish to supply positions.'/
      1  '    0... No more points.   Return to main menu.'/
      1  '    1... Individual points entered interactively.'/
-     1  '    2... The *80* records in a specified blue-book file.  '/
-     1  '    3... Transform positions contained in batch file '/
-     1  '         of delimited records of the form: '/
-     1  '         LAT,LON,EHT,TEXT' /
-     1  '         LAT = latitude in degrees (positive north/DBL PREC)'/
-     1  '         LON = longitude in degrees (positive west/DBL PREC)'/
-     1  '         EHT = ellipsoid height in meters (DBL PREC)'/
-     1  '         TEXT = Descriptive text (CHARACTER*24) '/
+     1  '    2... The position records in a specified Bluebook file.  '/
+     1  '    3... Transform positions contained in file of delimited'/
+     1  '         records of the form LAT,LON,EHT,TEXT:' /
+     1  '         LAT = latitude in degrees (positive north)'/
+     1  '         LON = longitude in degrees (positive west)'/
+     1  '         EHT = ellipsoid height in meters'/
+     1  '         TEXT = descriptive text (maximum 24 characters) '/
+     1  '         Example: 40.731671553,112.212671753,34.241,SALT'/
+     1  '    4... Transform positions contained in file of delimited'/
+     1  '         records of the form X,Y,Z,TEXT, where:' /
+     1  '         X, Y, Z = Cartesian coordinates in meters'/
+     1  '         TEXT = descriptive text (maximum 24 characters) '/
+     1  '         Example: -86682.104,-5394026.861,3391189.647,SALT'/
+     1  '    5... Transform positions using velocities in a file of '/
+     1  '         delimited records of the form X,Y,Z,Vx,Vy,Vz,TEXT' /
+     1  '         X, Y, Z = Cartesian coordinates in meters'/
+     1  '         Vx, Vy, Vz = Cartesian velocities in m/year'/
+     1  '         TEXT = descriptive text (maximum 24 characters) '/
      1  '         Example:   '/
-     1  '         40.731671553,112.212671753,34.241,SALT AIR  '/ 
-     1  '    4... Transform positions contained in batch file '/
-     1  '         of delimited records of the form: '/
-     1  '         X, Y, Z,TEXT' /
-     1  '         X, Y, Z are Cartesian coordinates of the station'/
-     1  '         TEXT = Descriptive text (CHARACTER*24) '/
-     1  '         Example:   '/
-     1  '           -86682.104,-5394026.861,3391189.647,SALT AIR  '/
-     1  '         Necessary velocities predicted by HTDP          '/
-     1  '    5... Transform positions using velocities contained in a '/
-     1  '         batch file of delimited records of the form: '/
-     1  '         X, Y, Z, Vx, Vy, Vz, TEXT' /
-     1  '         X, Y, Z are Cartesian coordinates of the station'/
-     1  '         Vx,Vy,Vz are Cartesian velocities in m/year     '/
-     1  '         TEXT = Descriptive text (CHARACTER*24) '/
-     1  '         Example:   '/
-     1'-86682.104,-5394026.861,3391189.647,-0.012,-0.001,-0.001,SALT'/)
+     1'   -86682.104,-5394026.861,3391189.647,0.012,0.006,-0.001,SALT'/)
 
       read(luin,'(a1)',err=602,iostat=ios) option
       if (ios /= 0) goto 602
@@ -3026,7 +2883,6 @@ c     write (*,*) "Starting to look at options"
         
 
 C  Added by JS on 09/10/2014
-
         if (Is_inp_NAD83 .or. Is_out_NAD83) then
           call TOIT94(x, y, z, x1, y1, z1, date1, iopt1)
           call FRIT94(x1, y1, z1, x2, y2, z2, date1, iopt2)
@@ -3034,16 +2890,17 @@ C  Added by JS on 09/10/2014
           call TOIT94_IERS(x, y, z, x1, y1, z1, date1, iopt1)
           call FRIT94_IERS(x1, y1, z1, x2, y2, z2, date1, iopt2)
         endif
+        
         if (min1 .ne. min2) then                                  !i.e., if the input and output dates are different
           if(.not.FRMXYZ(x2,y2,z2,ylat1,elon1,eht1)) STOP 666
           ylon1 = -elon1
           if(ylon1 .lt. 0.d0) ylon1 = ylon1 + twopi
-c         write (*,*) ylon1*180.d0/pi,ylat1*180.d0/pi,eht1
+
           call GETVLY(ylat1,elon1,vx,vy,vz,vn,ve,vu,vopt,210)
-c         write (*,*) vx,vy,vz,vn,ve,vu
+
           if (vopt .eq. '0') then
             call PREDV(ylat1,ylon1,eht1,date1,iopt1,jregn,vn,ve,vu)
-c           write (*,*) jregn,vn,ve,vu
+
             if (jregn .eq. 0) then
               write(luout, 200)
   200         format(/' ****************************************'/
@@ -3077,6 +2934,12 @@ c         write (*,*) "Passed TOXYZ"
           xt = x2
           yt = y2
           zt = z2
+          
+          write(*,*)
+          write(*,*) "x, y, z:    ", x, y, z
+          write(*,*) "xt, yt, zt: ", xt, yt, zt
+          write(*,*)
+          
           if(.not.(FRMXYZ(xt,yt,zt,ylatt,elont,ehtnew))) STOP 666
           ylont = -elont
           if(ylont .lt. 0.0d0) ylont = ylont + twopi
@@ -3092,7 +2955,7 @@ c         write (*,*) ylont*180.d0/pi,ylatt*180.d0/pi,ehtnew
         if (ios /= 0) goto 601
         if(answer .eq. 'Y' .or. answer .eq. 'y') go to 180
         close (i2, status = 'keep')
-      elseif (option .eq. '2') then     !Blue book input and output
+      elseif (option .eq. '2') then     !Bluebook input and output
          vxsave = 0.d0
          vysave = 0.d0
          vzsave = 0.d0
@@ -3101,12 +2964,12 @@ c         write (*,*) ylont*180.d0/pi,ylatt*180.d0/pi,ehtnew
          vusave = 0.d0
          write(luout, 300)
   300    format(/ 
-     1   ' Enter name of the blue-book file:  ')
+     1   ' Enter name of the Bluebook file:  ')
          read(luin, '(a)',err=603,iostat=ios) namebb
          if (ios /= 0) goto 603
          open (i1, file = namebb, status = 'old')
 
-*** Obtaining the ellipsoid heights from the blue book file
+*** Obtaining the ellipsoid heights from the Bluebook file
 
          do i = 1, nbbdim
            ht(i) = 0.d0
@@ -3159,7 +3022,7 @@ C  write some comments in the transformed files
  1312    FORMAT(' ***CAUTION: Coordinates in this file have been ',
      *   'updated to ',I2,'-',I2.2,'-',I4, '=(',F8.3,') ***'/)
 
-*** Reread blue book file to get latitudes and longitudes
+*** Reread Bluebook file to get latitudes and longitudes
 *** and to perform transformations
 *** and to write transformed lat and lon to the *80* records of the output bfile
 *** and to write transformed ellip. h to the *86* records of the output bfile
@@ -3328,7 +3191,6 @@ C  write some comments in the transformed files
          call TOXYZ(ylat, elon, eht, x, y, z)
 
 C  Modified in 09/15/2014 by JS to accommodate the IERS 96-97 trans. par.
-
          if (Is_inp_NAD83 .or. Is_out_NAD83) then
            call TOIT94 (x,y,z,x1,y1,z1,date1,iopt1)
            call FRIT94 (x1,y1,z1,x2,y2,z2,date1,iopt2)
@@ -3358,7 +3220,6 @@ C  End changes
                vusave = vu
 
 C  Modified on 09/15/2014 by JS to accomodate the IERS trans. par.
-
                if (Is_inp_NAD83 .or. Is_out_NAD83) then
                  call VTRANF(x,y,z,vx,vy,vz,iopt1,iopt2)
                else
@@ -3420,7 +3281,6 @@ C  write some comments in the transformed files
          if (ylon .lt. 0.d0) ylon = ylon + twopi
 
 C  Modified in 09/15/2014 by JS to accommodate the IERS 96-97 trans. par.
-
          if (Is_inp_NAD83 .or. Is_out_NAD83) then
            call TOIT94 (x,y,z,x1,y1,z1,date1,iopt1)
            call FRIT94 (x1,y1,z1,x2,y2,z2,date1,iopt2)
@@ -3451,7 +3311,6 @@ C  End changes
              write (*,*) vx,vy,vz
 
 C  Modified on 09/15/2014 by JS to accomodate the IERS trans. par.
-
              if (Is_inp_NAD83 .or. Is_out_NAD83) then
                call VTRANF(x,y,z,vx,vy,vz,iopt1,iopt2)
              else
@@ -3513,7 +3372,6 @@ c        write (*,*) Vx,Vy,Vz
          if (ylon .lt. 0.d0) ylon = ylon + twopi
 
 C  Modified in 09/15/2014 by JS to accommodate the IERS 96-97 trans. par.
-
          if (Is_inp_NAD83 .or. Is_out_NAD83) then
            call TOIT94 (x,y,z,x1,y1,z1,date1,iopt1)
            call FRIT94 (x1,y1,z1,x2,y2,z2,date1,iopt2)
@@ -3528,6 +3386,7 @@ C  End changes on 09/15/2014
            if(.not.FRMXYZ(x2,y2,z2,ylat1,elon1,eht1)) STOP 666
            ylon1 = -elon1
            if (ylon1 .lt. 0.d0) ylon1 = ylon1 + twopi
+           
 c          call PREDV (ylat1,ylon1,eht1,date1,iopt1,jregn,vn,ve,vu)
 c          if (jregn .eq. 0) then
 c            write(i2, 330) name24
@@ -3545,7 +3404,6 @@ c            call TOVXYZ(ylat1,elon1,vn,ve,vu,vx,vy,vz)
 c            write (*,*) vn,ve,vu
 
 C  Modified on 09/15/2014 by JS to accomodate the IERS trans. par.
-
              if (Is_inp_NAD83 .or. Is_out_NAD83) then
                call VTRANF(x,y,z,vx,vy,vz,iopt1,iopt2)
              else
@@ -3707,8 +3565,9 @@ C  Important note:
 C  The parameters in common block tranpa are computed using the IGS convention ITRF96 <> ITRF97.
 C  The parameters in common block tranpa1 are computed using the IERS convention ITRF96 = ITRF97.
 C  The latter parameters were added to HTDP in 09/2014. They will be used to transform between
-C  ITRF systems. They will not be used if the transformation involves NAD83 or WGS84 (original/transit).
-C  However, the NAD 83 Pacific frames use the IERS convention ITRF96 = ITRF97.
+C  ITRF systems. They will not be used if the transformation involves NAD83(2011).
+C  However, the NAD 83 Pacific and Mariana frames use the IERS convention ITRF96 = ITRF97.
+C  Removed equivalence between NAD83(2011)and WGS84 original (Transit) in v3.4.0.
 
 
       implicit double precision (a-h, o-z)
@@ -3730,109 +3589,111 @@ C  However, the NAD 83 Pacific frames use the IERS convention ITRF96 = ITRF97.
 C  Parameters computed with the IGS convention ITRF96 <> ITRF97
 
 *** From ITRF94 to NAD 83
-      tx(1) = 0.9910d0        
-      ty(1) = -1.9072d0      
-      tz(1) = -0.5129d0      
-      dtx(1) = 0.d0        
-      dty(1) = 0.d0       
-      dtz(1) = 0.d0      
-      rx(1) = 1.25033d-7
-      ry(1) = 0.46785d-7
-      rz(1) = 0.56529d-7
-      drx(1) = 0.00258d-7
-      dry(1) = -0.03599d-7
-      drz(1) = -0.00153d-7
-      scale(1) = 0.d0
+*** In v3.4.0, changed rotations from radians to mas to make consistent
+*** with published parameters.
+      tx(1) =     0.9910d0        
+      ty(1) =    -1.9072d0      
+      tz(1) =    -0.5129d0      
+      dtx(1) =    0.d0        
+      dty(1) =    0.d0       
+      dtz(1) =    0.d0      
+      rx(1) =     0.02579d0 / rhosec     !Previous  1.25033d-7 rad (prior to v3.4.0)
+      ry(1) =     0.00965d0 / rhosec     !Previous  0.46785d-7 rad (prior to v3.4.0)
+      rz(1) =     0.01166d0 / rhosec     !Previous  0.56529d-7 rad (prior to v3.4.0)
+      drx(1) =    0.0000532d0 / rhosec   !Previous  0.00258d-7 rad (prior to v3.4.0)
+      dry(1) =   -0.0007423d0 / rhosec   !Previous -0.03599d-7 rad (prior to v3.4.0)
+      drz(1) =   -0.0000316d0 / rhosec   !Previous -0.00153d-7 rad (prior to v3.4.0)
+      scale(1) =  0.d0
       dscale(1) = 0.0d0
       refepc(1) = 1997.0d0
 
 *** From ITRF94 to ITRF88
 ***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
-      tx(2) = 0.018d0
-      ty(2) = 0.000d0
-      tz(2) = -0.092d0
-      dtx(2) = 0.0d0    
-      dty(2) = 0.0d0
-      dtz(2) = 0.0d0
-      rx(2) = -0.0001d0 / rhosec
-      ry(2) = 0.0d0                 
-      rz(2) = 0.0d0 
-      drx(2) = 0.0d0                  
-      dry(2) = 0.0d0              
-      drz(2) = 0.0d0                   
-      scale(2) = 0.749d-8    !Previous scale = 0.74d-8 (prior to v3.3.0)
+      tx(2) =     0.018d0
+      ty(2) =     0.000d0
+      tz(2) =    -0.092d0
+      dtx(2) =    0.0d0    
+      dty(2) =    0.0d0
+      dtz(2) =    0.0d0
+      rx(2) =    -0.0001d0 / rhosec
+      ry(2) =     0.0d0                 
+      rz(2) =     0.0d0 
+      drx(2) =    0.0d0                  
+      dry(2) =    0.0d0              
+      drz(2) =    0.0d0                   
+      scale(2) =  0.749d-8    !Previous 0.74d-8 (prior to v3.3.0)
       dscale(2) = 0.0d0
       refepc(2) = 1988.0d0
 
 *** From ITRF94 to ITRF89
 ***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
-      tx(3) = 0.023d0
-      ty(3) = 0.036d0
-      tz(3) = -0.068d0
-      dtx(3) = 0.0d0    
-      dty(3) = 0.0d0
-      dtz(3) = 0.0d0
-      rx(3) = 0.0d0
-      ry(3) = 0.0d0                 
-      rz(3) = 0.0d0 
-      drx(3) = 0.0d0                  
-      dry(3) = 0.0d0              
-      drz(3) = 0.0d0                   
-      scale(3) = 0.439d-8    !Previous scale = 0.43d-8 (prior to v3.3.0)
+      tx(3) =     0.023d0
+      ty(3) =     0.036d0
+      tz(3) =    -0.068d0
+      dtx(3) =    0.0d0    
+      dty(3) =    0.0d0
+      dtz(3) =    0.0d0
+      rx(3) =     0.0d0
+      ry(3) =     0.0d0                 
+      rz(3) =     0.0d0 
+      drx(3) =    0.0d0                  
+      dry(3) =    0.0d0              
+      drz(3) =    0.0d0                   
+      scale(3) =  0.439d-8    !Previous 0.43d-8 (prior to v3.3.0)
       dscale(3) = 0.0d0
       refepc(3) = 1988.0d0
 
 *** From ITRF94 to ITRF90
 ***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
-      tx(4) = 0.018d0
-      ty(4) = 0.012d0
-      tz(4) = -0.030d0
-      dtx(4) = 0.0d0    
-      dty(4) = 0.0d0
-      dtz(4) = 0.0d0
-      rx(4) = 0.0d0
-      ry(4) = 0.0d0                 
-      rz(4) = 0.0d0 
-      drx(4) = 0.0d0                  
-      dry(4) = 0.0d0              
-      drz(4) = 0.0d0                   
-      scale(4) = 0.099d-8    !Previous scale = 0.09d-8 (prior to v3.3.0)
+      tx(4) =     0.018d0
+      ty(4) =     0.012d0
+      tz(4) =    -0.030d0
+      dtx(4) =    0.0d0    
+      dty(4) =    0.0d0
+      dtz(4) =    0.0d0
+      rx(4) =     0.0d0
+      ry(4) =     0.0d0                 
+      rz(4) =     0.0d0 
+      drx(4) =    0.0d0                  
+      dry(4) =    0.0d0              
+      drz(4) =    0.0d0                   
+      scale(4) =  0.099d-8    !Previous 0.09d-8 (prior to v3.3.0)
       dscale(4) = 0.0d0
       refepc(4) = 1988.0d0
 
 *** From ITRF94 to ITRF91
 ***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
-      tx(5) = 0.020d0
-      ty(5) = 0.016d0
-      tz(5) = -0.014d0
-      dtx(5) = 0.0d0    
-      dty(5) = 0.0d0
-      dtz(5) = 0.0d0
-      rx(5) = 0.0d0
-      ry(5) = 0.0d0                 
-      rz(5) = 0.0d0 
-      drx(5) = 0.0d0                  
-      dry(5) = 0.0d0              
-      drz(5) = 0.0d0                   
-      scale(5) = 0.069d-8    !Previous scale = 0.06d-8 (prior to v3.3.0)
+      tx(5) =     0.020d0
+      ty(5) =     0.016d0
+      tz(5) =    -0.014d0
+      dtx(5) =    0.0d0    
+      dty(5) =    0.0d0
+      dtz(5) =    0.0d0
+      rx(5) =     0.0d0
+      ry(5) =     0.0d0                 
+      rz(5) =     0.0d0 
+      drx(5) =    0.0d0                  
+      dry(5) =    0.0d0              
+      drz(5) =    0.0d0                   
+      scale(5) =  0.069d-8    !Previous 0.06d-8 (prior to v3.3.0)
       dscale(5) = 0.0d0
       refepc(5) = 1988.0d0
 
 *** From ITRF94 to ITRF92
 ***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
-      tx(6) = 0.008d0
-      ty(6) = 0.002d0
-      tz(6) = -0.008d0
-      dtx(6) = 0.0d0    
-      dty(6) = 0.0d0
-      dtz(6) = 0.0d0
-      rx(6) = 0.0d0
-      ry(6) = 0.0d0                 
-      rz(6) = 0.0d0 
-      drx(6) = 0.0d0                  
-      dry(6) = 0.0d0              
-      drz(6) = 0.0d0                   
-      scale(6) = -0.071d-8   !Previous scale = -0.08d-8 (prior to v3.3.0)
+      tx(6) =     0.008d0
+      ty(6) =     0.002d0
+      tz(6) =    -0.008d0
+      dtx(6) =    0.0d0    
+      dty(6) =    0.0d0
+      dtz(6) =    0.0d0
+      rx(6) =     0.0d0
+      ry(6) =     0.0d0                 
+      rz(6) =     0.0d0 
+      drx(6) =    0.0d0                  
+      dry(6) =    0.0d0              
+      drz(6) =    0.0d0                   
+      scale(6) = -0.071d-8    !Previous -0.08d-8 (prior to v3.3.0)
       dscale(6) = 0.0d0
       refepc(6) = 1988.0d0
 
@@ -3840,156 +3701,177 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
 ***   Update scale in v3.3.0 to match current value published by IERS 
 ***   (https://itrf.ign.fr/trans_para.php). Supersedes scale in file 
 ***   "ITRF94.TX" at ftp://itrf-ftp.ign.fr/pub/itrf/itrf94/.  
-***   Previous link under “Other transformation parameters” at 
-***   https://itrf.ign.fr/ITRF_solutions/94/ITRF94.php?page=2 currently 
-***   does not work (as of 1/15/2021).
 ***   This update also affects the scale for transformations from ITRF94 
-***   to all earlier ITRFs.
+***   to all earlier ITRFs in HTDP.
 ***   Note that this transformation is not published in IERS TN20 (1996).
-      tx(7) = 0.006d0
-      ty(7) = -0.005d0
-      tz(7) = -0.015d0
-      dtx(7) = -0.0029d0
-      dty(7) = 0.0004d0
-      dtz(7) = 0.0008d0
-      rx(7) = 0.00039d0 / rhosec
-      ry(7) = -0.00080d0 / rhosec
-      rz(7) = 0.00096d0 / rhosec
-      drx(7) = 0.00011d0 / rhosec
-      dry(7) = 0.00019d0 / rhosec
-      drz(7) = -0.00005d0 / rhosec
-      scale(7) = 0.049d-8    !Previous scale = 0.040d-8 (prior to v3.3.0)
+      tx(7) =     0.006d0
+      ty(7) =    -0.005d0
+      tz(7) =    -0.015d0
+      dtx(7) =   -0.0029d0
+      dty(7) =    0.0004d0
+      dtz(7) =    0.0008d0
+      rx(7) =     0.00039d0 / rhosec
+      ry(7) =    -0.00080d0 / rhosec
+      rz(7) =     0.00096d0 / rhosec
+      drx(7) =    0.00011d0 / rhosec
+      dry(7) =    0.00019d0 / rhosec
+      drz(7) =   -0.00005d0 / rhosec
+      scale(7) =  0.049d-8    !Previous 0.040d-8 (prior to v3.3.0)
       dscale(7) = 0.0d0
       refepc(7) = 1988.0d0
 
 *** From ITRF94 to ITRF96
-      tx(8) = 0.d0
-      ty(8) = 0.d0
-      tz(8) = 0.d0
-      dtx(8) = 0.d0
-      dty(8) = 0.d0
-      dtz(8) = 0.d0
-      rx(8) = 0.d0
-      ry(8) = 0.d0
-      rz(8) = 0.d0
-      drx(8) = 0.d0
-      dry(8) = 0.d0
-      drz(8) = 0.d0
-      scale(8) = 0.d0
+      tx(8) =     0.0d0
+      ty(8) =     0.0d0
+      tz(8) =     0.0d0
+      dtx(8) =    0.0d0
+      dty(8) =    0.0d0
+      dtz(8) =    0.0d0
+      rx(8) =     0.0d0
+      ry(8) =     0.0d0
+      rz(8) =     0.0d0
+      drx(8) =    0.0d0
+      dry(8) =    0.0d0
+      drz(8) =    0.0d0
+      scale(8) =  0.0d0
       dscale(8) = 0.0d0
-      refepc(8) = 1996.0d0
+      refepc(8) = 1997.0d0    !Previous 1996.0d0 (prior to v3.4.0)
 
-*** From ITRF94 to ITRF97 (also IGS97), based on IGS adopted values
+*** From ITRF94 to ITRF97, based on IGS adopted values
 *** According to IGS:  ITRF97 <> ITRF96 = ITRF94
-      tx(9) = 0.00207d0
-      ty(9) = 0.00021d0
-      tz(9) = -0.00995d0
-      dtx(9) = -0.00069d0
-      dty(9) = 0.00010d0
-      dtz(9) = -0.00186d0
-      rx(9) = -0.00012467d0 / rhosec
-      ry(9) = 0.00022355d0 / rhosec
-      rz(9) = 0.00006065d0 / rhosec
-      drx(9) = -0.00001347d0 / rhosec
-      dry(9) = 0.00001514d0 / rhosec
-      drz(9) = -0.00000027d0 / rhosec
-      scale(9) = 0.93496d-9
+      tx(9) =     0.00207d0
+      ty(9) =     0.00021d0
+      tz(9) =    -0.00995d0
+      dtx(9) =   -0.00069d0
+      dty(9) =    0.00010d0
+      dtz(9) =   -0.00186d0
+      rx(9) =    -0.00012467d0 / rhosec
+      ry(9) =     0.00022355d0 / rhosec
+      rz(9) =     0.00006065d0 / rhosec
+      drx(9) =   -0.00001347d0 / rhosec
+      dry(9) =    0.00001514d0 / rhosec
+      drz(9) =   -0.00000027d0 / rhosec
+      scale(9) =  0.93496d-9
       dscale(9) = 0.19201d-9
       refepc(9) = 1997.0d0
 
-*** From ITRF94 to WGS 72 (composition of ITRF94 -> NAD_83 -> WGS_72)
-      tx(10) = 0.9910d0
-      ty(10) = -1.9072d0
-      tz(10) = -0.5129d0 - 4.5d0
-      dtx(10) = 0.d0
-      dty(10) = 0.d0
-      dtz(10) = 0.d0
-      rx(10) = 1.25033d-7
-      ry(10) = 0.46785d-7
-      rz(10) = 0.56529d-7 + 26.85868d-7
-      drx(10) = 0.00258d-7
-      dry(10) = -0.03599d-7
-      drz(10) = -0.00153d-7
-      scale(10) = 0.d0 - 0.2263d-6
-      dscale(10) = 0.0d0
-      refepc(10) = 1997.0d0
+*** From ITRF94 to WGS72 (composition of ITRF94 -> NAD_83 -> WGS72)
+*** Remove WGS72 and replace with new WGS84 original (Transit) in v3.4.0
+c      tx(10) = 0.9910d0
+c      ty(10) = -1.9072d0
+c      tz(10) = -0.5129d0 - 4.5d0
+c      dtx(10) = 0.d0
+c      dty(10) = 0.d0
+c      dtz(10) = 0.d0
+c      rx(10) = 1.25033d-7
+c      ry(10) = 0.46785d-7
+c      rz(10) = 0.56529d-7 + 26.85868d-7
+c      drx(10) = 0.00258d-7
+c      dry(10) = -0.03599d-7
+c      drz(10) = -0.00153d-7
+c      scale(10) = 0.d0 - 0.2263d-6
+c      dscale(10) = 0.0d0
+c      refepc(10) = 1997.0d0
+      
+*** From ITRF94 to WGS84 original (Transit), added in v3.4.0.
+*** Based on IERS-published transformation from ITRF90 to WGS84 (Transit)
+*** at ftp://itrf-ftp.ign.fr/pub/itrf/ in file "WGS84.TXT".
+      tx(10) =      0.078d0
+      ty(10) =     -0.505d0
+      tz(10) =     -0.253d0
+      dtx(10) =     0.0d0
+      dty(10) =     0.0d0
+      dtz(10) =     0.0d0
+      rx(10) =     -0.0183d0 / rhosec
+      ry(10) =      0.0003d0 / rhosec
+      rz(10) =     -0.0070d0 / rhosec
+      drx(10) =     0.0d0
+      dry(10) =     0.0d0
+      drz(10) =     0.0d0
+      scale(10) = -10.010d-9
+      dscale(10) =  0.0d0
+      refepc(10) =  1997.0d0
 
 *** From ITRF94 to ITRF2000 (also IGS00 and IGb00)
 *** assumes that ITRF94 = ITRF96 and
 *** uses IGS values for ITRF96 -> ITRF97
 *** and IERS values for ITRF97 -> ITRF2000
-      tx(11) = -0.00463d0
-      ty(11) = -0.00589d0
-      tz(11) = 0.00855d0
-      dtx(11) = -0.00069d0
-      dty(11) = 0.00070d0
-      dtz(11) = -0.00046d0
-      rx(11) = -0.00012467d0 / rhosec
-      ry(11) = 0.00022355d0 / rhosec
-      rz(11) = 0.00006065d0 / rhosec
-      drx(11) = -0.00001347d0 / rhosec
-      dry(11) = 0.00001514d0 / rhosec
-      drz(11) = 0.00001973d0 / rhosec
-      scale(11) = -0.61504d-9
-      dscale(11) = 0.18201d-9
-      refepc(11) = 1997.0d0
+      tx(11)     = -0.00463d0
+      ty(11)     = -0.00589d0
+      tz(11)     =  0.00855d0
+      dtx(11)    = -0.00069d0
+      dty(11)    =  0.00070d0
+      dtz(11)    = -0.00046d0
+      rx(11)     = -0.00012467d0 / rhosec
+      ry(11)     =  0.00022355d0 / rhosec
+      rz(11)     =  0.00006065d0 / rhosec
+      drx(11)    = -0.00001347d0 / rhosec
+      dry(11)    =  0.00001514d0 / rhosec
+      drz(11)    =  0.00001973d0 / rhosec
+      scale(11)  = -0.61504d-9
+      dscale(11) =  0.18201d-9
+      refepc(11) =  1997.0d0
 
 *** From ITRF94 to PACP00
-*** use PA/ITRF2000 rotation rates from Beavan et al., (2002)
-      tx(12) = 0.9056d0
-      ty(12) = -2.0200d0
-      tz(12) = -0.5516d0
-      dtx(12) = -0.00069d0
-      dty(12) = 0.00070d0
-      dtz(12) = -0.00046d0
-      rx(12) = 0.027616d0 / rhosec
-      ry(12) = 0.013692d0 / rhosec
-      rz(12) = 0.002773d0 / rhosec
-      drx(12) = -0.000397d0 / rhosec
-      dry(12) = 0.001022d0 / rhosec
-      drz(12) = -0.002166d0 / rhosec
-      scale(12) = -0.61504d-9
-      dscale(12) = 0.18201d-9
-      refepc(12) = 1997.0d0
+*** use PA/ITRF2000 rotation rates from Beavan et al. (2002)
+*** In v3.4.0, edited parameters to make consistent with parameters used
+*** for ITRF94 to ITRF97 transformation which differed due to rounding.
+      tx(12)     =  0.90557d0               !Previous  0.9056d0 (prior to v3.4.0)
+      ty(12)     = -2.01999d0               !Previous -2.0200d0 (prior to v3.4.0)
+      tz(12)     = -0.55165d0               !Previous -0.5516d0 (prior to v3.4.0)
+      dtx(12)    = -0.00069d0
+      dty(12)    =  0.00070d0
+      dtz(12)    = -0.00046d0
+      rx(12)     =  0.02761633d0 / rhosec   !Previous  0.027616d0 (prior to v3.4.0)
+      ry(12)     =  0.01369255d0 / rhosec   !Previous  0.013692d0 (prior to v3.4.0)
+      rz(12)     =  0.00277265d0 / rhosec   !Previous  0.002773d0 (prior to v3.4.0)
+      drx(12)    = -0.00039747d0 / rhosec   !Previous -0.000397d0 (prior to v3.4.0)
+      dry(12)    =  0.00102214d0 / rhosec   !Previous  0.001022d0 (prior to v3.4.0)
+      drz(12)    = -0.00216627d0 / rhosec   !Previous -0.002166d0 (prior to v3.4.0)
+      scale(12)  = -0.61504d-9
+      dscale(12) =  0.18201d-9
+      refepc(12) =  1997.0d0
 
 *** From ITRF94 to MARP00
 *** Use velocity of GUAM
-      tx(13) = 0.9056d0
-      ty(13) = -2.0200d0
-      tz(13) = -0.5516d0
-      dtx(13) = -0.00069d0
-      dty(13) = 0.00070d0
-      dtz(13) = -0.00046d0
-      rx(13) = 0.028847d0 / rhosec
-      ry(13) = 0.010644d0 / rhosec
-      rz(13) = 0.008989d0 / rhosec
-      drx(13) = -0.000033d0 / rhosec
-      dry(13) =  0.000120d0 / rhosec
-      drz(13) = -0.000327d0 / rhosec
-      scale(13) = -0.61504d-9
-      dscale(13) = 0.18201d-9
-      refepc(13) = 1997.00d0
+*** In v3.4.0, edited parameters to make consistent with parameters used
+*** for ITRF94 to ITRF97 transformation which differed due to rounding.
+      tx(13)     =  0.90557d0               !Previous  0.9056d0 (prior to v3.4.0)
+      ty(13)     = -2.01999d0               !Previous -2.0200d0 (prior to v3.4.0)
+      tz(13)     = -0.55165d0               !Previous -0.5516d0 (prior to v3.4.0)
+      dtx(13)    = -0.00069d0
+      dty(13)    =  0.00070d0
+      dtz(13)    = -0.00046d0
+      rx(13)     =  0.02884633d0 / rhosec   !Previous  0.028847d0 (prior to v3.4.0)
+      ry(13)     =  0.01064355d0 / rhosec   !Previous  0.010644d0 (prior to v3.4.0)
+      rz(13)     =  0.00898865d0 / rhosec   !Previous  0.008989d0 (prior to v3.4.0)
+      drx(13)    = -0.00003347d0 / rhosec   !Previous -0.000033d0 (prior to v3.4.0)
+      dry(13)    =  0.00012014d0 / rhosec   !Previous  0.000120d0 (prior to v3.4.0)
+      drz(13)    = -0.00032727d0 / rhosec   !Previous -0.000327d0 (prior to v3.4.0)
+      scale(13)  = -0.61504d-9
+      dscale(13) =  0.18201d-9
+      refepc(13) =  1997.00d0
 
 *** From ITRF94 to ITRF2005 (also IGS05)
 *** assumes that ITRF94 = ITRF96
 *** uses IGS values for ITRF96 -> ITRF97
 *** uses IERS values for ITRF97 -> ITRF2000
 *** uses IERS values for ITRF2000 -> ITRF2005
-      tx(14) = -0.00533d0
-      ty(14) = -0.00479d0
-      tz(14) =  0.00895d0
-      dtx(14) = -0.00049d0
-      dty(14) =  0.00060d0
-      dtz(14) =  0.00134d0
-      rx(14) = -0.00012467d0 / rhosec
-      ry(14) = 0.00022355d0 / rhosec
-      rz(14) = 0.00006065d0 / rhosec
-      drx(14) = -0.00001347d0 / rhosec
-      dry(14) = 0.00001514d0 / rhosec
-      drz(14) = 0.00001973d0 / rhosec
-      scale(14) = -0.77504d-9
-      dscale(14) = 0.10201d-9
-      refepc(14) = 1997.0d0
+      tx(14)     = -0.00533d0
+      ty(14)     = -0.00479d0
+      tz(14)     =  0.00895d0
+      dtx(14)    = -0.00049d0
+      dty(14)    =  0.00060d0
+      dtz(14)    =  0.00134d0
+      rx(14)     = -0.00012467d0 / rhosec
+      ry(14)     =  0.00022355d0 / rhosec
+      rz(14)     =  0.00006065d0 / rhosec
+      drx(14)    = -0.00001347d0 / rhosec
+      dry(14)    =  0.00001514d0 / rhosec
+      drz(14)    =  0.00001973d0 / rhosec
+      scale(14)  = -0.77504d-9
+      dscale(14) =  0.10201d-9
+      refepc(14) =  1997.0d0
 
 *** From ITRF94 to ITRF2008 (also IGS08 and IGb08)
 *** assumes that ITRF94 = ITRF96
@@ -3997,22 +3879,21 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
 *** uses IERS values for ITRF97 -> ITRF2000
 *** uses IERS values for ITRF2000-> ITRF2005
 *** uses IERS values for ITRF2005 -> ITRF2008
-
-      tx(15) = -0.00243d0
-      ty(15) = -0.00389d0
-      tz(15) =  0.01365d0
-      dtx(15) = -0.00079d0
-      dty(15) =  0.00060d0
-      dtz(15) =  0.00134d0
-      rx(15)  = -0.00012467d0 / rhosec
-      ry(15)  =  0.00022355d0 / rhosec
-      rz(15)  =  0.00006065d0 / rhosec
-      drx(15) = -0.00001347d0 / rhosec
-      dry(15) =  0.00001514d0 / rhosec
-      drz(15) =  0.00001973d0 / rhosec
-      scale(15) = -1.71504d-9
-      dscale(15) = 0.10201d-9
-      refepc(15) = 1997.0d0
+      tx(15)     = -0.00243d0
+      ty(15)     = -0.00389d0
+      tz(15)     =  0.01365d0
+      dtx(15)    = -0.00079d0
+      dty(15)    =  0.00060d0
+      dtz(15)    =  0.00134d0
+      rx(15)     = -0.00012467d0 / rhosec
+      ry(15)     =  0.00022355d0 / rhosec
+      rz(15)     =  0.00006065d0 / rhosec
+      drx(15)    = -0.00001347d0 / rhosec
+      dry(15)    =  0.00001514d0 / rhosec
+      drz(15)    =  0.00001973d0 / rhosec
+      scale(15)  = -1.71504d-9
+      dscale(15) =  0.10201d-9
+      refepc(15) =  1997.0d0
 
 *** From ITRF94 to ITRF2014 (also IGS14 and IGb14)
 *** assumes that ITRF94 = ITRF96
@@ -4021,7 +3902,6 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
 *** uses IERS values for ITRF2000-> ITRF2005
 *** uses IERS values for ITRF2005 -> ITRF2008
 *** uses IERS values for ITRF2008 -> ITRF2014
-
       tx(16)     = -0.01430d0
       ty(16)     =  0.00201d0
       tz(16)     =  0.02867d0
@@ -4042,109 +3922,111 @@ C*******************************************************************************
 C  Parameters computed with the IERS convention ITRF96 = ITRF97
 
 *** From ITRF94 to NAD 83
-      tx1(1) = 0.9910d0        
-      ty1(1) = -1.9072d0      
-      tz1(1) = -0.5129d0      
-      dtx1(1) = 0.d0        
-      dty1(1) = 0.d0       
-      dtz1(1) = 0.d0      
-      rx1(1) = 1.25033d-7
-      ry1(1) = 0.46785d-7
-      rz1(1) = 0.56529d-7
-      drx1(1) = 0.00258d-7
-      dry1(1) = -0.03599d-7
-      drz1(1) = -0.00153d-7
-      scale(1) = 0.d0
+*** In v3.4.0, changed rotations from radians to mas to make consistent
+*** with published parameters.
+      tx1(1) =     0.9910d0        
+      ty1(1) =    -1.9072d0      
+      tz1(1) =    -0.5129d0      
+      dtx1(1) =    0.d0        
+      dty1(1) =    0.d0       
+      dtz1(1) =    0.d0      
+      rx1(1) =     0.02579d0 / rhosec     !Previous  1.25033d-7 rad (prior to v3.4.0)
+      ry1(1) =     0.00965d0 / rhosec     !Previous  0.46785d-7 rad (prior to v3.4.0)
+      rz1(1) =     0.01166d0 / rhosec     !Previous  0.56529d-7 rad (prior to v3.4.0)
+      drx1(1) =    0.0000532d0 / rhosec   !Previous  0.00258d-7 rad (prior to v3.4.0)
+      dry1(1) =   -0.0007423d0 / rhosec   !Previous -0.03599d-7 rad (prior to v3.4.0)
+      drz1(1) =   -0.0000316d0 / rhosec   !Previous -0.00153d-7 rad (prior to v3.4.0)
+      scale1(1) =  0.d0
       dscale1(1) = 0.0d0
       refepc1(1) = 1997.0d0
 
 *** From ITRF94 to ITRF88
 ***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
-      tx1(2) = 0.018d0
-      ty1(2) = 0.000d0
-      tz1(2) = -0.092d0
-      dtx1(2) = 0.0d0    
-      dty1(2) = 0.0d0
-      dtz1(2) = 0.0d0
-      rx1(2) = -0.0001d0 / rhosec
-      ry1(2) = 0.0d0                 
-      rz1(2) = 0.0d0 
-      drx1(2) = 0.0d0                  
-      dry1(2) = 0.0d0              
-      drz1(2) = 0.0d0                   
-      scale1(2) = 0.749d-8   !Previous scale = 0.74d-8 (prior to v3.3.0)
+      tx1(2) =     0.018d0
+      ty1(2) =     0.000d0
+      tz1(2) =    -0.092d0
+      dtx1(2) =    0.0d0    
+      dty1(2) =    0.0d0
+      dtz1(2) =    0.0d0
+      rx1(2) =    -0.0001d0 / rhosec
+      ry1(2) =     0.0d0                 
+      rz1(2) =     0.0d0 
+      drx1(2) =    0.0d0                  
+      dry1(2) =    0.0d0              
+      drz1(2) =    0.0d0                   
+      scale1(2) =  0.749d-8    !Previous 0.74d-8 (prior to v3.3.0)
       dscale1(2) = 0.0d0
       refepc1(2) = 1988.0d0
 
 *** From ITRF94 to ITRF89
 ***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
-      tx1(3) = 0.023d0
-      ty1(3) = 0.036d0
-      tz1(3) = -0.068d0
-      dtx1(3) = 0.0d0    
-      dty1(3) = 0.0d0
-      dtz1(3) = 0.0d0
-      rx1(3) = 0.0d0
-      ry1(3) = 0.0d0                 
-      rz1(3) = 0.0d0 
-      drx1(3) = 0.0d0                  
-      dry1(3) = 0.0d0              
-      drz1(3) = 0.0d0                   
-      scale1(3) = 0.439d-8   !Previous scale = 0.43d-8 (prior to v3.3.0)
+      tx1(3) =     0.023d0
+      ty1(3) =     0.036d0
+      tz1(3) =    -0.068d0
+      dtx1(3) =    0.0d0    
+      dty1(3) =    0.0d0
+      dtz1(3) =    0.0d0
+      rx1(3) =     0.0d0
+      ry1(3) =     0.0d0                 
+      rz1(3) =     0.0d0 
+      drx1(3) =    0.0d0                  
+      dry1(3) =    0.0d0              
+      drz1(3) =    0.0d0                   
+      scale1(3) =  0.439d-8    !Previous 0.43d-8 (prior to v3.3.0)
       dscale1(3) = 0.0d0
       refepc1(3) = 1988.0d0
 
 *** From ITRF94 to ITRF90
 ***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
-      tx1(4) = 0.018d0
-      ty1(4) = 0.012d0
-      tz1(4) = -0.030d0
-      dtx1(4) = 0.0d0    
-      dty1(4) = 0.0d0
-      dtz1(4) = 0.0d0
-      rx1(4) = 0.0d0
-      ry1(4) = 0.0d0                 
-      rz1(4) = 0.0d0 
-      drx1(4) = 0.0d0                  
-      dry1(4) = 0.0d0              
-      drz1(4) = 0.0d0                   
-      scale1(4) = 0.099d-8   !Previous scale = 0.09d-8 (prior to v3.3.0)
+      tx1(4) =     0.018d0
+      ty1(4) =     0.012d0
+      tz1(4) =    -0.030d0
+      dtx1(4) =    0.0d0    
+      dty1(4) =    0.0d0
+      dtz1(4) =    0.0d0
+      rx1(4) =     0.0d0
+      ry1(4) =     0.0d0                 
+      rz1(4) =     0.0d0 
+      drx1(4) =    0.0d0                  
+      dry1(4) =    0.0d0              
+      drz1(4) =    0.0d0                   
+      scale1(4) =  0.099d-8    !Previous 0.09d-8 (prior to v3.3.0)
       dscale1(4) = 0.0d0
       refepc1(4) = 1988.0d0
 
 *** From ITRF94 to ITRF91
 ***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
-      tx1(5) = 0.020d0
-      ty1(5) = 0.016d0
-      tz1(5) = -0.014d0
-      dtx1(5) = 0.0d0    
-      dty1(5) = 0.0d0
-      dtz1(5) = 0.0d0
-      rx1(5) = 0.0d0
-      ry1(5) = 0.0d0                 
-      rz1(5) = 0.0d0 
-      drx1(5) = 0.0d0                  
-      dry1(5) = 0.0d0              
-      drz1(5) = 0.0d0                   
-      scale1(5) = 0.069d-8   !Previous scale = 0.06d-8 (prior to v3.3.0)
+      tx1(5) =     0.020d0
+      ty1(5) =     0.016d0
+      tz1(5) =    -0.014d0
+      dtx1(5) =    0.0d0    
+      dty1(5) =    0.0d0
+      dtz1(5) =    0.0d0
+      rx1(5) =     0.0d0
+      ry1(5) =     0.0d0                 
+      rz1(5) =     0.0d0 
+      drx1(5) =    0.0d0                  
+      dry1(5) =    0.0d0              
+      drz1(5) =    0.0d0                   
+      scale1(5) =  0.069d-8    !Previous 0.06d-8 (prior to v3.3.0)
       dscale1(5) = 0.0d0
       refepc1(5) = 1988.0d0
 
 *** From ITRF94 to ITRF92
 ***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
-      tx1(6) = 0.008d0
-      ty1(6) = 0.002d0
-      tz1(6) = -0.008d0
-      dtx1(6) = 0.0d0    
-      dty1(6) = 0.0d0
-      dtz1(6) = 0.0d0
-      rx1(6) = 0.0d0
-      ry1(6) = 0.0d0                 
-      rz1(6) = 0.0d0 
-      drx1(6) = 0.0d0                  
-      dry1(6) = 0.0d0              
-      drz1(6) = 0.0d0                   
-      scale1(6) = -0.071d-8  !Previous scale = -0.08d-8 (prior to v3.3.0)
+      tx1(6) =     0.008d0
+      ty1(6) =     0.002d0
+      tz1(6) =    -0.008d0
+      dtx1(6) =    0.0d0    
+      dty1(6) =    0.0d0
+      dtz1(6) =    0.0d0
+      rx1(6) =     0.0d0
+      ry1(6) =     0.0d0                 
+      rz1(6) =     0.0d0 
+      drx1(6) =    0.0d0                  
+      dry1(6) =    0.0d0              
+      drz1(6) =    0.0d0                   
+      scale1(6) = -0.071d-8    !Previous -0.08d-8 (prior to v3.3.0)
       dscale1(6) = 0.0d0
       refepc1(6) = 1988.0d0
 
@@ -4152,11 +4034,8 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
 ***   Update scale in v3.3.0 to match current value published by IERS 
 ***   (https://itrf.ign.fr/trans_para.php). Supersedes scale in file 
 ***   "ITRF94.TX" at ftp://itrf-ftp.ign.fr/pub/itrf/itrf94/.  
-***   Previous link under “Other transformation parameters” at 
-***   https://itrf.ign.fr/ITRF_solutions/94/ITRF94.php?page=2 currently 
-***   does not work (as of 1/15/2021).
 ***   This update also affects the scale for transformations from ITRF94 
-***   to all earlier ITRFs.
+***   to all earlier ITRFs in HTDP.
 ***   Note that this transformation is not published in IERS TN20 (1996).
       tx1(7)     =  0.006d0
       ty1(7)     = -0.005d0
@@ -4170,27 +4049,27 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       drx1(7)    =  0.00011d0 / rhosec
       dry1(7)    =  0.00019d0 / rhosec
       drz1(7)    = -0.00005d0 / rhosec
-      scale1(7)  = 0.049d-8  !Previous scale = 0.04d-8 (prior to v3.3.0)
-      dscale1(7) = 0.0d0
-      refepc1(7) = 1988.0d0
+      scale1(7)  =  0.049d-8    !Previous 0.04d-8 (prior to v3.3.0)
+      dscale1(7) =  0.0d0
+      refepc1(7) =  1988.0d0
 
 *** From ITRF94 to ITRF96
 *** According to IERS:  ITRF97 = ITRF96 = ITRF94
-      tx1(8) = 0.d0
-      ty1(8) = 0.d0
-      tz1(8) = 0.d0
-      dtx1(8) = 0.d0
-      dty1(8) = 0.d0
-      dtz1(8) = 0.d0
-      rx1(8) = 0.d0
-      ry1(8) = 0.d0
-      rz1(8) = 0.d0
-      drx1(8) = 0.d0
-      dry1(8) = 0.d0
-      drz1(8) = 0.d0
-      scale1(8) = 0.d0
+      tx1(8)     = 0.d0
+      ty1(8)     = 0.d0
+      tz1(8)     = 0.d0
+      dtx1(8)    = 0.d0
+      dty1(8)    = 0.d0
+      dtz1(8)    = 0.d0
+      rx1(8)     = 0.d0
+      ry1(8)     = 0.d0
+      rz1(8)     = 0.d0
+      drx1(8)    = 0.d0
+      dry1(8)    = 0.d0
+      drz1(8)    = 0.d0
+      scale1(8)  = 0.d0
       dscale1(8) = 0.0d0
-      refepc1(8) = 1996.0d0
+      refepc1(8) = 1997.0d0    !Previous 1996.0d0 (prior to v3.4.0)
 
 *** From ITRF94 to ITRF97 (also IGS97), based on IERS adopted values
 *** According to IERS:  ITRF97 = ITRF96 = ITRF94
@@ -4200,109 +4079,131 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       dtx1(9)    = 0.0d0
       dty1(9)    = 0.0d0
       dtz1(9)    = 0.0d0
-      rx1(9)     = 0.0d0 
+      rx1(9)     = 0.0d0
       ry1(9)     = 0.0d0
-      rz1(9)     = 0.0d0 
-      drx1(9)    = 0.0d0 
-      dry1(9)    = 0.0d0 
-      drz1(9)    = 0.0d0 
-      scale1(9)  = 0.d0          
-      dscale1(9) = 0.d0          
-      refepc1(9) = 2000.0d0
+      rz1(9)     = 0.0d0
+      drx1(9)    = 0.0d0
+      dry1(9)    = 0.0d0
+      drz1(9)    = 0.0d0
+      scale1(9)  = 0.0d0
+      dscale1(9) = 0.0d0
+      refepc1(9) = 1997.0d0    !Previous 2000.0d0 (prior to v3.4.0)
 
-*** From ITRF94 to WGS 72 (composition of ITRF94 -> NAD_83 -> WGS_72)
-      tx1(10) = 0.9910d0
-      ty1(10) = -1.9072d0
-      tz1(10) = -.5129d0 - 4.5d0
-      dtx1(10) = 0.d0
-      dty1(10) = 0.d0
-      dtz1(10) = 0.d0
-      rx1(10) = 1.25033d-7
-      ry1(10) = 0.46785d-7
-      rz1(10) = 0.56529d-7 + 26.85868d-7
-      drx1(10) = 0.00258d-7
-      dry1(10) = -.03599d-7
-      drz1(10) = -.00153d-7
-      scale1(10) = 0.d0 - 0.2263d-6
-      dscale1(10) = 0.0d0
-      refepc1(10) = 1997.0d0
+*** From ITRF94 to WGS72 (composition of ITRF94 -> NAD_83 -> WGS72)
+*** Remove WGS72 and replace with new WGS84 original (Transit) in v3.4.0
+c      tx1(10) = 0.9910d0
+c      ty1(10) = -1.9072d0
+c      tz1(10) = -0.5129d0 - 4.5d0
+c      dtx1(10) = 0.d0
+c      dty1(10) = 0.d0
+c      dtz1(10) = 0.d0
+c      rx1(10) = 1.25033d-7
+c      ry1(10) = 0.46785d-7
+c      rz1(10) = 0.56529d-7 + 26.85868d-7
+c      drx1(10) = 0.00258d-7
+c      dry1(10) = -0.03599d-7
+c      drz1(10) = -0.00153d-7
+c      scale1(10) =  0.d0 - 0.2263d-6
+c      dscale1(10) = 0.0d0
+c      refepc1(10) = 1997.0d0
+      
+*** From ITRF94 to WGS84 original (Transit), added in v3.4.0.
+*** Based on IERS-published transformation from ITRF90 to WGS84 (Transit)
+*** at ftp://itrf-ftp.ign.fr/pub/itrf/ in file "WGS84.TXT".
+      tx1(10) =      0.078d0
+      ty1(10) =     -0.505d0
+      tz1(10) =     -0.253d0
+      dtx1(10) =     0.0d0
+      dty1(10) =     0.0d0
+      dtz1(10) =     0.0d0
+      rx1(10) =     -0.0183d0 / rhosec
+      ry1(10) =      0.0003d0 / rhosec
+      rz1(10) =     -0.0070d0 / rhosec
+      drx1(10) =     0.0d0
+      dry1(10) =     0.0d0
+      drz1(10) =     0.0d0
+      scale1(10) = -10.010d-9
+      dscale1(10) =  0.0d0
+      refepc1(10) =  1997.0d0
 
 *** From ITRF94 to ITRF2000 (also IGS00 and IGb00)
 *** assumes that         ITRF94 = ITRF96 and
 *** uses IERS convention ITRF96 = ITRF97
 *** and  IERS values for ITRF97 -> ITRF2000
-      tx1(11)     = -0.00670d0
-      ty1(11)     = -0.00430d0
-      tz1(11)     =  0.02270d0
-      dtx1(11)    =  0.00000d0
-      dty1(11)    =  0.00060d0
-      dtz1(11)    =  0.00140d0
-      rx1(11)     =  0.0d0        / rhosec
-      ry1(11)     =  0.0d0        / rhosec
-      rz1(11)     =  0.00006000d0 / rhosec
-      drx1(11)    =  0.0d0        / rhosec
-      dry1(11)    =  0.0d0        / rhosec
-      drz1(11)    =  0.00002000d0 / rhosec
-      scale1(11)  = -1.58000d-9
-      dscale1(11) = -0.01000d-9
-      refepc1(11) = 2000.0d0
+*** Changed epoch to 1997.0 to make consistent with trapa epoch (v3.4.0)
+      tx1(11)     = -0.0067d0
+      ty1(11)     = -0.0061d0             !Previous -0.00430d0 (prior to v3.4.0)
+      tz1(11)     =  0.0185d0             !Previous  0.02270d0 (prior to v3.4.0)
+      dtx1(11)    =  0.0000d0
+      dty1(11)    =  0.0006d0
+      dtz1(11)    =  0.0014d0
+      rx1(11)     =  0.0d0     / rhosec
+      ry1(11)     =  0.0d0     / rhosec
+      rz1(11)     =  0.0d0     / rhosec   !Previous  0.00006000d0 (prior to v3.4.0)
+      drx1(11)    =  0.0d0     / rhosec
+      dry1(11)    =  0.0d0     / rhosec
+      drz1(11)    =  0.00002d0 / rhosec
+      scale1(11)  = -1.55d-9              !Previous -1.58000d-9 (prior to v3.4.0)
+      dscale1(11) = -0.01d-9
+      refepc1(11) =  1997.0d0             !Previous 2000.0d0 (prior to v3.4.0)
 
 *** From ITRF94 to PACP00
-*** use PA/ITRF2000 rotation rates from Beavan et al., (2002)
+*** use PA/ITRF2000 rotation rates from Beavan et al. (2002)
       tx1(12)     =  0.9035d0
       ty1(12)     = -2.0202d0
       tz1(12)     = -0.5417d0
       dtx1(12)    =  0.0d0
       dty1(12)    =  0.00060d0
-      dtz1(12)    =  0.0014d0
+      dtz1(12)    =  0.00140d0
       rx1(12)     =  0.027741d0 / rhosec
       ry1(12)     =  0.013469d0 / rhosec
       rz1(12)     =  0.002712d0 / rhosec
       drx1(12)    = -0.000384d0 / rhosec
       dry1(12)    =  0.001007d0 / rhosec
       drz1(12)    = -0.002166d0 / rhosec
-      scale1(12)  = -1.55000d-9
-      dscale1(12) = -0.010000d-9
-      refepc1(12) = 1997.0d0
+      scale1(12)  = -1.55d-9
+      dscale1(12) = -0.01d-9
+      refepc1(12) =  1997.0d0
 
 *** From ITRF94 to MARP00
 *** Use velocity of GUAM
-      tx1(13) = 0.9035d0
-      ty1(13) = -2.0202d0
-      tz1(13) = -0.5417d0
-      dtx1(13) = -0.00000d0
-      dty1(13) = 0.00060d0
-      dtz1(13) = 0.00140d0
-      rx1(13) = 0.028971d0 / rhosec
-      ry1(13) = 0.01042d0 / rhosec
-      rz1(13) = 0.008928d0 / rhosec
-      drx1(13) = -0.00002d0 / rhosec
-      dry1(13) =  0.000105d0 / rhosec
-      drz1(13) = -0.000327d0 / rhosec
-      scale1(13) = -1.55000d-9
-      dscale1(13) = -0.01000d-9
-      refepc1(13) = 1997.00d0
+      tx1(13)     =  0.9035d0
+      ty1(13)     = -2.0202d0
+      tz1(13)     = -0.5417d0
+      dtx1(13)    =  0.0d0
+      dty1(13)    =  0.00060d0
+      dtz1(13)    =  0.00140d0
+      rx1(13)     =  0.028971d0 / rhosec
+      ry1(13)     =  0.010420d0 / rhosec
+      rz1(13)     =  0.008928d0 / rhosec
+      drx1(13)    = -0.000020d0 / rhosec
+      dry1(13)    =  0.000105d0 / rhosec
+      drz1(13)    = -0.000327d0 / rhosec
+      scale1(13)  = -1.55d-9
+      dscale1(13) = -0.01d-9
+      refepc1(13) =  1997.00d0
 
 *** From ITRF94 to ITRF2005 (also IGS05)
 *** assumes that         ITRF94 = ITRF96
 *** uses IERS convention ITRF96 = ITRF97
 *** uses IERS values for ITRF97   -> ITRF2000
 *** uses IERS values for ITRF2000 -> ITRF2005
-      tx1(14)     = -0.00680d0
-      ty1(14)     = -0.00350d0
-      tz1(14)     =  0.0285d0
-      dtx1(14)    =  0.00020d0
-      dty1(14)    =  0.00050d0
-      dtz1(14)    =  0.00320d0
-      rx1(14)     =  0.0d0        / rhosec
-      ry1(14)     =  0.0d0        / rhosec
-      rz1(14)     =  0.00006000d0 / rhosec
-      drx1(14)    =  0.0d0        / rhosec
-      dry1(14)    =  0.0d0        / rhosec
-      drz1(14)    =  0.00002000d0 / rhosec
-      scale1(14)  = -1.98000d-9
-      dscale1(14) = -0.09000d-9
-      refepc1(14) = 2000.0d0
+*** Changed epoch to 1997.0 to make consistent with trapa epoch (v3.4.0)
+      tx1(14)     = -0.0074d0             !Previous -0.00680d0 (prior to v3.4.0)
+      ty1(14)     = -0.0050d0             !Previous -0.00350d0 (prior to v3.4.0)
+      tz1(14)     =  0.0189d0             !Previous  0.02850d0 (prior to v3.4.0)
+      dtx1(14)    =  0.0002d0
+      dty1(14)    =  0.0005d0
+      dtz1(14)    =  0.0032d0
+      rx1(14)     =  0.0d0     / rhosec
+      ry1(14)     =  0.0d0     / rhosec
+      rz1(14)     =  0.0d0     / rhosec   !Previous  0.00006000d0 (prior to v3.4.0)
+      drx1(14)    =  0.0d0     / rhosec
+      dry1(14)    =  0.0d0     / rhosec
+      drz1(14)    =  0.00002d0 / rhosec
+      scale1(14)  = -1.71d-9              !Previous -1.98000d-9 (prior to v3.4.0)
+      dscale1(14) = -0.09d-9
+      refepc1(14) =  1997.0d0             !Previous 2000.0d0 (prior to v3.4.0)
 
 *** From ITRF94 to ITRF2008 (also IGS08 and IGb08)
 *** assumes that ITRF94 = ITRF96
@@ -4310,21 +4211,22 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
 *** uses IERS values for ITRF97 -> ITRF2000
 *** uses IERS values for ITRF2000 -> ITRF2005
 *** uses IERS values for ITRF2005 -> ITRF2008
-      tx1(15)     = -0.00480d0
-      ty1(15)     = -0.00260d0
-      tz1(15)     =  0.03320d0
-      dtx1(15)    = -0.00010d0
-      dty1(15)    =  0.00050d0
-      dtz1(15)    =  0.00320d0
-      rx1(15)     =  0.0d0        / rhosec
-      ry1(15)     =  0.0d0        / rhosec
-      rz1(15)     =  0.00006000d0 / rhosec
-      drx1(15)    = -0.0d0        / rhosec
-      dry1(15)    =  0.0d0        / rhosec
-      drz1(15)    =  0.00002000d0 / rhosec
-      scale1(15)  = -2.92d-9
+*** Changed epoch to 1997.0 to make consistent with trapa epoch (v3.4.0)
+      tx1(15)     = -0.0045d0             !Previous -0.00480d0 (prior to v3.4.0)
+      ty1(15)     = -0.0041d0             !Previous -0.00260d0 (prior to v3.4.0)
+      tz1(15)     =  0.0236d0             !Previous  0.03320d0 (prior to v3.4.0)
+      dtx1(15)    = -0.0001d0
+      dty1(15)    =  0.0005d0
+      dtz1(15)    =  0.0032d0
+      rx1(15)     =  0.0d0     / rhosec
+      ry1(15)     =  0.0d0     / rhosec
+      rz1(15)     =  0.0d0     / rhosec   !Previous  0.00006000d0 (prior to v3.4.0)
+      drx1(15)    =  0.0d0     / rhosec
+      dry1(15)    =  0.0d0     / rhosec
+      drz1(15)    =  0.00002d0 / rhosec
+      scale1(15)  = -2.65d-9              !Previous -2.92d-9 (prior to v3.4.0)
       dscale1(15) = -0.09d-9
-      refepc1(15) = 2000.0d0
+      refepc1(15) =  1997.0d0             !Previous 2000.0d0 (prior to v3.4.0)
 
 *** From ITRF94 to ITRF2014 (also IGS14 and IGb14)
 *** assumes that ITRF94 = ITRF96
@@ -4333,7 +4235,6 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
 *** uses IERS values for ITRF2000 -> ITRF2005
 *** uses IERS values for ITRF2005 -> ITRF2008
 *** uses IERS values for ITRF2008 -> ITRF2014
-
       tx1(16)     = -0.00740d0
       ty1(16)     =  0.00050d0
       tz1(16)     =  0.06280d0
@@ -4348,7 +4249,7 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       drz1(16)    =  0.00002000d0 / rhosec
       scale1(16)  = -3.80d-9
       dscale1(16) = -0.12d-9
-      refepc1(16) = 2010.0d0
+      refepc1(16) =  2010.0d0
 
       return
       end
@@ -4363,7 +4264,7 @@ C  Important note:
 C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
 C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
 
-*** (x1, y1, z1) --> input ITRF94 coordiates (meters)
+*** (x1, y1, z1) --> input ITRF94 coordinates (meters)
 *** (x2, y2, z2) --> output coordinates (meters)
 *** date --> time (decimal years) to which the input & output
 ***          coordinates correspond
@@ -4378,6 +4279,8 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
      &                rx(numref), ry(numref), rz(numref), 
      &                drx(numref), dry(numref), drz(numref),
      &                scale(numref), dscale(numref), refepc(numref)
+
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       if (jopt .eq. 0) then
          iopt = 1
@@ -4397,13 +4300,6 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
       x2 = tranx + ds*x1 + rotnz*y1 - rotny*z1
       y2 = trany - rotnz*x1 + ds*y1 + rotnx*z1
       z2 = tranz + rotny*x1 - rotnx*y1 + ds*z1
-c     write (*,*) "FROM TIIT94 ",dtime
-c     write (*,*) "FROM TIIT94 ",tx(iopt),ty(iopt),tz(iopt)
-c     write (*,*) "FROM TIIT94 ",dtx(iopt),dty(iopt),dtz(iopt)
-c     write (*,*) "FROM TIIT94 ",rx(iopt),ry(iopt),rz(iopt)
-c     write (*,*) "FROM TIIT94 ",drx(iopt),dry(iopt),drz(iopt)
-c     write (*,*) "FROM TIIT94 ",scale(iopt),dscale(iopt)
-c     write (*,*) "FROM TIIT94 ",x2,y2,z2
 
       return
       end
@@ -4418,7 +4314,7 @@ C  Important note:
 C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
 C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
 
-*** (x1, y1, z1) --> input ITRF94 coordiates (meters)
+*** (x1, y1, z1) --> input ITRF94 coordinates (meters)
 *** (x2, y2, z2) --> output coordinates (meters)
 *** date --> time (decimal years) to which the input & output
 ***          coordinates correspond
@@ -4434,6 +4330,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
      &                drx1(numref), dry1(numref), drz1(numref),
      &                scale1(numref), dscale1(numref), refepc1(numref)
 
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       if (jopt .eq. 0) then
          iopt = 1
@@ -4453,13 +4350,6 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
       x2 = tranx + ds*x1    + rotnz*y1 - rotny*z1
       y2 = trany - rotnz*x1 + ds*y1    + rotnx*z1
       z2 = tranz + rotny*x1 - rotnx*y1 + ds*z1
-c     write (*,*) "FROM TIIT94_IERS ",dtime
-c     write (*,*) "FROM TIIT94_IERS ",tx1(iopt),ty1(iopt),tz1(iopt)
-c     write (*,*) "FROM TIIT94_IERS ",dtx1(iopt),dty1(iopt),dtz1(iopt)
-c     write (*,*) "FROM TIIT94_IERS ",rx1(iopt),ry1(iopt),rz1(iopt)
-c     write (*,*) "FROM TIIT94_IERS ",drx1(iopt),dry1(iopt),drz1(iopt)
-c     write (*,*) "FROM TIIT94_IERS ",scale1(iopt),dscale1(iopt)
-c     write (*,*) "FROM TIIT94_IERS ",x2,y2,z2
 
       return
       end
@@ -4474,7 +4364,7 @@ C  Important note:
 C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
 C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
 
-*** (x1, y1, z1) --> input coordiates (meters)
+*** (x1, y1, z1) --> input coordinates (meters)
 *** (x2, y2, z2) --> output  ITRF94 coordinates (meters)
 *** date --> time (decimal years) to which the input & output
 ***          coordinates correspond
@@ -4489,6 +4379,8 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
      &                rx(numref), ry(numref), rz(numref), 
      &                drx(numref), dry(numref), drz(numref),
      &                scale(numref), dscale(numref), refepc(numref)
+
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       if (jopt .eq. 0) then
          iopt = 1
@@ -4508,14 +4400,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
       x2 = tranx + ds*x1 + rotnz*y1 - rotny*z1
       y2 = trany - rotnz*x1 + ds*y1 + rotnx*z1
       z2 = tranz + rotny*x1 - rotnx*y1 + ds*z1
-c     write (*,*) "TO TIIT94 ",dtime
-c     write (*,*) "TO TIIT94 ",tx(iopt),ty(iopt),tz(iopt)
-c     write (*,*) "TO TIIT94 ",dtx(iopt),dty(iopt),dtz(iopt)
-c     write (*,*) "TO TIIT94 ",rx(iopt),ry(iopt),rz(iopt)
-c     write (*,*) "TO TIIT94 ",drx(iopt),dry(iopt),drz(iopt)
-c     write (*,*) "TO TIIT94 ",scale(iopt),dscale(iopt)
-c     write (*,*) "TO TIIT94 ",x2,y2,z2
-
+     
       return
       end
 
@@ -4545,6 +4430,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
      &                drx1(numref), dry1(numref), drz1(numref),
      &                scale1(numref), dscale1(numref), refepc1(numref)
 
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       if (jopt .eq. 0) then
          iopt = 1
@@ -4564,13 +4450,6 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
       x2 = tranx + ds*x1 + rotnz*y1 - rotny*z1
       y2 = trany - rotnz*x1 + ds*y1 + rotnx*z1
       z2 = tranz + rotny*x1 - rotnx*y1 + ds*z1
-c     write (*,*) "TO TIIT94_IERS ",dtime
-c     write (*,*) "TO TIIT94_IERS ",tx1(iopt),ty1(iopt),tz1(iopt)
-c     write (*,*) "TO TIIT94_IERS ",dtx1(iopt),dty1(iopt),dtz1(iopt)
-c     write (*,*) "TO TIIT94_IERS ",rx1(iopt),ry1(iopt),rz1(iopt)
-c     write (*,*) "TO TIIT94_IERS ",drx1(iopt),dry1(iopt),drz1(iopt)
-c     write (*,*) "TO TIIT94_IERS ",scale1(iopt),dscale1(iopt)
-c     write (*,*) "TO TIIT94_IERS ",x2,y2,z2
 
       return
       end
@@ -4591,71 +4470,72 @@ c     write (*,*) "TO TIIT94_IERS ",x2,y2,z2
       nframe(2) = 'NAD_83(PA11/PACP00)     '
       iframe(3) = 13
       nframe(3) = 'NAD_83(MA11/MARP00)     '
+      
       iframe(4) = 10
-      nframe(4) = 'WGS_72                  '
-      iframe(5) = 1
-      nframe(5) = 'WGS_84(original)        '
-c     iframe(6) = 6 (This was incorrect in all versions of HTDP)
-      iframe(6) = 5
-      nframe(6) = 'WGS_84(G730)            '
-      iframe(7) = 8
-      nframe(7) = 'WGS_84(G873)            '
-      iframe(8) = 11
-      nframe(8) = 'WGS_84(G1150)           '
+      nframe(4) = 'WGS84 original (Transit)'
+      iframe(5) = 5
+      nframe(5) = 'WGS84(G730)             '
+      iframe(6) = 8
+      nframe(6) = 'WGS84(G873)             '
+      iframe(7) = 11
+      nframe(7) = 'WGS84(G1150)            '
+      iframe(8) = 15
+      nframe(8) = 'WGS84(G1674)            '
       iframe(9) = 15
-      nframe(9) = 'WGS_84(G1674)           '
-c     iframe(10)= 4
-c     nframe(10)= 'PNEOS_90 or NEOS_90     '
-      iframe(10)= 15
-      nframe(10)= 'WGS_84(G1762)           '
-      iframe(11)= 5
-      nframe(11)= 'SIO/MIT_92              '
-      iframe(12)= 2
-      nframe(12)= 'ITRF88                  '
-      iframe(13)= 3
-      nframe(13)= 'ITRF89                  '
-      iframe(14)= 4
-      nframe(14)= 'ITRF90                  '
-      iframe(15)= 5
-      nframe(15)= 'ITRF91                  '
-      iframe(16)= 6
-      nframe(16)= 'ITRF92                  '
-      iframe(17)= 7
-      nframe(17)= 'ITRF93                  '
+      nframe(9) = 'WGS84(G1762)    '
+      iframe(10)= 16
+      nframe(10)= 'WGS84(G2139)            '
+      
+c      iframe(11)= 5                          !Included with ITRF91 in v3.4.0
+c      nframe(11)= 'SIO/MIT_92              ' !Included with ITRF91 in v3.4.0
+      iframe(11)= 2
+      nframe(11)= 'ITRF88                  '
+      iframe(12)= 3
+      nframe(12)= 'ITRF89                  '
+      iframe(13)= 4
+      nframe(13)= 'ITRF90                  '
+      iframe(14)= 5
+      nframe(14)= 'ITRF91                  '
+      iframe(15)= 6
+      nframe(15)= 'ITRF92                  '
+      iframe(16)= 7
+      nframe(16)= 'ITRF93                  '
+      iframe(17)= 8
+      nframe(17)= 'ITRF94                  '
       iframe(18)= 8
-      nframe(18)= 'ITRF94                  '
-      iframe(19)= 8
-      nframe(19)= 'ITRF96                  '
-      iframe(20)= 9
-      nframe(20)= 'ITRF97 or IGS97         '
-      iframe(21)= 11
-      nframe(21)= 'ITRF2000 or IGS00/IGb00 '
-      iframe(22)= 14
-      nframe(22)= 'ITRF2005 or IGS05       '
-      iframe(23)= 15
-      nframe(23)= 'ITRF2008 or IGS08/IGb08 '
-      iframe(24)= 16
-      nframe(24)= 'ITRF2014 or IGS14/IGb14 '
+      nframe(18)= 'ITRF96                  '
+      iframe(19)= 9
+      nframe(19)= 'ITRF97                  '
+      iframe(20)= 11
+      nframe(20)= 'ITRF2000 or IGS00/IGb00 '
+      iframe(21)= 14
+      nframe(21)= 'ITRF2005 or IGS05       '
+      iframe(22)= 15
+      nframe(22)= 'ITRF2008 or IGS08/IGb08 '
+      iframe(23)= 16
+      nframe(23)= 'ITRF2014 or IGS14/IGb14 '
 
       write(luout, 100)  
   100 format(
-     1'  1...NAD_83(2011/CORS96/2007)  (North American plate fixed) '/
-     1'  2...NAD_83(PA11/PACP00)       (Pacific plate fixed) '/
-     1'  3...NAD_83(MA11/MARP00)       (Mariana plate fixed) '/
-     1'                                                   '/
-c    1'  4...WGS_72                              '/
-     1'  5...WGS_84(original) (NAD_83(2011) used) 15...ITRF91 '/
-     1'  6...WGS_84(G730) (ITRF91 used)           16...ITRF92 '/
-     1'  7...WGS_84(G873) (ITRF94 used)           17...ITRF93 '/
-     1'  8...WGS_84(G1150) (ITRF2000 used)        18...ITRF94 '/
-     1'  9...WGS_84(G1674) (ITRF2008 used)        19...ITRF96 '/
-c    1' 10...PNEOS_90 or NEOS_90  (ITRF90 used)   20...ITRF97 or IGS97'/
-     1' 10...WGS_84(G1762) (IGb08 used)           20...ITRF97 or IGS97'/
-     1' 11...SIO/MIT_92 (ITRF91 used)    21...ITRF2000 or IGS00/IGb00'/
-     1' 12...ITRF88                      22...ITRF2005 or IGS05 '/
-     1' 13...ITRF89                      23...ITRF2008 or IGS08/IGb08'/
-     1' 14...ITRF90 or (PNEOS90/NEOS90)  24...ITRF2014 or IGS14/IGb14'/)
-c    1' 14...ITRF90                              '/ )
+     1'  1...NAD_83(2011/CORS96/2007)  North America plate fixed     '/
+     1'  2...NAD_83(PA11/PACP00)       Pacific plate fixed           '/
+     1'  3...NAD_83(MA11/MARP00)       Mariana plate fixed           '/
+     1'                                                              '/
+     1'  4...WGS84 original (Transit)                                '/
+     1'  5...WGS84(G730)   ITRF91 used                               '/
+     1'  6...WGS84(G873)   ITRF94=ITRF96=ITRF97 used                 '/
+     1'  7...WGS84(G1150)  ITRF2000=IGS00=IGb00 used                 '/
+     1'  8...WGS84(G1674)  ITRF2008=IGS08=IGb08 used                 '/
+     1'  9...WGS84(G1762)  ITRF2008=IGS08=IGb08 used                 '/
+     1' 10...WGS84(G2139)  ITRF2014=IGS14=IGb14 used                 '/
+     1'                                                              '/
+     1' 11...ITRF88                      18...ITRF96 (=ITRF94=ITRF97)'/
+     1' 12...ITRF89                      19...ITRF97 (=ITRF94=ITRF96)'/
+     1' 13...ITRF90 (or PNEOS90/NEOS90)  20...ITRF2000 or IGS00/IGb00'/
+     1' 14...ITRF91 (or SIO/MIT_92)      21...ITRF2005 or IGS05      '/
+     1' 15...ITRF92                      22...ITRF2008 or IGS08/IGb08'/
+     1' 16...ITRF93                      23...ITRF2014 or IGS14/IGb14'/
+     1' 17...ITRF94 (=ITRF96=ITRF97)                                 '/)
 
       read (luin, *,err=50,iostat=ios) iopt
       if (ios /= 0) goto 50
@@ -4727,21 +4607,17 @@ c    1' 14...ITRF90                              '/ )
      2   '     0...No more updates. Return to main menu.'/
      3   '     1...Update positions for individual points', 
      4             ' entered interactively.'/
-     5   '     2...Update positions for blue book stations.'/
-     6   '     3...Update values for blue book observations.'/
-     7   '     4...Update both the positions for blue book',
-     8              ' stations'/
-     9   '          and the values for blue book',
-     9              ' observations.'/
+     5   '     2...Update positions for Bluebook stations.'/
+     6   '     3...Update values for Bluebook observations.'/
+     7   '     4...Update both the positions for Bluebook stations'/
+     9   '         and the values for Bluebook observations.'/
      9   '     5...Update positions for multiple points contained'/
-     9   '         in a file in Lat-Lon-Ht format:'/
-     9   '         LAT,LON,EHT,TEXT'/
+     9   '         in a file in the format LAT,LON,EHT,TEXT:'/
      9   '         LAT = latitude in degrees (positive north)'/
      9   '         LON = longitude in degrees (positive west)'/
      9   '         EHT = ellipsoid height in meters'/
-     9   '         TEXT = Descriptive text (up to 24 characters)'/
-     9   '         Example:'/
-     9   '         40.731671553,112.212671753,34.241,SALT AIR'/)
+     9   '         TEXT = descriptive text (maximum 24 characters)'/
+     9   '         Example: 40.731671553,112.212671753,34.241,SALT'/)
       READ(LUIN,'(A1)',err=501,iostat=ios) OPT
       if (ios /= 0) goto 501
       IF(OPT .eq. '0') THEN
@@ -4843,14 +4719,14 @@ c    1' 14...ITRF90                              '/ )
          CLOSE(I2,STATUS='KEEP')
          RETURN
 
-*** Updating a blue book 
+*** Updating a Bluebook 
 
       ELSEIF(OPT .eq. '2' .or. OPT .eq. '3' .or. OPT .eq. '4') THEN
 
           if (nbbdim .eq. 10000) then
    90        WRITE(LUOUT,91)
    91        FORMAT(
-     1       ' Identify type of blue book:'/
+     1       ' Identify type of Bluebook:'/
      2       '    1...Standard (4-digit SSN)'/
      3       '    2...Non-standard (5-digit SSN)  ')
              READ(LUIN,'(A1)',err=503,iostat=ios) BBTYPE
@@ -4861,12 +4737,12 @@ c    1' 14...ITRF90                              '/ )
           endif
 
           WRITE(LUOUT,100)
-  100     FORMAT(' Enter name of the blue book file to be updated.'/)
+  100     FORMAT(' Enter name of the Bluebook file to be updated.'/)
           READ(LUIN,110,err=502,iostat=ios) OLDBB
           if (ios /= 0) goto 502
   110     FORMAT(A80)
           WRITE(LUOUT,120)
-  120     FORMAT(' Enter name for the new blue book file that is to '/
+  120     FORMAT(' Enter name for the new Bluebook file that is to '/
      1       'contain the updated information.'/)
           READ(LUIN,110,err=502,iostat=ios) NEWBB
           if (ios /= 0) goto 502
@@ -4890,7 +4766,7 @@ c    1' 14...ITRF90                              '/ )
              ENDIF
           ENDIF
 
-*** Retrieve geodetic positions from old blue-book file
+*** Retrieve geodetic positions from old Bluebook file
 
          IF(BBTYPE .EQ. '1') THEN
               CALL GETPO4(IOPT, DATE1)
@@ -4898,7 +4774,7 @@ c    1' 14...ITRF90                              '/ )
               CALL GETPO5(IOPT, DATE1)
          ENDIF
 
-*** Create new blue book file
+*** Create new Bluebook file
 
          OPEN(I2,FILE = NEWBB, STATUS = 'UNKNOWN')
 
@@ -4928,22 +4804,22 @@ c        ENDIF
          CLOSE(I1, STATUS = 'KEEP')
          CLOSE(I2, STATUS = 'KEEP')
 
-*** Update G-FILE
+*** Update G-file
 
          IF(OPT .eq. '3' .or. OPT .eq. '4') THEN
   605      WRITE(LUOUT,610)
-  610      FORMAT(/' Is there a G-FILE to be updated? (y/n)  ')
+  610      FORMAT(/' Is there a G-file to be updated? (y/n)  ')
            READ(LUIN,'(A1)',err=500,iostat=ios) ANSWER
            if (ios /= 0) goto 500
            IF(ANSWER .eq. 'N' .or. ANSWER .eq. 'n') THEN
              CONTINUE
            ELSEIF(ANSWER .eq. 'Y' .or. ANSWER .eq. 'y')THEN
              WRITE(LUOUT,620)
-  620        FORMAT(' Enter name of old G-FILE to be updated.  ')
+  620        FORMAT(' Enter name of input G-file to be updated.  ')
              READ(LUIN,'(A80)',err=502,iostat=ios) OLDBB
              if (ios /= 0) goto 502
              WRITE(LUOUT,630)
-  630        FORMAT(' Enter name for the new updated G-FILE.  ')
+  630        FORMAT(' Enter name for the updated output G-file.  ')
              READ(LUIN,'(A80)',err=502,iostat=ios) NEWBB
              if (ios /= 0) goto 502
              OPEN(I1,FILE=OLDBB,STATUS='OLD')
@@ -4955,7 +4831,7 @@ c        ENDIF
   634        WRITE(LUOUT, 632)
   632        FORMAT(/' ***************************'/
      *              ' Specify the reference frame for the updated'
-     *              ' G-File vectors:'//
+     *              ' G-file vectors:'//
      *              '    -1...Do not transform GPS vectors.')
              CALL MENU1(kopt, frame2)
              IF(KOPT .LT. -1 .OR. KOPT .GT. numref) THEN
@@ -5101,7 +4977,7 @@ c        ENDIF
 *******************************************************************
       SUBROUTINE GETPO4(IOPT, DATE)
 
-*** Retrieve geodetic coordinates from the blue book
+*** Retrieve geodetic coordinates from the Bluebook
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
@@ -5193,7 +5069,7 @@ C        HT(ISN) = HT(ISN) + GH
 ******************************************************************
       SUBROUTINE GETPO5(IOPT, DATE)
 
-*** Retrieve geodetic position from blue book with 5-digit SSN
+*** Retrieve geodetic position from Bluebook with 5-digit SSN
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
@@ -5283,7 +5159,7 @@ C        HT(ISN) = HT(ISN) + GH
 ******************************************************************
       SUBROUTINE UPBB4(MIN1,MIN2,OPT)
 
-*** Update blue book
+*** Update Bluebook
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
@@ -5356,7 +5232,7 @@ C***    classical observation records contain only a 2-digit year
      1            ' error. Either they span more than 99 years or '/
      1            ' the end date preceedes the start date.'/
      1            ' If they span more than 99 years, then the Bluebook'/
-     1            ' will need to divided into two or more bluebooks'/
+     1            ' will need to divided into two or more Bluebooks'/
      1            ' with the observations in each spanning no more'/
      1            ' than 99 years.')
              ELSE
@@ -5430,7 +5306,7 @@ C***    classical observation records contain only a 2-digit year
   230      FORMAT(BZ,10X,I4,I2,T51,I4,T64,I3,I2,F4.2)
            IF(LIST.NE.LIST0 .OR. ISN.NE.ISN0) THEN
              WRITE(LUOUT,240) CARD
-  240        FORMAT(' Blue-book file has incorrect structure.'/
+  240        FORMAT(' Bluebook file has incorrect structure.'/
      1              ' A *22* record disagrees with its corresponding'/
      2              ' *20* record.  The record reads:'/A80)
              STOP
@@ -5538,7 +5414,7 @@ C    1          YLATT,YLONT,EHTNEW,DN,DE,DU,IOPT)
   320         FORMAT(I3,I2.2,I7.7,A1)
             ENDIF
 
-*** Unrecognized blue book record
+*** Unrecognized Bluebook record
 *** Associated ELSE statement with label 500 deleted in v3.3.0.
 
       ENDIF
@@ -5611,7 +5487,7 @@ C    1          YLATT,YLONT,EHTNEW,DN,DE,DU,IOPT)
 ***************************************************************
       SUBROUTINE UPBB5(MIN1,MIN2,OPT)
 
-*** Update 5-digit blue book
+*** Update 5-digit Bluebook
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
@@ -5752,7 +5628,7 @@ C 220       FORMAT(BZ, 9X,I5,I2,T40,A6,T51,I5)
   230      FORMAT(BZ, 9X,I5,I2,T51,I5,T64,I3,I2,F4.2)
            IF(LIST.NE.LIST0 .OR. ISN.NE.ISN0) THEN
              WRITE(LUOUT,240) CARD
-  240           FORMAT(' Blue-book file has incorrect structure.'/
+  240           FORMAT(' Bluebook file has incorrect structure.'/
      1          ' A *22* record disagrees with its corresponding'/
      2          ' *20* record.  The record reads:'/A212)
              STOP
@@ -5845,7 +5721,7 @@ C    1          YLATT,YLONT,EHTNEW,DN,DE,DU,IOPT)
   320         FORMAT(I3,I2.2,I7.7,A1)
             ENDIF
 
-*** Unrecognized blue book record
+*** Unrecognized Bluebook record
 
       ELSE
             WRITE(LUOUT,500) TYPE
@@ -5936,27 +5812,30 @@ C    1          YLATT,YLONT,EHTNEW,DN,DE,DU,IOPT)
 
       RETURN
       END
-C*************************************************
-      SUBROUTINE UPGFI4(DATE2, MIN2, IOPT, KOPT,
-     *     MONTH, IDAY, IYEAR)
+C*******************************************************************
+      SUBROUTINE UPGFI4(DATE2, MIN2, IOPT, KOPT, MONTH, IDAY, IYEAR)
 
-*** Update G-FILE of blue book
+*** Update G-file of Bluebook
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-c     CHARACTER*80 CARD
       CHARACTER     CARD*120
       CHARACTER     TYPE*1
       CHARACTER     NRF*2
       CHARACTER     ZT*2
       CHARACTER     CHAR14*14
       LOGICAL       TEST
-      LOGICAL Is_inp_NAD83,Is_out_NAD83,Is_out1_NAD83
+      LOGICAL Is_inp_NAD83, Is_out_NAD83, Is_out1_NAD83
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
 
       ZT = 'ZT'
+      
+C  Initialize NAD 83 input/poutput logical variables as false:
+      Is_inp_NAD83 = .FALSE.
+      Is_out_NAD83 = .FALSE.
+      Is_out1_NAD83 = .FALSE.
 
-*** Obtain blue-book reference frame identifier
+*** Obtain Bluebook reference frame identifier
 *** corresponding to KOPT  (output frame for vectors)
       IF (KOPT .NE. -1) THEN
          CALL RFCON1(KOPT, NBBREF)
@@ -5966,7 +5845,6 @@ c     CHARACTER*80 CARD
 
    90 READ(I1,100,END=200,err=300,iostat=ios) CARD
       if (ios /= 0) goto 300
-c 100 FORMAT(A80)
   100 FORMAT(A120)
       TYPE = CARD(1:1)
       IF(TYPE .eq. 'A') THEN
@@ -5993,12 +5871,6 @@ c 100 FORMAT(A80)
      1        IYEAR2,MONTH2,IDAY2,IBBREF
          if (ios /= 0) goto 301
   110    FORMAT(1X,I4,I2,I2,4X,I4,I2,I2,30X,I2)
-C        CALL TOTIME(IYEAR1,MONTH1,IDAY1,MINO1)
-C        CALL TOTIME(IYEAR1, 1, 1, MIN00)
-C        DECYR1 = DBLE(IYEAR1) + DBLE(MINO1 - MIN00)/525600.D0
-C        CALL TOTIME(IYEAR2,MONTH2,IDAY2,MINO2)
-C        CALL TOTIME(IYEAR2, 1, 1, MIN00)
-C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
 
          CALL IYMDMJ(IYEAR1,MONTH1,IDAY1,MJD1)
          MINO1 = MJD1 * 24 * 60
@@ -6010,13 +5882,13 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
          DECYR2 = DBLE(IYEAR2) + DBLE(MJD2 - MJD0)/365.D0
          MINO = (MINO1 + MINO2) / 2
          DECYR = (DECYR1 + DECYR2) / 2.D0
-         CALL RFCON(IBBREF, JREF)         !JREF is the current frame or frame of input
+         CALL RFCON(IBBREF, JREF)      !JREF is the current frame or frame of input
          IF (KOPT .NE. -1) THEN
             CARD(52:53) = NRF
          ENDIF
          Is_inp_NAD83 = (JREF == 1)
-         Is_out_NAD83 = (IOPT == 1)       !IOPT is the frame of the positions
-         Is_out1_NAD83 = (KOPT == 1)       !IOPT is the frame of the positions
+         Is_out_NAD83 = (IOPT == 1)    !IOPT is the frame of the positions
+         Is_out1_NAD83 = (KOPT == 1)   !KOPT is the frame of the vectors (comment corrected v3.4.0)
       ELSEIF(TYPE .eq. 'C') THEN
          READ(CARD,120,err=302,iostat=ios)ISN,JSN,DX,DY,DZ
          if (ios /= 0) goto 302
@@ -6110,6 +5982,7 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
       ENDIF
       WRITE(I2,100) CARD
       GO TO 90
+      
   200 CONTINUE
       RETURN
 
@@ -6138,11 +6011,12 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
       stop
 
       END
+
 *********************************************************
       SUBROUTINE UPGFI5(DATE2, MIN2, IOPT, KOPT,
      *                  MONTH, IDAY, IYEAR)
 
-*** Update G-FILE of 5-digit blue book
+*** Update G-file of 5-digit Bluebook
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
@@ -6157,7 +6031,7 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
 
       ZT = 'ZT'
 
-*** Obtain blue-book reference frame identifier
+*** Obtain Bluebook reference frame identifier
 *** corresponding to IOPT
       IF (KOPT .NE. -1) THEN
          CALL RFCON1(KOPT, NBBREF)
@@ -6285,6 +6159,7 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
       stop
 
       END
+
 *********************************************************
       SUBROUTINE TODMSS(val,id,im,s,isign)
  
@@ -6335,33 +6210,33 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
       SUBROUTINE SETRF
 
 *** Specify arrays that may be used to convert
-*** a reference frame identifier in the blue book
+*** a reference frame identifier in the Bluebook
 *** to a reference frame identifier in HTDP and back
 
       IMPLICIT INTEGER*4 (I-N)
       parameter ( numref = 16 )
-      COMMON /REFCON/ IRFCON(37), JRFCON(numref)
+      COMMON /REFCON/ IRFCON(38), JRFCON(numref)
 
-*** From blue book identifier to HTDP indentifier
-*** WGS 72 Precise
+*** From Bluebook identifier to HTDP indentifier
+*** WGS72 Precise
 c     IRFCON(1) = 10
       IRFCON(1) = 1
-C HTDP no longer supports WGS 72. Hence, if a BlueBook
-C file contains WGS 72 coordinates, HTDP treats these
+C HTDP no longer supports WGS72. Hence, if a BlueBook
+C file contains WGS72 coordinates, HTDP treats these
 C coordinates as if they were NAD 83(2011) coordinates.
 
-*** WGS 84 (orig) Precise (set  equal to NAD 83)
-      IRFCON(2) = 1
+*** WGS84 (orig) Precise
+      IRFCON(2) = 10   !Changed in v3.4.0 (no longer equal to NAD 83)
 
-*** WGS 72 Broadcast
+*** WGS72 Broadcast
 c     IRFCON(3) = 10
       IRFCON(3) = 1
-C HTDP no longer supports WGS 72. Hence, if a BlueBook
-C file contains WGS 72 coordinates, HTDP treats these
+C HTDP no longer supports WGS72. Hence, if a BlueBook
+C file contains WGS72 coordinates, HTDP treats these
 C coordinates as if they were NAD 83(2011)coordinates.
 
-*** WGS 84 (orig) Broadcast (set equal to NAD 83)
-      IRFCON(4) = 1
+*** WGS84 (orig) Broadcast
+      IRFCON(4) = 10   !Changed in v3.4.0 (no longer equal to NAD 83)
 
 *** ITRF89
       IRFCON(5) = 3
@@ -6375,7 +6250,7 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** ITRF91
       IRFCON(8) = 5
 
-*** SIO/MIT 92.57 (set equal to ITRF91)
+*** SIO/MIT 92.57 (set equal to ITRF91)   !This ooption no longer available as of v3.4.0
       IRFCON(9) = 5
 
 *** ITRF91
@@ -6387,19 +6262,19 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** ITRF93
       IRFCON(12) = 7
 
-*** WGS 84 (G730) Precise (set equal to ITRF91)
+*** WGS84 (G730) Precise (set equal to ITRF91)
       IRFCON(13) = 5
 
-*** WGS 84 (G730) Broadcast (set equal to ITRF91)
+*** WGS84 (G730) Broadcast (set equal to ITRF91)
       IRFCON(14) = 5
 
 *** ITRF94
       IRFCON(15) = 8
 
-*** WGS 84 (G873) Precise  (set equal to ITRF94)
+*** WGS84 (G873) Precise  (set equal to ITRF94)
       IRFCON(16) = 8
 
-*** WGS 84 (G873) Broadcast (set equal to ITRF94)
+*** WGS84 (G873) Broadcast (set equal to ITRF94)
       IRFCON(17) = 8
 
 *** ITRF96
@@ -6417,7 +6292,7 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** IGS00
       IRFCON(22) = 11
 
-*** WGS 84 (G1150)
+*** WGS84 (G1150)
       IRFCON(23) = 11
 
 *** IGb00
@@ -6461,11 +6336,13 @@ C coordinates as if they were NAD 83(2011)coordinates.
 
 *** IGb14
       IRFCON(37) = 16
+
+*** WGS84 (G2139)
+      IRFCON(38) = 16
       
 
-*** From HTDP identifier to blue book identifier.
+*** From HTDP identifier to Bluebook identifier.
 *** NAD 83 (2011/2007/CORS96/...) referenced to North America plate.
-c     JRFCON(1) = 2
       JRFCON(1) = 34
 
 *** ITRF88 (set equal to ITRF89)
@@ -6492,20 +6369,16 @@ c     JRFCON(1) = 2
 *** ITRF97
       JRFCON(9) = 19
 
-*** WGS 72
+*** WGS72
       JRFCON(10) = 1
 
 *** ITRF2000
       JRFCON(11) = 21
 
 *** NAD 83 (PACP00) or NAD 83 (PA11)
-c     JRFCON(12) = 0
-c     JRFCON(12) = 2
       JRFCON(12) = 35
 
 *** NAD 83 (MARP00) or NAD 83 (MA11)
-c     JRFCON(13) = 0
-c     JRFCON(13) = 2 
       JRFCON(13) = 36
 
 *** ITRF2005 or IGS05
@@ -6529,20 +6402,20 @@ c     JRFCON(13) = 2
       SUBROUTINE RFCON(IBBREF, JREF)
 
 *** Convert reference frame identifier from
-*** system used in the blue-book to the
+*** system used in the Bluebook to the
 *** system used in HTDP
 
       IMPLICIT INTEGER*4 (I-N)
       parameter ( numref = 16 )
-      COMMON /REFCON/ IRFCON(37), JRFCON(numref)
+      COMMON /REFCON/ IRFCON(38), JRFCON(numref)
 
-      IF (1 .LE. IBBREF .AND. IBBREF .LE. 37) THEN
+      IF (1 .LE. IBBREF .AND. IBBREF .LE. 38) THEN
           JREF = IRFCON(IBBREF)
       ELSE
           WRITE(6, 10) IBBREF
    10     FORMAT(' Improper reference frame identifier (=',
      1      I4, ')' /
-     1      ' appearing in B-record of the G-FILE')
+     1      ' appearing in B-record of the G-file')
           STOP
        ENDIF
 
@@ -6553,11 +6426,11 @@ c     JRFCON(13) = 2
 
 *** Convert reference frame identifier from
 *** system used in HTDP to the  system
-*** used in the blue-book
+*** used in the Bluebook
 
       IMPLICIT INTEGER*4 (I-N)
       parameter ( numref = 16 )
-      COMMON /REFCON/ IRFCON(37), JRFCON(numref)
+      COMMON /REFCON/ IRFCON(38), JRFCON(numref)
 
       IF (JREF .EQ. 0) THEN
         I = 1
@@ -6734,7 +6607,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       WRITE(LUOUT,100)
-  100 FORMAT(' Enter name for point (24 character max).  ')
+  100 FORMAT(' Enter name for point (maximum 24 characters).')
       READ(LUIN,105,err=200,iostat=ios) NAME
       if (ios /= 0) goto 200
   105 FORMAT(A24)
@@ -6750,9 +6623,9 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
         WRITE(LUOUT,115)
   115   FORMAT(
      1    ' Enter latitude degrees-minutes-seconds in free format'/,
-     2    ' with north being positive. For example,    35,17,28.3  '/
-     2    ' For a point in the southern hemisphere, enter a minus sign'/
-     3    ' before each value. For example, -35,-17,-28.3')
+     2    ' with north positive, for example 35 17 28.3 or 35,17,28.3 '/
+     2    ' (for the southern hemisphere, enter a minus sign before'/
+     3    ' each value, for example -35 -17 -28.3 or -35,-17,-28.3)')
      
         READ(LUIN,*,err=202,iostat=ios) LATD, LATM, SLAT
         if (ios /= 0) goto 202
@@ -7046,13 +6919,13 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
      1       '     0...use velocity predicted by this software.'/ 
      1       '     1...user will specify the north-east-up'/ 
      1       '         components of site velocity.'/ 
-     1       '     2...user will specify the global x-y-z'/
+     1       '     2...user will specify the global X-Y-Z'/
      1       '         components of site velocity.' )
       else
         write(luout, 211)
   211   FORMAT(' How do you wish to specify the velocity: '/
      1       '     1...north-east-up components.'/
-     1       '     2...global x-y-z components.' )
+     1       '     2...global X-Y-Z components.' )
       endif
 
       READ(LUIN, '(A1)',err=300,iostat=ios) VOPT
@@ -7144,11 +7017,11 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
      1                  MIN,VN, VE, VU)
 
 *** Compute the position of a point at specified time
-*** Upon input VN, VE, and VU are in mm/yr
+*** Input VN, VE, and VU are in mm/yr
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (NDLOC = 2195)
+      parameter (NDLOC = 2740)
 
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /TIMREF/ ITREF
@@ -7165,18 +7038,15 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
          YLATT = YLAT + VNR*DTIME
          YLONT = YLON - VER*DTIME
          HTT   = HT + ((VU * DTIME) /1000.D0)
-c        write (*,*) "FROM COMPSN ",YLATT*180.d0/pi,YLONT*180.d0/pi,
-c    &               HTT
-c        write (*,*) "FROM COMPSN ",ITREF,MIN,DTIME
        
 ** Compute the contribution due to earthquakes.
 ** It is assumed that the components of displacement,
-** DNORTH,DWEST,DUP, do not vary from one reference
+** (DNORTH, DWEST, DUP) do not vary from one reference
 ** frame to another given the accuracy of dislocation
 ** models.
       DO 10 I = 1, NUMEQ
           IF(ITEQK(I) .GT. ITREF) THEN 
-               NTIME = 1
+            NTIME = 1
           ELSE
             NTIME = 0
           ENDIF
@@ -7204,7 +7074,6 @@ c        write (*,*) "FROM COMPSN ",ITREF,MIN,DTIME
 
 *** Compute contribution due to postseismic deformation
       CALL PSDISP(YLAT, YLON, MIN, DNORTH, DEAST, DUP)
-c     write (*,*) "FROM COMPSN DISP ",DNORTH, DEAST, DUP
       CALL RADII (YLAT, RMER, RPAR)
       YLATT = YLATT + DNORTH/RMER
       YLONT = YLONT - DEAST/RPAR
@@ -7233,19 +7102,12 @@ c     write (*,*) "FROM COMPSN DISP ",DNORTH, DEAST, DUP
       YLAT3 = YLAT + YLAT2 - YLAT1
       YLON3 = YLON + YLON2 - YLON1
       HTNEW   = HT   + HT2   - HT1
-c     write (*,*) "FROM NEWCOR ",YLAT3*180.d0/pi,YLON3*180.d0/pi,
-c    &  HTNEW
 
       CALL RADII(YLAT,RADMER,RADPAR)
 
       DN =  RADMER * (YLAT2 - YLAT1)
       DE = -RADPAR * (YLON2 - YLON1)
       DU =  HT2 - HT1
-c     write (*,*) "FROM NEWCOR displacement ",DN,DE,DU
-c     write (*,*) "FROM NEWCOR ",YLAT*180.d0/pi,YLON*180.d0/pi,HT
-c     write (*,*) "FROM NEWCOR ",YLAT1*180.d0/pi,YLON1*180.d0/pi,HT1
-c     write (*,*) "FROM NEWCOR ",YLAT2*180.d0/pi,YLON2*180.d0/pi,HT2
-c     write (*,*) "FROM NEWCOR ",YLAT3*180.d0/pi,YLON3*180.d0/pi,HTNEW
 
       RETURN
       END
@@ -7274,8 +7136,7 @@ C  The following 2 lines were added on 07/22/2015 after Rich found this bug
          elon = -ylon
          call TOXYZ(ylat, elon, eht, x, y, z)
 
-c        IF(IOPT .EQ. 0 .OR. IOPT .EQ. 1) THEN   !Velocity grids are No longer in NAD83
-         IF(IOPT .EQ. 15) THEN                   !They are in ITRF2008
+         IF(IOPT .EQ. 15) THEN                   !Velocity grids are in ITRF2008
             RLAT = YLAT
 ***     Added conditional statement to get rid of out-of-region error when
 ***     YLON is negative for reference frame (v3.3.0):
@@ -7285,16 +7146,12 @@ c        IF(IOPT .EQ. 0 .OR. IOPT .EQ. 1) THEN   !Velocity grids are No longer i
               RLON = YLON + TWOPI
             ENDIF
          ELSE
-c            elon = -ylon                         !Was a bug, commented out on 07222015
-c            call TOXYZ(ylat, elon, eht, x, y, z) !Was a bug, commented out on 07222015
-c            CALL XTONAD(X,Y,Z,RLAT,RLON,EHTNAD,DATE,IOPT)   !No longer NAD83
-             CALL XTO08 (X,Y,Z,RLAT,RLON,EHTNAD,DATE,IOPT)   !Positions should be in ITRF2008
+             CALL XTO08 (X,Y,Z,RLAT,RLON,EHTNAD,DATE,IOPT)   !Positions are in ITRF2008
          ENDIF
 
 ** Get deformation region
 
          CALL GETREG(RLAT,RLON,JREGN)
-c        write (*,*) JREGN
          IF (JREGN .EQ. 0) THEN
            VN = 0.D0
            VE = 0.D0
@@ -7303,21 +7160,18 @@ c        write (*,*) JREGN
          ENDIF
          CALL COMVEL( RLAT, RLON, JREGN, VN, VE, VU)       !Those velocities are in ITRF2008
 
-** Convert  velocity to reference of iopt, if iopt != NAD83   !No, was in ITRF2008, not in NAD83  (since 09/12/2014)
+** Convert  velocity to reference of iopt, if frame not ITRF2008
 
          Is_iopt_NAD83 = (iopt == 1)
-c        IF (IOPT .NE. 0 .AND. IOPT .NE. 1) THEN
          IF (IOPT .NE. 15) THEN
            CALL TOVXYZ( YLAT, ELON, VN, VE, VU, VX, VY, VZ)
            if (Is_iopt_NAD83) then
-c            CALL VTRANF( X, Y, Z, VX, VY, VZ, 1, IOPT)
              CALL VTRANF( X, Y, Z, VX, VY, VZ, 15, IOPT)
            else
              CALL VTRANF_IERS( X, Y, Z, VX, VY, VZ, 15, IOPT)
            endif
            CALL TOVNEU( YLAT, ELON, VX, VY, VZ, VN, VE, VU)
          ENDIF
-c        write (*,*) "From PREDV ",VN, VE, VU
 
          RETURN
          END
@@ -7336,9 +7190,13 @@ c        write (*,*) "From PREDV ",VN, VE, VU
       character    option*1
       character    vopt*1, LATDIR*1,LONDIR*1
       character    record*120                 
-      LOGICAL      Is_inp_NAD83,Is_out_NAD83
+      LOGICAL      Is_inp_NAD83, Is_out_NAD83
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
       COMMON /CONST/ A, F, E2, EPS, AF, PI, TWOPI, RHOSEC
+
+C  Initialize NAD 83 input/poutput logical variables as false:
+      Is_inp_NAD83 = .FALSE.
+      Is_out_NAD83 = .FALSE.
 
       write( luout, 100)
   100 format(
@@ -7358,7 +7216,9 @@ c        write (*,*) "From PREDV ",VN, VE, VU
       write( luout, *) ' Improper selection -- try again.'
       go to 105
       endif
-      Is_inp_NAD83 = (iopt1 ==  1)
+
+      IF(iopt1 .EQ. 1) Is_inp_NAD83 = .TRUE.
+c      Is_inp_NAD83 = (iopt1 ==  1)    !Comment out v3.4.0
 
   115 write( luout, 120)
   120 format( /' Enter the reference frame for the output velocities.')
@@ -7367,7 +7227,9 @@ c        write (*,*) "From PREDV ",VN, VE, VU
       write( luout, *) 'Improper selection -- try again.'
       go to 115
       endif
-      Is_out_NAD83 = (iopt2 ==  1)
+      
+      IF(iopt2 .EQ. 1) Is_out_NAD83 = .TRUE.
+c      Is_out_NAD83 = (iopt2 ==  1)    !Comment out v3.4.0
 
       write( i2, 125) frame1, frame2
   125 format( ' TRANSFORMING VELOCITIES FROM ', A24, ' TO ', a24//
@@ -7379,17 +7241,16 @@ c        write (*,*) "From PREDV ",VN, VE, VU
      1  ' Please indicate how you wish to input points.'/
      1  '    0...No more points.  Return to main menu.'/
      1  '    1...Individual points entered interactively.'/
-     1  '    2...Transform velocities contained in batch file '/
-     1  '        of delimited records of the form: '/
-     1  '        LAT,LON,VN,VE,VU,TEXT ' /
-     1  '        LAT = latitude in degrees (positive north/DBL PREC)'/
-     1  '        LON = longitude in degrees (positive west/DBL PREC)'/
-     1  '        VN = northward velocity in mm/yr (DBL PREC) '/
-     1  '        VE = eastwars velocity in mm/yr (DBL PREC) '/
-     1  '        VU = upward velocity in mm/yr (DBL PREC) '/
-     1  '        TEXT = descriptive text (CHARACTER*24) '/
+     1  '    2...Transform velocities contained in file of delimited'/
+     1  '        records of the form LAT,LON,VN,VE,VU,TEXT:' /
+     1  '        LAT = latitude in degrees (positive north)'/
+     1  '        LON = longitude in degrees (positive west)'/
+     1  '        VN = northward velocity in mm/yr '/
+     1  '        VE = eastwars velocity in mm/yr '/
+     1  '        VU = upward velocity in mm/yr '/
+     1  '        TEXT = descriptive text (maximum 24 characters) '/
      1  '        Example: '/
-     1  '        40.731671553,112.212671753, 3.7,3.8,-2.4,SALT AIR '/)
+     1  '          40.731671553,112.212671753,3.7,3.8,-2.4,SALT AIR '/)
       read( luin,'(a1)',err=601,iostat=ios) option
       if (ios /= 0) goto 601
       if (option .eq. '0') then
@@ -7462,6 +7323,7 @@ c        write (*,*) "From PREDV ",VN, VE, VU
          go to 210
   220    close (i1, status = 'keep')
       endif
+       
   500 continue
       close (i2, status = 'keep')
       return
@@ -7516,7 +7378,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
      &   .and. IOPT1 .gt. 0 .and. IOPT2 .gt. 0 ) THEN
 
 *** Convert from mm/yr to m/yr
-         VX = VX /1000.d0
+         VX = VX / 1000.d0
          VY = VY / 1000.d0
          VZ = VZ / 1000.d0
 
@@ -7701,13 +7563,12 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
    3  WRITE (LUOUT,1)
    1  FORMAT (' How do you wish to enter the time?'/
-     1        '     1. month-day-year in free format'/
-     1        '        for example, 5,12,1979'/
+     1        '     1. Month-day-year in free format.'/
+     1        '        For example 5 12 1979 or 5,12,1979'/
      1        '        represents May 12, 1979'/
-     1        '     2. decimal year'/
-     1        '        for example the entry 1979.359'/
-     1        '        represents UTC midnight at the begining'/
-     1        '        of May 12, 1979.'/) 
+     1        '     2. Decimal year.'/
+     1        '        For example 2010.000 represents UTC midnight'/
+     1        '        at the beginning of January 1, 2010.'/)
 
       READ (LUIN,5,err=100,iostat=ios) TOPT
       if (ios /= 0) goto 100
@@ -7752,7 +7613,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
           RETURN
 
       ELSEIF (TOPT .EQ. '2') then
-          write(luout,*) ' Enter decimal year '
+          write(luout,*) 'Enter decimal year '
           READ (LUIN, *,err=102,iostat=ios) DATE
           if (ios /= 0)  goto 102
           
@@ -7870,8 +7731,7 @@ C                              ASTRONOMY WITH YOUR CALCULATOR', 2ND
 C                              EDITION, CAMBRIDGE UNIVERSITY PRESS,
 C                              NEW YORK, P.9
 C
-C       COMMENTS:              THIS SUBROUTINE REQUIRES THE FULL YEAR,
-C                              I.E. 1992 RATHER THAN 92.  
+C       COMMENTS:              REQUIRES 4-DIGIT YEAR (E.G. 1992 NOT 92).  
 C
 C********1*********2*********3*********4*********5*********6*********7**
 C::LAST MODIFICATION
@@ -8047,7 +7907,7 @@ C
 C
 C********1*********2*********3*********4*********5*********6*********7**
 C
-C PURPOSE:     THIS SUBROUTINE RETURNS THE INDICES OF THE LOWER-LEFT
+C PURPOSE:     RETURNS THE INDICES OF THE LOWER-LEFT
 C              HAND CORNER OF THE GRID CELL CONTAINING THE POINT
 C              AND COMPUTES NORMALIZED WEIGHTS FOR 
 C              BI-LINEAR INTERPOLATION OVER A PLANE
@@ -8130,7 +7990,7 @@ C*********************************************************************
       SUBROUTINE GRDAMP (K, I, J, AMP, PS)
 C********1*********2*********3*********4*********5*********6*********7**
 C
-C PURPOSE:     THIS SUBROUTINE RETRIEVES THE AMPLITUDES OF THE FOUR
+C PURPOSE:     RETRIEVES THE AMPLITUDES OF THE FOUR
 C              GRID NODES OFGRID K WHERE I,J ARE THE INDICES OF
 C              THE LOWER LEFT HAND CORNER
 C              
@@ -8204,7 +8064,7 @@ C---------------------------------------------------------------------
       subroutine extract_name (name,i)
 
 C  In f90, use trim(name) to truncate all spaces after the name.
-C  But "trim" were not available in f77. This is what this subroutine is for
+C  But "trim" were not available in f77.
 
       implicit none
       integer*4 i
@@ -8789,8 +8649,3 @@ C  Done
          return 
          end
 C-----------------------------------------------------------------------
-C  On 5/10/2020 removed all code and comments entered on 7/22/2015 that limited use
-C  of HTDP to US and its territories. That functionality was disabled on 5/11/2017.
-C  The removed code still exists in HTDP v3.2.8 and 3.2.7, commented out to disable.
-C  But functions remained in those previous versions, causing numerous warnings when 
-C  program compiled.

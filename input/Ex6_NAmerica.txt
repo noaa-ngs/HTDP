@@ -1,0 +1,7 @@
+39,98,370,Kansas
+37,122,30,California
+48,124,550,Washington
+45,69,70,Maine
+28,81,-10,Florida
+65,152,120,Alaska
+18.2,66.5,890,Puerto Rico

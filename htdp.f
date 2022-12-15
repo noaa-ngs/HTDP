@@ -3,8 +3,8 @@
 **************************************************************
 *  NAME:       HTDP (Horizontal Time-Dependent Positioning)
 *
-*  WRITTEN BY: Richard Snay, Chris Pearson, Jarir Saleh, 
-*              and Michael Dennis
+*  WRITTEN BY: Michael Dennis, Jarir Saleh, Richard Snay, 
+*              and Chris Pearson
 *
 *  PURPOSE:    Transform coordinates across time
 *              and between reference frames
@@ -23,8 +23,8 @@
 
 C  You must change HTDP version and date here, if necessary
 
-      HTDP_version = '3.4.0'
-      Version_date = 'October 12, 2021'
+      HTDP_version = '3.5.0'
+      Version_date = 'November 29, 2022'
 
 *** Introduce variables for file IDs
 
@@ -71,8 +71,8 @@ C    1      FORM='UNFORMATTED')
      1 '   VERSION DATE:     ', a20                              /)
       WRITE(LUOUT,501) 
   501 FORMAT(
-     1 '   AUTHORS: Richard Snay, Chris Pearson, Jarir Saleh,   '/
-     1 '            and Michael Dennis                          '//
+     1 '   AUTHORS: Michael Dennis, Jarir Saleh, Richard Snay,  '/
+     1 '            and Chris Pearson                          '//
      1 '   Web: https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml  '/
      1 '   Email: ngs.cors.htdp@noaa.gov                        '/
      1 '********************************************************')
@@ -138,10 +138,10 @@ C    1      FORM='UNFORMATTED')
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /TIMREF/ ITREF
 
-      A = 6.378137D06
+      A = 6378137.D0
       F = 1.D0 / 298.257222101D0
-      E2 = 0.6694380022903146D-2
-      AF = A / (1.D0 -F)
+      E2 = F*(2.D0 - F)   !Calculate E2 from F rather than hard-coded as done previously
+      AF = A / (1.D0 - F)
       EPS = F*(2.D0 - F) / ((1.D0 -F)**2)
       PI = 4.D0 * DATAN(1.D0)
       RHOSEC = (180.D0 * 3600.D0) / PI
@@ -1763,7 +1763,7 @@ C***************************************************
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (numref = 16)
+      parameter (numref = 19)
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /FILES/ LUIN,LUOUT, I1, I2, I3, I4, I5, I6
       CHARACTER   CARD*80
@@ -2154,7 +2154,7 @@ C         IF(JN.EQ.'S' .OR. JW.EQ.'E')GO TO 320
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (numref = 16)
+      parameter (numref = 19)
       parameter (nrsrch = 0)
       COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /FILES/ LUIN,LUOUT, I1, I2, I3, I4, I5, I6
@@ -2740,7 +2740,7 @@ c         CALL VTRANF(X,Y,Z,VX,VY,VZ, 1, IOPT)  !No longer NAD83
 
       implicit double precision (a-h,o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 16)
+      parameter (numref = 19)
       parameter (nbbdim = 10000)
       parameter (rad2deg = 180.d0/3.14159265358979d0)
 
@@ -2934,12 +2934,7 @@ c         write (*,*) "Passed TOXYZ"
           xt = x2
           yt = y2
           zt = z2
-          
-          write(*,*)
-          write(*,*) "x, y, z:    ", x, y, z
-          write(*,*) "xt, yt, zt: ", xt, yt, zt
-          write(*,*)
-          
+                   
           if(.not.(FRMXYZ(xt,yt,zt,ylatt,elont,ehtnew))) STOP 666
           ylont = -elont
           if(ylont .lt. 0.0d0) ylont = ylont + twopi
@@ -3569,10 +3564,9 @@ C  ITRF systems. They will not be used if the transformation involves NAD83(2011
 C  However, the NAD 83 Pacific and Mariana frames use the IERS convention ITRF96 = ITRF97.
 C  Removed equivalence between NAD83(2011)and WGS84 original (Transit) in v3.4.0.
 
-
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 16)
+      parameter (numref = 19)
 
       common /const/ a, f, e2, eps, af, pi, twopi, rhosec
       common /tranpa/ tx(numref), ty(numref), tz(numref), 
@@ -3608,7 +3602,7 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       refepc(1) = 1997.0d0
 
 *** From ITRF94 to ITRF88
-***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
+*** Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx(2) =     0.018d0
       ty(2) =     0.000d0
       tz(2) =    -0.092d0
@@ -3616,65 +3610,65 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       dty(2) =    0.0d0
       dtz(2) =    0.0d0
       rx(2) =    -0.0001d0 / rhosec
-      ry(2) =     0.0d0                 
-      rz(2) =     0.0d0 
-      drx(2) =    0.0d0                  
-      dry(2) =    0.0d0              
-      drz(2) =    0.0d0                   
+      ry(2) =     0.0d0 / rhosec
+      rz(2) =     0.0d0 / rhosec
+      drx(2) =    0.0d0 / rhosec
+      dry(2) =    0.0d0 / rhosec
+      drz(2) =    0.0d0 / rhosec
       scale(2) =  0.749d-8    !Previous 0.74d-8 (prior to v3.3.0)
       dscale(2) = 0.0d0
       refepc(2) = 1988.0d0
 
 *** From ITRF94 to ITRF89
-***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
+*** Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx(3) =     0.023d0
       ty(3) =     0.036d0
       tz(3) =    -0.068d0
       dtx(3) =    0.0d0    
       dty(3) =    0.0d0
       dtz(3) =    0.0d0
-      rx(3) =     0.0d0
-      ry(3) =     0.0d0                 
-      rz(3) =     0.0d0 
-      drx(3) =    0.0d0                  
-      dry(3) =    0.0d0              
-      drz(3) =    0.0d0                   
+      rx(3) =     0.0d0 / rhosec
+      ry(3) =     0.0d0 / rhosec
+      rz(3) =     0.0d0 / rhosec
+      drx(3) =    0.0d0 / rhosec
+      dry(3) =    0.0d0 / rhosec
+      drz(3) =    0.0d0 / rhosec
       scale(3) =  0.439d-8    !Previous 0.43d-8 (prior to v3.3.0)
       dscale(3) = 0.0d0
       refepc(3) = 1988.0d0
 
 *** From ITRF94 to ITRF90
-***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
+*** Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx(4) =     0.018d0
       ty(4) =     0.012d0
       tz(4) =    -0.030d0
       dtx(4) =    0.0d0    
       dty(4) =    0.0d0
       dtz(4) =    0.0d0
-      rx(4) =     0.0d0
-      ry(4) =     0.0d0                 
-      rz(4) =     0.0d0 
-      drx(4) =    0.0d0                  
-      dry(4) =    0.0d0              
-      drz(4) =    0.0d0                   
+      rx(4) =     0.0d0 / rhosec
+      ry(4) =     0.0d0 / rhosec
+      rz(4) =     0.0d0 / rhosec
+      drx(4) =    0.0d0 / rhosec
+      dry(4) =    0.0d0 / rhosec
+      drz(4) =    0.0d0 / rhosec
       scale(4) =  0.099d-8    !Previous 0.09d-8 (prior to v3.3.0)
       dscale(4) = 0.0d0
       refepc(4) = 1988.0d0
 
 *** From ITRF94 to ITRF91
-***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
+*** Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx(5) =     0.020d0
       ty(5) =     0.016d0
       tz(5) =    -0.014d0
       dtx(5) =    0.0d0    
       dty(5) =    0.0d0
       dtz(5) =    0.0d0
-      rx(5) =     0.0d0
-      ry(5) =     0.0d0                 
-      rz(5) =     0.0d0 
-      drx(5) =    0.0d0                  
-      dry(5) =    0.0d0              
-      drz(5) =    0.0d0                   
+      rx(5) =     0.0d0 / rhosec
+      ry(5) =     0.0d0 / rhosec
+      rz(5) =     0.0d0 / rhosec
+      drx(5) =    0.0d0 / rhosec
+      dry(5) =    0.0d0 / rhosec
+      drz(5) =    0.0d0 / rhosec
       scale(5) =  0.069d-8    !Previous 0.06d-8 (prior to v3.3.0)
       dscale(5) = 0.0d0
       refepc(5) = 1988.0d0
@@ -3687,23 +3681,23 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       dtx(6) =    0.0d0    
       dty(6) =    0.0d0
       dtz(6) =    0.0d0
-      rx(6) =     0.0d0
-      ry(6) =     0.0d0                 
-      rz(6) =     0.0d0 
-      drx(6) =    0.0d0                  
-      dry(6) =    0.0d0              
-      drz(6) =    0.0d0                   
+      rx(6) =     0.0d0 / rhosec
+      ry(6) =     0.0d0 / rhosec
+      rz(6) =     0.0d0 / rhosec
+      drx(6) =    0.0d0 / rhosec
+      dry(6) =    0.0d0 / rhosec
+      drz(6) =    0.0d0 / rhosec
       scale(6) = -0.071d-8    !Previous -0.08d-8 (prior to v3.3.0)
       dscale(6) = 0.0d0
       refepc(6) = 1988.0d0
 
 *** From ITRF94 to ITRF93
-***   Update scale in v3.3.0 to match current value published by IERS 
-***   (https://itrf.ign.fr/trans_para.php). Supersedes scale in file 
-***   "ITRF94.TX" at ftp://itrf-ftp.ign.fr/pub/itrf/itrf94/.  
-***   This update also affects the scale for transformations from ITRF94 
-***   to all earlier ITRFs in HTDP.
-***   Note that this transformation is not published in IERS TN20 (1996).
+*** Update scale in v3.3.0 to match current value published by IGN 
+*** (2022) "Transformation parameters from ITRF2020 to past ITRFs" at
+*** https://itrf.ign.fr/docs/solutions/itrf2020/Transfo-ITRF2020_TRFs.txt
+*** This update also affects the scale for transformations from ITRF94 
+*** to all earlier ITRFs in HTDP.
+*** Note that this transformation is not published in IERS TN20 (1996).
       tx(7) =     0.006d0
       ty(7) =    -0.005d0
       tz(7) =    -0.015d0
@@ -3727,12 +3721,12 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       dtx(8) =    0.0d0
       dty(8) =    0.0d0
       dtz(8) =    0.0d0
-      rx(8) =     0.0d0
-      ry(8) =     0.0d0
-      rz(8) =     0.0d0
-      drx(8) =    0.0d0
-      dry(8) =    0.0d0
-      drz(8) =    0.0d0
+      rx(8) =     0.0d0 / rhosec
+      ry(8) =     0.0d0 / rhosec
+      rz(8) =     0.0d0 / rhosec
+      drx(8) =    0.0d0 / rhosec
+      dry(8) =    0.0d0 / rhosec
+      drz(8) =    0.0d0 / rhosec
       scale(8) =  0.0d0
       dscale(8) = 0.0d0
       refepc(8) = 1997.0d0    !Previous 1996.0d0 (prior to v3.4.0)
@@ -3775,7 +3769,8 @@ c      refepc(10) = 1997.0d0
       
 *** From ITRF94 to WGS84 original (Transit), added in v3.4.0.
 *** Based on IERS-published transformation from ITRF90 to WGS84 (Transit)
-*** at ftp://itrf-ftp.ign.fr/pub/itrf/ in file "WGS84.TXT".
+*** in Table 3.1 of McCarthy (1992) "IERS standards," IERS Tech. Note 13, 
+*** Observatoire de Paris, France: Central Bureau of IERS. 
       tx(10) =      0.078d0
       ty(10) =     -0.505d0
       tz(10) =     -0.253d0
@@ -3785,9 +3780,9 @@ c      refepc(10) = 1997.0d0
       rx(10) =     -0.0183d0 / rhosec
       ry(10) =      0.0003d0 / rhosec
       rz(10) =     -0.0070d0 / rhosec
-      drx(10) =     0.0d0
-      dry(10) =     0.0d0
-      drz(10) =     0.0d0
+      drx(10) =     0.0d0 / rhosec
+      dry(10) =     0.0d0 / rhosec
+      drz(10) =     0.0d0 / rhosec
       scale(10) = -10.010d-9
       dscale(10) =  0.0d0
       refepc(10) =  1997.0d0
@@ -3918,6 +3913,80 @@ c      refepc(10) = 1997.0d0
       dscale(16) =  0.07201d-9
       refepc(16) =  2010.0d0
 
+*** From ITRF94 to ITRF2020 (also IGS20)
+*** assumes that ITRF94 = ITRF96
+*** uses IGS values for ITRF96 -> ITRF97
+*** uses IERS values for ITRF97 -> ITRF2000
+*** uses IERS values for ITRF2000-> ITRF2005
+*** uses IERS values for ITRF2005 -> ITRF2008
+*** uses IERS values for ITRF2008 -> ITRF2014
+*** uses IERS values for ITRF2014 -> ITRF2020
+      tx(17)     = -0.01290d0
+      ty(17)     =  0.00241d0
+      tz(17)     =  0.02827d0
+      dtx(17)    = -0.00079d0
+      dty(17)    =  0.00070d0
+      dtz(17)    =  0.00124d0
+      rx(17)     = -0.00029978d0 / rhosec
+      ry(17)     =  0.00042037d0 / rhosec
+      rz(17)     =  0.00031714d0 / rhosec
+      drx(17)    = -0.00001347d0 / rhosec
+      dry(17)    =  0.00001514d0 / rhosec
+      drz(17)    =  0.00001973d0 / rhosec
+      scale(17)  =  0.05109d-9
+      dscale(17) =  0.07201d-9
+      refepc(17) =  2010.0d0
+
+*** From ITRF94 to WGS84(G1150), added in v3.5.0.
+*** Uses IGS values for ITRF96 -> ITRF97.
+*** Treated as biased with respect to ITRF2000.
+*** Based on NGA-published transformation between WGS84(G1150)
+*** and WGS84(G1762) = ITRF2008 in Table 2.5 of NGA.STND.0036_1.0.0_WGS84,
+*** "Department of Defense World Geodetic System 1984: its definition and 
+*** relationships with local geodetic systems", v1.0.0, 2014.  See also
+*** Kelly and Dennis (2022) "Transforming Between WGS84 Realizations,"
+*** J Surv Eng, doi: 10.1061/(ASCE)SU.1943-5428.0000389.
+      tx(18)     = -0.00580d0
+      ty(18)     = -0.00019d0
+      tz(18)     = -0.00513d0
+      dtx(18)    = -0.00069d0
+      dty(18)    =  0.00070d0
+      dtz(18)    = -0.00046d0
+      rx(18)     = -0.00029978d0 / rhosec
+      ry(18)     =  0.00042037d0 / rhosec
+      rz(18)     =  0.00031714d0 / rhosec
+      drx(18)    = -0.00001347d0 / rhosec
+      dry(18)    =  0.00001514d0 / rhosec
+      drz(18)    =  0.00001973d0 / rhosec
+      scale(18)  =  4.83109d-9
+      dscale(18) =  0.18201d-9
+      refepc(18) =  2010.0d0
+
+*** From ITRF94 to WGS84(G1674), added in v3.5.0.
+*** Uses IGS values for ITRF96 -> ITRF97.
+*** Treated as biased with respect to ITRF2008.
+*** Based on NGA-published bias transformation between WGS84(G1674)
+*** and WGS84(G1762) = ITRF2008 in Table 2.5 of NGA.STND.0036_1.0.0_WGS84,
+*** "Department of Defense World Geodetic System 1984: its definition and 
+*** relationships with local geodetic systems", v1.0.0, 2014.
+*** See also Kelly and Dennis (2022) "Transforming Between WGS84 Realizations,"
+*** J Surv Eng, doi: 10.1061/(ASCE)SU.1943-5428.0000389.
+      tx(19)     = -0.00870d0
+      ty(19)     =  0.00091d0
+      tz(19)     =  0.02707d0
+      dtx(19)    = -0.00079d0
+      dty(19)    =  0.00060d0
+      dtz(19)    =  0.00134d0
+      rx(19)     = -0.00056978d0 / rhosec
+      ry(19)     =  0.00069037d0 / rhosec
+      rz(19)     = -0.00006286d0 / rhosec
+      drx(19)    = -0.00001347d0 / rhosec
+      dry(19)    =  0.00001514d0 / rhosec
+      drz(19)    =  0.00001973d0 / rhosec
+      scale(19)  =  6.51109d-9
+      dscale(19) =  0.10201d-9
+      refepc(19) =  2010.0d0
+
 C*************************************************************************************************************************
 C  Parameters computed with the IERS convention ITRF96 = ITRF97
 
@@ -3941,7 +4010,7 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       refepc1(1) = 1997.0d0
 
 *** From ITRF94 to ITRF88
-***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
+*** Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx1(2) =     0.018d0
       ty1(2) =     0.000d0
       tz1(2) =    -0.092d0
@@ -3949,94 +4018,94 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       dty1(2) =    0.0d0
       dtz1(2) =    0.0d0
       rx1(2) =    -0.0001d0 / rhosec
-      ry1(2) =     0.0d0                 
-      rz1(2) =     0.0d0 
-      drx1(2) =    0.0d0                  
-      dry1(2) =    0.0d0              
-      drz1(2) =    0.0d0                   
+      ry1(2) =     0.0d0 / rhosec
+      rz1(2) =     0.0d0 / rhosec
+      drx1(2) =    0.0d0 / rhosec
+      dry1(2) =    0.0d0 / rhosec
+      drz1(2) =    0.0d0 / rhosec
       scale1(2) =  0.749d-8    !Previous 0.74d-8 (prior to v3.3.0)
       dscale1(2) = 0.0d0
       refepc1(2) = 1988.0d0
 
 *** From ITRF94 to ITRF89
-***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
+*** Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx1(3) =     0.023d0
       ty1(3) =     0.036d0
       tz1(3) =    -0.068d0
       dtx1(3) =    0.0d0    
       dty1(3) =    0.0d0
       dtz1(3) =    0.0d0
-      rx1(3) =     0.0d0
-      ry1(3) =     0.0d0                 
-      rz1(3) =     0.0d0 
-      drx1(3) =    0.0d0                  
-      dry1(3) =    0.0d0              
-      drz1(3) =    0.0d0                   
+      rx1(3) =     0.0d0 / rhosec
+      ry1(3) =     0.0d0 / rhosec
+      rz1(3) =     0.0d0 / rhosec
+      drx1(3) =    0.0d0 / rhosec
+      dry1(3) =    0.0d0 / rhosec
+      drz1(3) =    0.0d0 / rhosec
       scale1(3) =  0.439d-8    !Previous 0.43d-8 (prior to v3.3.0)
       dscale1(3) = 0.0d0
       refepc1(3) = 1988.0d0
 
 *** From ITRF94 to ITRF90
-***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
+*** Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx1(4) =     0.018d0
       ty1(4) =     0.012d0
       tz1(4) =    -0.030d0
       dtx1(4) =    0.0d0    
       dty1(4) =    0.0d0
       dtz1(4) =    0.0d0
-      rx1(4) =     0.0d0
-      ry1(4) =     0.0d0                 
-      rz1(4) =     0.0d0 
-      drx1(4) =    0.0d0                  
-      dry1(4) =    0.0d0              
-      drz1(4) =    0.0d0                   
+      rx1(4) =     0.0d0 / rhosec
+      ry1(4) =     0.0d0 / rhosec
+      rz1(4) =     0.0d0 / rhosec
+      drx1(4) =    0.0d0 / rhosec
+      dry1(4) =    0.0d0 / rhosec
+      drz1(4) =    0.0d0 / rhosec
       scale1(4) =  0.099d-8    !Previous 0.09d-8 (prior to v3.3.0)
       dscale1(4) = 0.0d0
       refepc1(4) = 1988.0d0
 
 *** From ITRF94 to ITRF91
-***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
+*** Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx1(5) =     0.020d0
       ty1(5) =     0.016d0
       tz1(5) =    -0.014d0
       dtx1(5) =    0.0d0    
       dty1(5) =    0.0d0
       dtz1(5) =    0.0d0
-      rx1(5) =     0.0d0
-      ry1(5) =     0.0d0                 
-      rz1(5) =     0.0d0 
-      drx1(5) =    0.0d0                  
-      dry1(5) =    0.0d0              
-      drz1(5) =    0.0d0                   
+      rx1(5) =     0.0d0 / rhosec
+      ry1(5) =     0.0d0 / rhosec
+      rz1(5) =     0.0d0 / rhosec
+      drx1(5) =    0.0d0 / rhosec
+      dry1(5) =    0.0d0 / rhosec
+      drz1(5) =    0.0d0 / rhosec
       scale1(5) =  0.069d-8    !Previous 0.06d-8 (prior to v3.3.0)
       dscale1(5) = 0.0d0
       refepc1(5) = 1988.0d0
 
 *** From ITRF94 to ITRF92
-***   Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
+*** Update scale in v3.3.0 due to ITRF94 to ITRF93 transformation update.
       tx1(6) =     0.008d0
       ty1(6) =     0.002d0
       tz1(6) =    -0.008d0
       dtx1(6) =    0.0d0    
       dty1(6) =    0.0d0
       dtz1(6) =    0.0d0
-      rx1(6) =     0.0d0
-      ry1(6) =     0.0d0                 
-      rz1(6) =     0.0d0 
-      drx1(6) =    0.0d0                  
-      dry1(6) =    0.0d0              
-      drz1(6) =    0.0d0                   
+      rx1(6) =     0.0d0 / rhosec
+      ry1(6) =     0.0d0 / rhosec
+      rz1(6) =     0.0d0 / rhosec
+      drx1(6) =    0.0d0 / rhosec
+      dry1(6) =    0.0d0 / rhosec
+      drz1(6) =    0.0d0 / rhosec
       scale1(6) = -0.071d-8    !Previous -0.08d-8 (prior to v3.3.0)
       dscale1(6) = 0.0d0
       refepc1(6) = 1988.0d0
 
 *** From ITRF94 to ITRF93
-***   Update scale in v3.3.0 to match current value published by IERS 
-***   (https://itrf.ign.fr/trans_para.php). Supersedes scale in file 
-***   "ITRF94.TX" at ftp://itrf-ftp.ign.fr/pub/itrf/itrf94/.  
-***   This update also affects the scale for transformations from ITRF94 
-***   to all earlier ITRFs in HTDP.
-***   Note that this transformation is not published in IERS TN20 (1996).
+*** Update scale in v3.3.0 to match current value published by IGN 
+*** (2022) "Transformation parameters from ITRF2020 to past ITRFs" at
+*** https://itrf.ign.fr/docs/solutions/itrf2020/Transfo-ITRF2020_TRFs.txt
+*** This update also affects the scale for transformations from ITRF94 
+*** to all earlier ITRFs in HTDP.
+*** Note that this transformation is not published in IERS TN20 (1996).
       tx1(7)     =  0.006d0
       ty1(7)     = -0.005d0
       tz1(7)     = -0.015d0
@@ -4061,12 +4130,12 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       dtx1(8)    = 0.d0
       dty1(8)    = 0.d0
       dtz1(8)    = 0.d0
-      rx1(8)     = 0.d0
-      ry1(8)     = 0.d0
-      rz1(8)     = 0.d0
-      drx1(8)    = 0.d0
-      dry1(8)    = 0.d0
-      drz1(8)    = 0.d0
+      rx1(8)     = 0.d0 / rhosec
+      ry1(8)     = 0.d0 / rhosec
+      rz1(8)     = 0.d0 / rhosec
+      drx1(8)    = 0.d0 / rhosec
+      dry1(8)    = 0.d0 / rhosec
+      drz1(8)    = 0.d0 / rhosec
       scale1(8)  = 0.d0
       dscale1(8) = 0.0d0
       refepc1(8) = 1997.0d0    !Previous 1996.0d0 (prior to v3.4.0)
@@ -4079,12 +4148,12 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       dtx1(9)    = 0.0d0
       dty1(9)    = 0.0d0
       dtz1(9)    = 0.0d0
-      rx1(9)     = 0.0d0
-      ry1(9)     = 0.0d0
-      rz1(9)     = 0.0d0
-      drx1(9)    = 0.0d0
-      dry1(9)    = 0.0d0
-      drz1(9)    = 0.0d0
+      rx1(9)     = 0.0d0 / rhosec
+      ry1(9)     = 0.0d0 / rhosec
+      rz1(9)     = 0.0d0 / rhosec
+      drx1(9)    = 0.0d0 / rhosec
+      dry1(9)    = 0.0d0 / rhosec
+      drz1(9)    = 0.0d0 / rhosec
       scale1(9)  = 0.0d0
       dscale1(9) = 0.0d0
       refepc1(9) = 1997.0d0    !Previous 2000.0d0 (prior to v3.4.0)
@@ -4109,7 +4178,8 @@ c      refepc1(10) = 1997.0d0
       
 *** From ITRF94 to WGS84 original (Transit), added in v3.4.0.
 *** Based on IERS-published transformation from ITRF90 to WGS84 (Transit)
-*** at ftp://itrf-ftp.ign.fr/pub/itrf/ in file "WGS84.TXT".
+*** in Table 3.1 of McCarthy (1992) "IERS standards," IERS Tech. Note 13, 
+*** Observatoire de Paris, France: Central Bureau of IERS. 
       tx1(10) =      0.078d0
       ty1(10) =     -0.505d0
       tz1(10) =     -0.253d0
@@ -4119,9 +4189,9 @@ c      refepc1(10) = 1997.0d0
       rx1(10) =     -0.0183d0 / rhosec
       ry1(10) =      0.0003d0 / rhosec
       rz1(10) =     -0.0070d0 / rhosec
-      drx1(10) =     0.0d0
-      dry1(10) =     0.0d0
-      drz1(10) =     0.0d0
+      drx1(10) =     0.0d0    / rhosec
+      dry1(10) =     0.0d0    / rhosec
+      drz1(10) =     0.0d0    / rhosec
       scale1(10) = -10.010d-9
       dscale1(10) =  0.0d0
       refepc1(10) =  1997.0d0
@@ -4235,21 +4305,95 @@ c      refepc1(10) = 1997.0d0
 *** uses IERS values for ITRF2000 -> ITRF2005
 *** uses IERS values for ITRF2005 -> ITRF2008
 *** uses IERS values for ITRF2008 -> ITRF2014
-      tx1(16)     = -0.00740d0
-      ty1(16)     =  0.00050d0
-      tz1(16)     =  0.06280d0
-      dtx1(16)    = -0.00010d0
-      dty1(16)    =  0.00050d0
-      dtz1(16)    =  0.00330d0
-      rx1(16)     =  0.0d0        / rhosec
-      ry1(16)     =  0.0d0        / rhosec
-      rz1(16)     =  0.00026000d0 / rhosec
-      drx1(16)    =  0.0d0        / rhosec
-      dry1(16)    =  0.0d0        / rhosec
-      drz1(16)    =  0.00002000d0 / rhosec
+      tx1(16)     = -0.0074d0
+      ty1(16)     =  0.0005d0
+      tz1(16)     =  0.0628d0
+      dtx1(16)    = -0.0001d0
+      dty1(16)    =  0.0005d0
+      dtz1(16)    =  0.0033d0
+      rx1(16)     =  0.0d0     / rhosec
+      ry1(16)     =  0.0d0     / rhosec
+      rz1(16)     =  0.00026d0 / rhosec
+      drx1(16)    =  0.0d0     / rhosec
+      dry1(16)    =  0.0d0     / rhosec
+      drz1(16)    =  0.00002d0 / rhosec
       scale1(16)  = -3.80d-9
       dscale1(16) = -0.12d-9
       refepc1(16) =  2010.0d0
+
+*** From ITRF94 to ITRF2020 (also IGS20)
+*** assumes that ITRF94 = ITRF96
+*** uses IERS convention ITRF96 = ITRF97
+*** uses IERS values for ITRF97 -> ITRF2000
+*** uses IERS values for ITRF2000 -> ITRF2005
+*** uses IERS values for ITRF2005 -> ITRF2008
+*** uses IERS values for ITRF2008 -> ITRF2014
+*** uses IERS values for ITRF2014 -> ITRF2020
+      tx1(17)     = -0.0060d0
+      ty1(17)     =  0.0009d0
+      tz1(17)     =  0.0624d0
+      dtx1(17)    = -0.0001d0
+      dty1(17)    =  0.0006d0
+      dtz1(17)    =  0.0031d0
+      rx1(17)     =  0.0d0     / rhosec
+      ry1(17)     =  0.0d0     / rhosec
+      rz1(17)     =  0.00026d0 / rhosec
+      drx1(17)    =  0.0d0     / rhosec
+      dry1(17)    =  0.0d0     / rhosec
+      drz1(17)    =  0.00002d0 / rhosec
+      scale1(17)  = -3.38d-9
+      dscale1(17) = -0.12d-9
+      refepc1(17) =  2010.0d0
+
+*** From ITRF94 to WGS84(G1150), added in v3.5.0.
+*** Uses IERS convention ITRF96 = ITRF97.
+*** Treated as biased with respect to ITRF2000.
+*** Based on NGA-published transformation between WGS84(G1150)
+*** and WGS84(G1762) = ITRF2008 in Table 2.5 of NGA.STND.0036_1.0.0_WGS84,
+*** "Department of Defense World Geodetic System 1984: its definition and 
+*** relationships with local geodetic systems", v1.0.0, 2014.  See also
+*** Kelly and Dennis (2022) "Transforming Between WGS84 Realizations,"
+*** J Surv Eng, doi: 10.1061/(ASCE)SU.1943-5428.0000389.
+      tx1(18)     =  0.0011d0
+      ty1(18)     = -0.0017d0
+      tz1(18)     =  0.0290d0
+      dtx1(18)    =  0.0d0
+      dty1(18)    =  0.0006d0
+      dtz1(18)    =  0.0014d0
+      rx1(18)     =  0.0d0     / rhosec
+      ry1(18)     =  0.0d0     / rhosec
+      rz1(18)     =  0.00026d0 / rhosec
+      drx1(18)    =  0.0d0     / rhosec
+      dry1(18)    =  0.0d0     / rhosec
+      drz1(18)    =  0.00002d0 / rhosec
+      scale1(18)  =  1.40d-9
+      dscale1(18) = -0.01d-9
+      refepc1(18) =  2010.0d0
+
+*** From ITRF94 to WGS84(G1674), added in v3.5.0.
+*** Uses IERS convention ITRF96 = ITRF97.
+*** Treated as biased with respect to ITRF2008.
+*** Based on NGA-published bias transformation between WGS84(G1674)
+*** and WGS84(G1762) = ITRF2008 in Table 2.5 of NGA.STND.0036_1.0.0_WGS84,
+*** "Department of Defense World Geodetic System 1984: its definition and 
+*** relationships with local geodetic systems", v1.0.0, 2014.
+*** See also Kelly and Dennis (2022) "Transforming Between WGS84 Realizations,"
+*** J Surv Eng, doi: 10.1061/(ASCE)SU.1943-5428.0000389.
+      tx1(19)     = -0.0018d0
+      ty1(19)     = -0.0006d0
+      tz1(19)     =  0.0612d0
+      dtx1(19)    = -0.0001d0
+      dty1(19)    =  0.0005d0
+      dtz1(19)    =  0.0032d0
+      rx1(19)     = -0.00027d0 / rhosec
+      ry1(19)     =  0.00027d0 / rhosec
+      rz1(19)     = -0.00012d0 / rhosec
+      drx1(19)    =  0.0d0     / rhosec
+      dry1(19)    =  0.0d0     / rhosec
+      drz1(19)    =  0.00002d0 / rhosec
+      scale1(19)  =  3.08d-9
+      dscale1(19) = -0.09d-9
+      refepc1(19) =  2010.0d0
 
       return
       end
@@ -4272,7 +4416,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 16)
+      parameter (numref = 19)
 
       common /tranpa/ tx(numref), ty(numref), tz(numref), 
      &                dtx(numref), dty(numref), dtz(numref),
@@ -4322,7 +4466,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 16)
+      parameter (numref = 19)
 
       common /tranpa1/ tx1(numref), ty1(numref), tz1(numref), 
      &                dtx1(numref), dty1(numref), dtz1(numref),
@@ -4372,7 +4516,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 16)
+      parameter (numref = 19)
 
       common /tranpa/ tx(numref), ty(numref), tz(numref), 
      &                dtx(numref), dty(numref), dtz(numref),
@@ -4422,7 +4566,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 16)
+      parameter (numref = 19)
 
       common /tranpa1/ tx1(numref), ty1(numref), tz1(numref), 
      &                dtx1(numref), dty1(numref), dtz1(numref),
@@ -4465,55 +4609,81 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
       common /files/ luin, luout, i1, i2, i3, i4, i5, i6
 
       iframe(1) = 1
-      nframe(1) = 'NAD_83(2011/CORS96/2007)'       
+      nframe(1) = 'NAD_83(2011/CORS96/2007)'
+      
       iframe(2) = 12
       nframe(2) = 'NAD_83(PA11/PACP00)     '
+      
       iframe(3) = 13
       nframe(3) = 'NAD_83(MA11/MARP00)     '
       
+      
       iframe(4) = 10
       nframe(4) = 'WGS84 original (Transit)'
+      
       iframe(5) = 5
       nframe(5) = 'WGS84(G730)             '
+      
       iframe(6) = 8
       nframe(6) = 'WGS84(G873)             '
-      iframe(7) = 11
+      
+      iframe(7) = 18
       nframe(7) = 'WGS84(G1150)            '
-      iframe(8) = 15
+      
+      iframe(8) = 19
       nframe(8) = 'WGS84(G1674)            '
+      
       iframe(9) = 15
-      nframe(9) = 'WGS84(G1762)    '
+      nframe(9) = 'WGS84(G1762)            '
+      
       iframe(10)= 16
       nframe(10)= 'WGS84(G2139)            '
       
+      
 c      iframe(11)= 5                          !Included with ITRF91 in v3.4.0
 c      nframe(11)= 'SIO/MIT_92              ' !Included with ITRF91 in v3.4.0
+
       iframe(11)= 2
       nframe(11)= 'ITRF88                  '
+      
       iframe(12)= 3
       nframe(12)= 'ITRF89                  '
+      
       iframe(13)= 4
       nframe(13)= 'ITRF90                  '
+      
       iframe(14)= 5
       nframe(14)= 'ITRF91                  '
+      
       iframe(15)= 6
       nframe(15)= 'ITRF92                  '
+      
       iframe(16)= 7
       nframe(16)= 'ITRF93                  '
+      
       iframe(17)= 8
       nframe(17)= 'ITRF94                  '
+      
       iframe(18)= 8
       nframe(18)= 'ITRF96                  '
+      
       iframe(19)= 9
       nframe(19)= 'ITRF97                  '
+      
       iframe(20)= 11
       nframe(20)= 'ITRF2000 or IGS00/IGb00 '
+      
       iframe(21)= 14
       nframe(21)= 'ITRF2005 or IGS05       '
+      
       iframe(22)= 15
       nframe(22)= 'ITRF2008 or IGS08/IGb08 '
+      
       iframe(23)= 16
       nframe(23)= 'ITRF2014 or IGS14/IGb14 '
+      
+      iframe(24)= 17
+      nframe(24)= 'ITRF2020 or IGS20       '
 
       write(luout, 100)  
   100 format(
@@ -4524,8 +4694,8 @@ c      nframe(11)= 'SIO/MIT_92              ' !Included with ITRF91 in v3.4.0
      1'  4...WGS84 original (Transit)                                '/
      1'  5...WGS84(G730)   ITRF91 used                               '/
      1'  6...WGS84(G873)   ITRF94=ITRF96=ITRF97 used                 '/
-     1'  7...WGS84(G1150)  ITRF2000=IGS00=IGb00 used                 '/
-     1'  8...WGS84(G1674)  ITRF2008=IGS08=IGb08 used                 '/
+     1'  7...WGS84(G1150)  Biased with respect to ITRF2000           '/
+     1'  8...WGS84(G1674)  Biased with respect to ITRF2008           '/
      1'  9...WGS84(G1762)  ITRF2008=IGS08=IGb08 used                 '/
      1' 10...WGS84(G2139)  ITRF2014=IGS14=IGb14 used                 '/
      1'                                                              '/
@@ -4535,7 +4705,7 @@ c      nframe(11)= 'SIO/MIT_92              ' !Included with ITRF91 in v3.4.0
      1' 14...ITRF91 (or SIO/MIT_92)      21...ITRF2005 or IGS05      '/
      1' 15...ITRF92                      22...ITRF2008 or IGS08/IGb08'/
      1' 16...ITRF93                      23...ITRF2014 or IGS14/IGb14'/
-     1' 17...ITRF94 (=ITRF96=ITRF97)                                 '/)
+     1' 17...ITRF94 (=ITRF96=ITRF97)     24...ITRF2020 or IGS20      '/)
 
       read (luin, *,err=50,iostat=ios) iopt
       if (ios /= 0) goto 50
@@ -4563,7 +4733,7 @@ c      nframe(11)= 'SIO/MIT_92              ' !Included with ITRF91 in v3.4.0
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (numref = 16)
+      parameter (numref = 19)
       parameter (nbbdim = 10000)
       CHARACTER    OLDBB*80, NEWBB*80, NAMEIF*80
       CHARACTER    NAME24*24
@@ -6214,8 +6384,8 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
 *** to a reference frame identifier in HTDP and back
 
       IMPLICIT INTEGER*4 (I-N)
-      parameter ( numref = 16 )
-      COMMON /REFCON/ IRFCON(38), JRFCON(numref)
+      parameter ( numref = 19 )
+      COMMON /REFCON/ IRFCON(40), JRFCON(numref)
 
 *** From Bluebook identifier to HTDP indentifier
 *** WGS72 Precise
@@ -6293,7 +6463,7 @@ C coordinates as if they were NAD 83(2011)coordinates.
       IRFCON(22) = 11
 
 *** WGS84 (G1150)
-      IRFCON(23) = 11
+      IRFCON(23) = 18
 
 *** IGb00
       IRFCON(24) = 11
@@ -6314,7 +6484,7 @@ C coordinates as if they were NAD 83(2011)coordinates.
       IRFCON(29) = 15
 
 *** WGS84 (G1674)
-      IRFCON(30) = 15
+      IRFCON(30) = 19
 
 *** WGS84 (G1762)
       IRFCON(31) = 15
@@ -6339,7 +6509,12 @@ C coordinates as if they were NAD 83(2011)coordinates.
 
 *** WGS84 (G2139)
       IRFCON(38) = 16
-      
+
+*** ITRF2020
+      IRFCON(39) = 17
+
+*** IGS20
+      IRFCON(40) = 17
 
 *** From HTDP identifier to Bluebook identifier.
 *** NAD 83 (2011/2007/CORS96/...) referenced to North America plate.
@@ -6396,6 +6571,9 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** IGb14
       JRFCON(16) = 37
 
+*** ITRF2020 or IGS20
+      JRFCON(17) = 40
+
       RETURN
       END
 ***************************************************
@@ -6406,10 +6584,10 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** system used in HTDP
 
       IMPLICIT INTEGER*4 (I-N)
-      parameter ( numref = 16 )
-      COMMON /REFCON/ IRFCON(38), JRFCON(numref)
+      parameter ( numref = 19 )
+      COMMON /REFCON/ IRFCON(40), JRFCON(numref)
 
-      IF (1 .LE. IBBREF .AND. IBBREF .LE. 38) THEN
+      IF (1 .LE. IBBREF .AND. IBBREF .LE. 40) THEN
           JREF = IRFCON(IBBREF)
       ELSE
           WRITE(6, 10) IBBREF
@@ -6425,12 +6603,12 @@ C coordinates as if they were NAD 83(2011)coordinates.
       SUBROUTINE RFCON1(JREF, IBBREF)
 
 *** Convert reference frame identifier from
-*** system used in HTDP to the  system
+*** system used in HTDP to the system
 *** used in the Bluebook
 
       IMPLICIT INTEGER*4 (I-N)
-      parameter ( numref = 16 )
-      COMMON /REFCON/ IRFCON(38), JRFCON(numref)
+      parameter ( numref = 19 )
+      COMMON /REFCON/ IRFCON(40), JRFCON(numref)
 
       IF (JREF .EQ. 0) THEN
         I = 1
@@ -6478,7 +6656,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 16)
+      parameter (numref = 19)
 
       common /tranpa/ tx(numref), ty(numref), tz(numref), 
      &                dtx(numref), dty(numref), dtz(numref),
@@ -6545,7 +6723,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 16)
+      parameter (numref = 19)
 
       common /tranpa1/ tx1(numref), ty1(numref), tz1(numref), 
      &                dtx1(numref), dty1(numref), dtz1(numref),
@@ -7183,7 +7361,7 @@ C  The following 2 lines were added on 07/22/2015 after Rich found this bug
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 16)
+      parameter (numref = 19)
       character    nameif*80,name24*80
       character    NAMEF*80
       character    frame1*24, frame2*24
@@ -7365,7 +7543,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (numref = 16)
+      parameter (numref = 19)
       common /tranpa/ tx(numref), ty(numref), tz(numref),
      &                dtx(numref), dty(numref), dtz(numref),
      &                rx(numref), ry(numref), rz(numref),
@@ -7429,7 +7607,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (numref = 16)
+      parameter (numref = 19)
       common /tranpa1/ tx1(numref), ty1(numref), tz1(numref), 
      &                dtx1(numref), dty1(numref), dtz1(numref),
      &                rx1(numref), ry1(numref), rz1(numref), 

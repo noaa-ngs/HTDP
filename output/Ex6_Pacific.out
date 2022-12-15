@@ -1,11 +1,11 @@
- HTDP OUTPUT, VERSION 3.4.0   
+ HTDP OUTPUT, VERSION 3.5.0   
 
  TRANSFORMING POSITIONS FROM NAD_83(PA11/PACP00)      (EPOCH = 01-01-2010 (2010.0000))
-                          TO ITRF2014 or IGS14/IGb14  (EPOCH = 01-01-2020 (2020.0000))
+                          TO ITRF2020 or IGS20        (EPOCH = 01-01-2020 (2020.0000))
 
- ***CAUTION: This file was processed using HTDP version 3.4.0   ***
- ***CAUTION: Coordinates in this file are in ITRF2014 or IGS14/IGb14 ***
+ ***CAUTION: This file was processed using HTDP version 3.5.0   ***
+ ***CAUTION: Coordinates in this file are in ITRF2020 or IGS20       ***
  ***CAUTION: Coordinates in this file have been updated to  1-01-2020=(2020.000) ***
 
-   19.5000122880  155.5000310427  3230.174    Hawaii
-  -14.2999842115  170.7000346582   350.388    American Samoa
+   19.5000122731  155.5000310493  3230.174    Hawaii
+  -14.2999842360  170.7000346689   350.390    American Samoa

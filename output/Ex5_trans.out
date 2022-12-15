@@ -1,13 +1,13 @@
- HTDP OUTPUT, VERSION 3.4.0   
+ HTDP OUTPUT, VERSION 3.5.0   
 
  TRANSFORMING POSITIONS FROM NAD_83(2011/CORS96/2007) (EPOCH = 01-01-2010 (2010.0000))
-                          TO ITRF2014 or IGS14/IGb14  (EPOCH = 01-01-2020 (2020.0000))
+                          TO ITRF2020 or IGS20        (EPOCH = 01-01-2020 (2020.0000))
 
  Kansas                  
-  LATITUDE     39 00  0.00000 N     39 00  0.02175 N        0.78 mm/yr  north
-  LONGITUDE    98 00  0.00000 W     98 00  0.04473 W        2.21 mm/yr  east
+  LATITUDE     39 00  0.00000 N     39 00  0.02173 N        0.78 mm/yr  north
+  LONGITUDE    98 00  0.00000 W     98 00  0.04468 W        2.21 mm/yr  east
   ELLIP. HT.             370.000             368.974 m     -1.10 mm/yr  up
-  X                  -690801.675         -690802.571 m      2.38 mm/yr
-  Y                 -4915309.324        -4915307.966 m      1.02 mm/yr
-  Z                  3992549.871         3992549.747 m     -0.09 mm/yr
+  X                  -690801.675         -690802.570 m      2.38 mm/yr
+  Y                 -4915309.324        -4915307.967 m      1.02 mm/yr
+  Z                  3992549.871         3992549.746 m     -0.09 mm/yr
 

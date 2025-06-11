@@ -1,10 +1,10 @@
- HTDP OUTPUT, VERSION 3.5.0   
+ HTDP OUTPUT, VERSION 3.6.0   
 
  TRANSFORMING POSITIONS FROM NAD_83(2011/CORS96/2007) (EPOCH = 01-01-2010 (2010.0000))
-                          TO ITRF2020 or IGS20        (EPOCH = 01-01-2020 (2020.0000))
+                          TO ITRF2020 or IGS20/IGb20  (EPOCH = 01-01-2020 (2020.0000))
 
- ***CAUTION: This file was processed using HTDP version 3.5.0   ***
- ***CAUTION: Coordinates in this file are in ITRF2020 or IGS20       ***
+ ***CAUTION: This file was processed using HTDP version 3.6.0   ***
+ ***CAUTION: Coordinates in this file are in ITRF2020 or IGS20/IGb20 ***
  ***CAUTION: Coordinates in this file have been updated to  1-01-2020=(2020.000) ***
 
    39.0000060350   98.0000124108   368.974    Kansas

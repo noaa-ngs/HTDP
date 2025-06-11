@@ -16,15 +16,16 @@
       character    HTDP_version*8
       character    Version_date*20
       CHARACTER    OPTION*1
+      CHARACTER    ELPSD*5
 
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
       COMMON /VERSION/ HTDP_version
-
+      
 C  You must change HTDP version and date here, if necessary
 
-      HTDP_version = '3.5.0'
-      Version_date = 'November 29, 2022'
+      HTDP_version = '3.6.0'
+      Version_date = 'April 7, 2025'
 
 *** Introduce variables for file IDs
 
@@ -54,9 +55,15 @@ C    1      FORM='UNFORMATTED')
       I6 = 16
 *       output of transformed Bluebook BFILE in TRFPOS
 
-*** Obtain parameters defining crustal motion model
+*** Define and compute ellipsoid parameters and default epoch. 
+*** with default ellipsoid set 'GRS80'.
+      ELPSD = 'GRS80'
       CALL MODEL
-       
+
+*** Obtain grid boundary points.
+*** Moved out of subroutine MODEL so that it is not called every time MODEL is called (v3.6.0)
+      CALL GETBDY
+
 *** Initialize transformation parameters between reference frames
       CALL SETTP 
 
@@ -118,6 +125,7 @@ C    1      FORM='UNFORMATTED')
         GO TO 30
       ENDIF
       GO TO 25
+      
    50 CONTINUE
       stop
       
@@ -135,11 +143,21 @@ C    1      FORM='UNFORMATTED')
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      CHARACTER ELPSD*5
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COMMON /TIMREF/ ITREF
 
+C*** Default ellipsoid is 'GRS80' (initially set in main program).
       A = 6378137.D0
       F = 1.D0 / 298.257222101D0
+     
+      IF (ELPSD .EQ. 'WGS84') F = 1.D0 / 298.257223563D0
+      
+      IF (ELPSD .EQ. 'WGS72') THEN
+        A = 6378135.D0
+        F = 1.D0 / 298.26D0
+      ENDIF
+
       E2 = F*(2.D0 - F)   !Calculate E2 from F rather than hard-coded as done previously
       AF = A / (1.D0 - F)
       EPS = F*(2.D0 - F) / ((1.D0 -F)**2)
@@ -153,9 +171,7 @@ C*** Set default reference epoch to Jan. 1, 2010
       IDYREF = 1
       CALL IYMDMJ (IYRREF, IMOREF, IDYREF, MJD)
       ITREF = MJD * 24 * 60
-
-      CALL GETBDY
-
+      
       RETURN
       END
 
@@ -247,9 +263,9 @@ C*** Set default reference epoch to Jan. 1, 2010
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
       parameter (NMREGN = 65)
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COMMON /BNDRY/ X(12000), Y(12000), NPOINT(70)
- 
+
       IEND = NPOINT(NMREGN + 1) - 1  
       DO 10 J = 1, IEND              
         X(J) = (X(J) * 3600.D0)/RHOSEC
@@ -267,7 +283,7 @@ C*** Set default reference epoch to Jan. 1, 2010
       parameter (NMREGN = 65)
       COMMON /BNDRY/ X(12000), Y(12000), NPOINT(70)
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
-      COMMON /CONST/ A, F, E2, EPS, AF, PI, TWOPI, RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
 
       Y0 = TWOPI - YKEEP
       IF (Y0 .lt. 0.d0) Y0 = Y0 + TWOPI
@@ -411,10 +427,13 @@ C Compute the ITRF2008 velocity at a point in mm/yr
       IMPLICIT INTEGER*4 (I-N)
       parameter (NUMGRD = 10)
       parameter (NMREGN = 65)
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      CHARACTER    ELPSD*5
       COMMON /FILES/ LUIN, LUOUT, I1,I2,I3,I4,I5,I6
       COMMON /VGRID/ B(210000)
       DIMENSION WEI(2,2), VEL(2,2,3)
+
+C  Set ellipsoid as 'GRS80' for these calculations (WGS84 and WGS72 not used).
+      ELPSD = 'GRS80'
 
 c     WRITE (6, 1001) JREGN
 c1001 FORMAT( 'JREGN = ', I6)
@@ -671,7 +690,6 @@ C*** then set its vertical velocity to 0.0
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
 
       HTF = 0.0D0
@@ -731,7 +749,7 @@ C      S   = Distance (meters)
 C                                               
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)                               
       IMPLICIT INTEGER*4 (I-N)
-      COMMON/CONST/A,F,EPS2,EPS,AF,PI,TWOPI,RHOSEC                      
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       DATA TOL/0.5D-14/                                                 
       R = 1.0D0-F                                                       
       TU1 = R*DSIN(GLAT1)/DCOS(GLAT1)                                   
@@ -880,7 +898,10 @@ C************************************************************************
 *** ref p.17 geometric geodesy notes vol 1, osu, rapp
  
       implicit double precision(a-h,o-z)
-      common/CONST/ a,f,e2,ep2,af,pi,twopi,rhosec
+      CHARACTER ELPSD*5
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
+
+      CALL MODEL
  
       slat=dsin(glat)
       clat=dcos(glat)
@@ -890,7 +911,7 @@ C************************************************************************
       x=(en+eht)*clat*dcos(glon)
       y=(en+eht)*clat*dsin(glon)
       z=(en*(1.d0-e2)+eht)*slat
- 
+
       return
       end
       
@@ -903,8 +924,11 @@ C************************************************************************
  
       implicit double precision(a-h,o-z)
       parameter(maxint=10,tol=1.d-13)
-      common/CONST/ a,f,e2,ep2,af,pi,twopi,rhosec
+      CHARACTER ELPSD*5
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
  
+      CALL MODEL
+      
       ae2=a*e2
  
 *** compute initial estimate of reduced latitude  (eht=0)
@@ -955,7 +979,7 @@ C  Computes the radius of curvature in the meridian
 C  and the radius of curvature in a parallel of latitude
 C
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COSLAT = DCOS(YLAT)
       DENOM = DSQRT(1.D0 + EPS*COSLAT*COSLAT)
       RADMER = AF/(DENOM**3)
@@ -1059,7 +1083,7 @@ C
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
       COMMON /FILES/ LUIN,LUOUT,I1,I2,I3,I4,I5,I6
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       CHARACTER   NAMEG*10
 
       WRITE(LUOUT,100)
@@ -1146,7 +1170,7 @@ C *** MODIFIED RAINSFORD'S METHOD WITH HELMERT'S ELLIPTICAL TERMS
 C *** EFFECTIVE IN ANY AZIMUTH AND AT ANY DISTANCE SHORT OF ANTIPODAL
 C
 C *** A IS THE SEMI-MAJOR AXIS OF THE REFERENCE ELLIPSOID
-C *** FINV IS THE FLATTENING OF THE REFERENCE ELLIPSOID
+C *** F IS THE FLATTENING OF THE REFERENCE ELLIPSOID
 C *** LATITUDES AND LONGITUDES IN RADIANS POSITIVE NORTH AND EAST
 C *** AZIMUTHS IN RADIANS CLOCKWISE FROM NORTH
 C *** GEODESIC DISTANCE S ASSUMED IN UNITS OF SEMI-MAJOR AXIS A
@@ -1156,9 +1180,10 @@ C *** MODIFIED FOR SYSTEM 360 BY JOHN G GERGEN NGS ROCKVILLE MD 750608
 C
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      COMMON /CONST/ A,FINV,E2,EPI,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPI,AF,PI,TWOPI,RHOSEC,ELPSD
       DATA EPS/0.5D-13/
-      R=1.D0-FINV
+      R=1.D0-F
+      WRITE(*,*)'F =', 1.D0/F, '   R =', R
       TU=R*DSIN(GLAT1)/DCOS(GLAT1)
       SF=DSIN(FAZ)
       CF=DCOS(FAZ)
@@ -1190,10 +1215,10 @@ C
       GLAT2=DATAN2(D,C)
       C=CU*CY-SU*SY*CF
       X=DATAN2(SY*SF,C)
-      C=((-3.D0*C2A+4.D0)*FINV+4.D0)*C2A*FINV/16.D0
+      C=((-3.D0*C2A+4.D0)*F+4.D0)*C2A*F/16.D0
       D=((E*CY*C+CZ)*SY*C+Y)*SA
-      GLON2=GLON1+X-(1.D0-C)*D*FINV
-      IF (GLON2.GE.TWOPI) GLON2=GLON2-TWOPI
+      GLON2=GLON1+X-(1.D0-C)*D*F
+      IF(GLON2.GE.TWOPI) GLON2=GLON2-TWOPI
       IF(GLON2.LT.0.D0) GLON2=GLON2+TWOPI
       BAZ=DATAN2(SA,BAZ)+PI
       IF (BAZ.GE.TWOPI) BAZ=BAZ-TWOPI
@@ -1572,7 +1597,7 @@ C**** COMPUTES THE WEIGHTS FOR AN ELEMENT IN A GRID
       COMMON /CDGRID/ GRDLX(NUMGRD), GRDUX(NUMGRD), 
      1          GRDLY(NUMGRD), GRDUY(NUMGRD),
      1          ICNTX(NUMGRD), ICNTY(NUMGRD), NBASE(NUMGRD)
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
 
 C*** Convert input coordinates to degrees
       POSX = (TWOPI - YLON) * 180.D0 / PI
@@ -1763,8 +1788,8 @@ C***************************************************
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (numref = 19)
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      parameter (numref = 20)
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COMMON /FILES/ LUIN,LUOUT, I1, I2, I3, I4, I5, I6
       CHARACTER   CARD*80
       CHARACTER   record*120
@@ -2154,9 +2179,9 @@ C         IF(JN.EQ.'S' .OR. JW.EQ.'E')GO TO 320
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (numref = 19)
+      parameter (numref = 20)
       parameter (nrsrch = 0)
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COMMON /FILES/ LUIN,LUOUT, I1, I2, I3, I4, I5, I6
       CHARACTER   CARD*80
       CHARACTER   NAMEF*80,NAME*80,NAMEBB*80,PVFILE*80
@@ -2168,14 +2193,6 @@ C         IF(JN.EQ.'S' .OR. JW.EQ.'E')GO TO 320
       CHARACTER   LATDIR*1, LONDIR*1
       character   frame1*24
       character   record*120
-
-*** Commented out following temporary code (v3.3.0).
-*** temporary code to plot results ****************
-C       character TEMPNA*8   !Added string length to match string below.
-C
-C       TEMPNA = '        '
-C       DUMMY = 0.0D0
-*** end of temporary code *************************
 
       BLAB = 'OUTSIDE OF REGION'
 
@@ -2649,16 +2666,19 @@ C 129    FORMAT(F6.2, 1X, F6.2, 1X, F5.1)
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
       logical  Is_iopt_NAD83
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      CHARACTER ELPSD*5
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
 
       Is_iopt_NAD83 = (IOPT == 1)
 
-*** Get reference latitude RLAT and reference longitude RLON in NAD 83
-c     IF(IOPT .EQ. 0 .OR. IOPT .EQ. 1) THEN   !Not NAD83 anymore
+** Change ellipsoid if frame is WGS72 (change for WGS84 ellipsoid negligible for velocities)
+      IF(IOPT .EQ. 20) ELPSD = 'WGS72'
+
+*** Get reference latitude RLAT and reference longitude RLON in ITRF2008
       IF(IOPT .EQ. 15) THEN
           RLAT = YLAT
-***     Added conditional statement to get rid of out-of-region error when
-***     YLON is negative for reference frame (v3.3.0):
+***    Added conditional statement to get rid of out-of-region error when
+***    YLON is negative for reference frame (v3.3.0):
           IF(YLON .GE. 0.D0) THEN
             RLON = YLON
           ELSE
@@ -2668,10 +2688,10 @@ c     IF(IOPT .EQ. 0 .OR. IOPT .EQ. 1) THEN   !Not NAD83 anymore
           ELON = -YLON
           CALL TOXYZ(YLAT,ELON,EHT,X,Y,Z)
           DATE = 2010.0d0
-          CALL XTO08 (X,Y,Z,RLAT,RLON,EHT08,DATE,IOPT)   !They are in ITRF2008
+          CALL XTO08 (X,Y,Z,RLAT,RLON,EHT08,DATE,IOPT)   !Transform to ITRF2008
       ENDIF
 
-*** Get velocity in NAD 83  !Not anymore since 09/12/2014. Now it is in ITRF2008
+*** Get velocity in ITRF2008
       CALL GETREG(RLAT,RLON,JREGN)
       IF (JREGN .EQ. 0) RETURN
       CALL COMVEL(RLAT,RLON,JREGN,VN,VE,VU)
@@ -2683,17 +2703,18 @@ c     IF(IOPT .EQ. 0 .OR. IOPT .EQ. 1) THEN   !Not NAD83 anymore
       CALL TOVXYZ(YLAT,ELON,VN,VE,VU,VX,VY,VZ)
 
 *** Convert velocity into another reference frame if needed
-c     IF(IOPT .NE. 0 .AND. IOPT .NE. 1) THEN    !Commented out on 09/12/2014
       IF(IOPT .NE. 15) THEN
         IF(Is_iopt_NAD83) THEN
-c         CALL VTRANF(X,Y,Z,VX,VY,VZ, 1, IOPT)  !No longer NAD83
-          CALL VTRANF(X,Y,Z,VX,VY,VZ, 15, IOPT)  !No longer NAD83
+          CALL VTRANF(X,Y,Z,VX,VY,VZ, 15, IOPT)
         else
-          CALL VTRANF_IERS(X,Y,Z,VX,VY,VZ, 15, IOPT) !Now ITRF2008
+          CALL VTRANF_IERS(X,Y,Z,VX,VY,VZ, 15, IOPT)
         endif
           CALL TOVNEU(YLAT, ELON, VX, VY, VZ, VN, VE, VU)
       ENDIF
-     
+
+      ELPSD = 'GRS80'   !Set ellipsoid back to default.
+      CALL MODEL
+
       RETURN
       END
 ****************************************************************************
@@ -2706,7 +2727,7 @@ c         CALL VTRANF(X,Y,Z,VX,VY,VZ, 1, IOPT)  !No longer NAD83
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
       LOGICAL FRMXYZ
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
 
 *** Convert to cartesian coordinates in ITRF2008   
       if (iopt .eq. 15) then
@@ -2740,7 +2761,7 @@ c         CALL VTRANF(X,Y,Z,VX,VY,VZ, 1, IOPT)  !No longer NAD83
 
       implicit double precision (a-h,o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 19)
+      parameter (numref = 20)
       parameter (nbbdim = 10000)
       parameter (rad2deg = 180.d0/3.14159265358979d0)
 
@@ -2752,18 +2773,17 @@ c         CALL VTRANF(X,Y,Z,VX,VY,VZ, 1, IOPT)  !No longer NAD83
       character    option*1, answer*1, vopt*1
       character    PID*6,PIDs*6
       character    HTDP_version*8
+      CHARACTER    ELPSD*5
       LOGICAL      FRMXYZ
       LOGICAL      TEST
       LOGICAL      Is_inp_NAD83, Is_out_NAD83
-c      LOGICAL      Is_inp_NAD83PAC,Is_out_NAD83PAC    !Comment out v3.4.0
-c      LOGICAL      Is_inp_NAD83MAR,Is_out_NAD83MAR    !Comment out v3.4.0
 
-      COMMON /CONST/ A, F, E2, EPS, AF, PI, TWOPI, RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
       COMMON /ARRAYS/ HT(nbbdim), LOC(nbbdim),PIDs(nbbdim)
       COMMON /VERSION/ HTDP_version
 
-C  Initialize NAD 83 input/poutput logical variables as false:
+C  Initialize NAD 83 input/output logical variables as false:
       Is_inp_NAD83 = .FALSE.
       Is_out_NAD83 = .FALSE.
 
@@ -2787,10 +2807,6 @@ C  Initialize NAD 83 input/poutput logical variables as false:
 
       IF(iopt1 .EQ. 1) Is_inp_NAD83 = .TRUE.
 
-c      Is_inp_NAD83    = (iopt1 == 1)     !Comment out v3.4.0
-c      Is_inp_NAD83PAC = (iopt1 == 12)    !Comment out v3.4.0
-c      Is_inp_NAD83MAR = (iopt1 == 13)    !Comment out v3.4.0
-
   105 write(luout,110)
   110 format (/' Enter the reference frame for the output positions')
       call MENU1(iopt2, frame2)
@@ -2800,10 +2816,6 @@ c      Is_inp_NAD83MAR = (iopt1 == 13)    !Comment out v3.4.0
       endif
 
       IF(iopt2 .EQ. 1) Is_out_NAD83 = .TRUE.
-
-c      Is_out_NAD83    = (iopt2 == 1)     !Comment out v3.4.0
-c      Is_out_NAD83PAC = (iopt2 == 12)    !Comment out v3.4.0
-c      Is_out_NAD83MAR = (iopt2 == 13)    !Comment out v3.4.0
 
       write(luout,120)
   120 format (/
@@ -2834,8 +2846,6 @@ c      Is_out_NAD83MAR = (iopt2 == 13)    !Comment out v3.4.0
   150 format(' TRANSFORMING POSITIONS FROM ',A24,' (EPOCH = ',
      1  I2.2,'-',I2.2,'-',I4,' (',F9.4,'))'/26X,
      1  'TO ', A24, ' (EPOCH = ',I2.2,'-',I2.2,'-',I4,' (',F9.4,'))'/)
-c    1  13X,'INPUT COORDINATES   OUTPUT COORDINATES',
-c    1     4x, 'INPUT VELOCITY' /)
  
   160 write(luout, 170)
   170 format (/' ***************************************'/
@@ -2867,8 +2877,6 @@ c    1     4x, 'INPUT VELOCITY' /)
       read(luin,'(a1)',err=602,iostat=ios) option
       if (ios /= 0) goto 602
 
-c     write (*,*) "Starting to look at options"
-
       if (option .eq. '0') then
          go to 500
       elseif (option .eq. '1') then
@@ -2878,9 +2886,15 @@ c     write (*,*) "Starting to look at options"
         vnsave = 0.d0
         vesave = 0.d0
         vusave = 0.d0
+        
+C  Specify ellipsoid for source frame1.
+        IF((frame1(1:5) .NE. 'WGS72') .AND. (frame1(1:5) .NE. 'WGS84')) 
+     1    ELPSD = 'GRS80'
+        IF(frame1(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+        IF(frame1(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+        
   180   call GETPNT(latd, latm, slat, LATDIR, lond, lonm, slon, 
      1        LONDIR, name24, x, y, z, ylat, ylon, eht)
-        
 
 C  Added by JS on 09/10/2014
         if (Is_inp_NAD83 .or. Is_out_NAD83) then
@@ -2890,9 +2904,16 @@ C  Added by JS on 09/10/2014
           call TOIT94_IERS(x, y, z, x1, y1, z1, date1, iopt1)
           call FRIT94_IERS(x1, y1, z1, x2, y2, z2, date1, iopt2)
         endif
+
+C  Specify ellipsoid for target frame2.
+        IF((frame2(1:5) .NE. 'WGS72') .AND. (frame2(1:5) .NE. 'WGS84')) 
+     1    ELPSD = 'GRS80'
+        IF(frame2(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+        IF(frame2(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
         
-        if (min1 .ne. min2) then                                  !i.e., if the input and output dates are different
+        if (min1 .ne. min2) then       !i.e., if the input and output dates are different
           if(.not.FRMXYZ(x2,y2,z2,ylat1,elon1,eht1)) STOP 666
+
           ylon1 = -elon1
           if(ylon1 .lt. 0.d0) ylon1 = ylon1 + twopi
 
@@ -2909,7 +2930,6 @@ C  Added by JS on 09/10/2014
               go to 220
             else
               call TOVXYZ( ylat1, elon1, vn, ve, vu, vx, vy, vz)
-c             write (*,*) vx,vy,vz,vn,ve,vu
             endif
           endif
           vxsave = vx
@@ -2924,21 +2944,21 @@ c             write (*,*) vx,vy,vz,vn,ve,vu
             call VTRANF_IERS( x, y, z, vx, vy, vz, iopt1, iopt2)
           endif
           call TOVNEU( ylat1, elon1, vx, vy, vz, vn, ve, vu)
-c         write (*,*) "Passed TOVNEU",vn, ve, vu
+
           call NEWCOR( ylat1, ylon1, eht1, min1, min2, 
      1            ylatt, ylont, ehtnew, dn, de, du, vn, ve, vu)
-c         write (*,*) "Passed NEWCOR",vn, ve, vu
+
           call TOXYZ(ylatt,-ylont, ehtnew, xt, yt, zt)
-c         write (*,*) "Passed TOXYZ"
+
         else
           xt = x2
           yt = y2
           zt = z2
                    
           if(.not.(FRMXYZ(xt,yt,zt,ylatt,elont,ehtnew))) STOP 666
+          
           ylont = -elont
           if(ylont .lt. 0.0d0) ylont = ylont + twopi
-c         write (*,*) ylont*180.d0/pi,ylatt*180.d0/pi,ehtnew
         endif
          
         call PRNTTP(x, y, z, xt, yt, zt, ylat, ylatt,
@@ -2963,7 +2983,7 @@ c         write (*,*) ylont*180.d0/pi,ylatt*180.d0/pi,ehtnew
          read(luin, '(a)',err=603,iostat=ios) namebb
          if (ios /= 0) goto 603
          open (i1, file = namebb, status = 'old')
-
+         
 *** Obtaining the ellipsoid heights from the Bluebook file
 
          do i = 1, nbbdim
@@ -2974,8 +2994,6 @@ c         write (*,*) ylont*180.d0/pi,ylatt*180.d0/pi,ehtnew
          if (ios /= 0) goto 604
 
          if (card(7:10) .eq. '*80*') then
-c           read (card, 303) isn, eht
-c 303       format (bz, 10x, i4, t70, f6.2)
             read (card, 303,err=605,iostat=ios) PID,isn,eht
             if (ios /= 0) goto 605
   303       format (a6,4x,i4, t70, f6.2)
@@ -3040,6 +3058,13 @@ C  write some comments in the transformed files
            if (jn .eq. 'S') ylat = -ylat
            if (jw .eq. 'E') ylon = -ylon
            eht = ht(isn)
+           
+C  Specify ellipsoid for source frame1.
+           IF((frame1(1:5) .NE. 'WGS72') .AND. 
+     1       (frame1(1:5) .NE. 'WGS84')) ELPSD = 'GRS80'
+           IF(frame1(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+           IF(frame1(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+           
            call TOXYZ(ylat, -ylon, eht, x, y, z)
 
 C  Modified in 09/15/2014 by JS to accommodate the IERS 96-97 trans. par.
@@ -3051,9 +3076,15 @@ C  Modified in 09/15/2014 by JS to accommodate the IERS 96-97 trans. par.
              call FRIT94_IERS(x1, y1, z1, x2, y2, z2, date1, iopt2)
            endif
 C  End changes
-
+C  Specify ellipsoid for target frame2.
+           IF((frame2(1:5) .NE. 'WGS72') .AND.  
+     1       (frame2(1:5) .NE. 'WGS84')) ELPSD = 'GRS80'
+           IF(frame2(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+           IF(frame2(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+        
            if (min1 .ne. min2) then
               if(.not.FRMXYZ(x2,y2,z2,ylat1,elon1,eht1)) STOP 666
+              
               ylon1 = -elon1
               if (ylon1 .lt. 0.0d0) ylon1 = ylon1 + twopi
               call PREDV(ylat1, ylon1, eht1, date1, iopt1,
@@ -3088,7 +3119,9 @@ C  End changes
                xt = x2
                yt = y2
                zt = z2
+               
                if(.not.FRMXYZ(xt,yt,zt,ylatt,elont,ehtnew))STOP 666
+               
                ylont = -elont
                if (ylont .lt. 0.0d0) ylont = ylont + twopi
             endif
@@ -3183,6 +3216,13 @@ C  write some comments in the transformed files
          ylat = (xlat*3600.d0) / rhosec
          ylon = (xlon*3600.d0) / rhosec
          elon = -ylon
+         
+C  Specify ellipsoid for source frame1.
+         IF((frame1(1:5) .NE. 'WGS72') .AND. (frame1(1:5) .NE. 'WGS84')) 
+     1     ELPSD = 'GRS80'
+         IF(frame1(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+         IF(frame1(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+         
          call TOXYZ(ylat, elon, eht, x, y, z)
 
 C  Modified in 09/15/2014 by JS to accommodate the IERS 96-97 trans. par.
@@ -3196,6 +3236,12 @@ C  Modified in 09/15/2014 by JS to accommodate the IERS 96-97 trans. par.
 
 C  End changes
 
+C  Specify ellipsoid for target frame2.
+         IF((frame2(1:5) .NE. 'WGS72') .AND. (frame2(1:5) .NE. 'WGS84')) 
+     1     ELPSD = 'GRS80'
+         IF(frame2(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+         IF(frame2(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+         
          if (min1 .ne. min2) then
             if(.not.FRMXYZ(x2,y2,z2,ylat1,elon1,eht1)) STOP 666
             ylon1 = -elon1
@@ -3271,6 +3317,13 @@ C  write some comments in the transformed files
   411    read (i1,'(a)',end=451,err=607,iostat=ios) record         
          if (ios /= 0) goto 607
          call interprate_XYZ_record (record,x,y,z,name24)
+         
+C  Specify ellipsoid for source frame1.
+         IF((frame1(1:5) .NE. 'WGS72') .AND. (frame1(1:5) .NE. 'WGS84')) 
+     1     ELPSD = 'GRS80'
+         IF(frame1(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+         IF(frame1(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+         
          if(.not.FRMXYZ(x,y,z,ylat,elon,eht)) STOP 666
          ylon = -elon
          if (ylon .lt. 0.d0) ylon = ylon + twopi
@@ -3285,7 +3338,12 @@ C  Modified in 09/15/2014 by JS to accommodate the IERS 96-97 trans. par.
          endif
 
 C  End changes
-
+C  Specify ellipsoid for target frame2.
+         IF((frame2(1:5) .NE. 'WGS72') .AND. (frame2(1:5) .NE. 'WGS84')) 
+     1     ELPSD = 'GRS80'
+         IF(frame2(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+         IF(frame2(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+         
          if (min1 .ne. min2) then
            if(.not.FRMXYZ(x2,y2,z2,ylat1,elon1,eht1)) STOP 666
            ylon1 = -elon1
@@ -3360,8 +3418,13 @@ C  write some comments in the transformed files
   511    read (i1,'(a)',end=551,err=607,iostat=ios) record         
          if (ios /= 0) goto 607
          call interprate_XYZVxVyVz_record (record,x,y,z,Vx,Vy,Vz,name24)
-c        write (*,*) X,Y,Z
-c        write (*,*) Vx,Vy,Vz
+
+C  Specify ellipsoid for source frame1.
+         IF((frame1(1:5) .NE. 'WGS72') .AND. (frame1(1:5) .NE. 'WGS84')) 
+     1     ELPSD = 'GRS80'
+         IF(frame1(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+         IF(frame1(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+
          if(.not.FRMXYZ(x,y,z,ylat,elon,eht)) STOP 666
          ylon = -elon
          if (ylon .lt. 0.d0) ylon = ylon + twopi
@@ -3376,19 +3439,17 @@ C  Modified in 09/15/2014 by JS to accommodate the IERS 96-97 trans. par.
          endif
 
 C  End changes on 09/15/2014
+C  Specify ellipsoid for target frame2.
+         IF((frame2(1:5) .NE. 'WGS72') .AND. (frame2(1:5) .NE. 'WGS84')) 
+     1     ELPSD = 'GRS80'
+         IF(frame2(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+         IF(frame2(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
 
          if (min1 .ne. min2) then
            if(.not.FRMXYZ(x2,y2,z2,ylat1,elon1,eht1)) STOP 666
            ylon1 = -elon1
            if (ylon1 .lt. 0.d0) ylon1 = ylon1 + twopi
            
-c          call PREDV (ylat1,ylon1,eht1,date1,iopt1,jregn,vn,ve,vu)
-c          if (jregn .eq. 0) then
-c            write(i2, 330) name24
-c            go to 411
-c          else
-c            call TOVXYZ(ylat1,elon1,vn,ve,vu,vx,vy,vz)
-
              call TOVNEU(ylat1,elon1,vx,vy,vz,vn,ve,vu)
              vxsave = vx
              vysave = vy
@@ -3396,7 +3457,6 @@ c            call TOVXYZ(ylat1,elon1,vn,ve,vu,vx,vy,vz)
              vnsave = vn
              vesave = ve
              vusave = vu
-c            write (*,*) vn,ve,vu
 
 C  Modified on 09/15/2014 by JS to accomodate the IERS trans. par.
              if (Is_inp_NAD83 .or. Is_out_NAD83) then
@@ -3437,6 +3497,10 @@ c        write (i6,1449) xt,yt,zt,trim(name24)
 
   500 continue
 c     close(i2, status = 'keep')
+
+      ELPSD = 'GRS80'   !Set ellipsoid back to default.
+      CALL MODEL
+
       return
 
   600 write (*,'(/)') 
@@ -3566,9 +3630,9 @@ C  Removed equivalence between NAD83(2011)and WGS84 original (Transit) in v3.4.0
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 19)
+      parameter (numref = 20)
 
-      common /const/ a, f, e2, eps, af, pi, twopi, rhosec
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       common /tranpa/ tx(numref), ty(numref), tz(numref), 
      &                dtx(numref), dty(numref), dtz(numref),
      &                rx(numref), ry(numref), rz(numref), 
@@ -3748,25 +3812,7 @@ C  Parameters computed with the IGS convention ITRF96 <> ITRF97
       scale(9) =  0.93496d-9
       dscale(9) = 0.19201d-9
       refepc(9) = 1997.0d0
-
-*** From ITRF94 to WGS72 (composition of ITRF94 -> NAD_83 -> WGS72)
-*** Remove WGS72 and replace with new WGS84 original (Transit) in v3.4.0
-c      tx(10) = 0.9910d0
-c      ty(10) = -1.9072d0
-c      tz(10) = -0.5129d0 - 4.5d0
-c      dtx(10) = 0.d0
-c      dty(10) = 0.d0
-c      dtz(10) = 0.d0
-c      rx(10) = 1.25033d-7
-c      ry(10) = 0.46785d-7
-c      rz(10) = 0.56529d-7 + 26.85868d-7
-c      drx(10) = 0.00258d-7
-c      dry(10) = -0.03599d-7
-c      drz(10) = -0.00153d-7
-c      scale(10) = 0.d0 - 0.2263d-6
-c      dscale(10) = 0.0d0
-c      refepc(10) = 1997.0d0
-      
+     
 *** From ITRF94 to WGS84 original (Transit), added in v3.4.0.
 *** Based on IERS-published transformation from ITRF90 to WGS84 (Transit)
 *** in Table 3.1 of McCarthy (1992) "IERS standards," IERS Tech. Note 13, 
@@ -3785,7 +3831,7 @@ c      refepc(10) = 1997.0d0
       drz(10) =     0.0d0 / rhosec
       scale(10) = -10.010d-9
       dscale(10) =  0.0d0
-      refepc(10) =  1997.0d0
+      refepc(10) =  1988.0d0
 
 *** From ITRF94 to ITRF2000 (also IGS00 and IGb00)
 *** assumes that ITRF94 = ITRF96 and
@@ -3913,7 +3959,7 @@ c      refepc(10) = 1997.0d0
       dscale(16) =  0.07201d-9
       refepc(16) =  2010.0d0
 
-*** From ITRF94 to ITRF2020 (also IGS20)
+*** From ITRF94 to ITRF2020 (also IGS20 and IGb20)
 *** assumes that ITRF94 = ITRF96
 *** uses IGS values for ITRF96 -> ITRF97
 *** uses IERS values for ITRF97 -> ITRF2000
@@ -3986,6 +4032,29 @@ c      refepc(10) = 1997.0d0
       scale(19)  =  6.51109d-9
       dscale(19) =  0.10201d-9
       refepc(19) =  2010.0d0
+
+*** From ITRF94 to WGS72
+*** Removed in v3.2.1, added back in v3.6.0 with new parameters
+*** based on IERS-published transformation from ITRF90
+*** in Table 3.1 of McCarthy (1992) "IERS standards," IERS Tech. Note 13, 
+*** Observatoire de Paris, France: Central Bureau of IERS. 
+*** Note that this frame requires the WGS72 ellipsoid, which was
+*** added to v3.6.0.
+      tx(20) =     0.078d0
+      ty(20) =    -0.505d0
+      tz(20) =    -4.753d0
+      dtx(20) =    0.0d0    
+      dty(20) =    0.0d0
+      dtz(20) =    0.0d0
+      rx(20) =    -0.0183d0 / rhosec
+      ry(20) =     0.0003d0 / rhosec
+      rz(20) =     0.5470d0 / rhosec
+      drx(20) =    0.0d0
+      dry(20) =    0.0d0
+      drz(20) =    0.0d0
+      scale(20) = -230.01d-9
+      dscale(20) = 0.0d0
+      refepc(20) = 1988.0d0
 
 C*************************************************************************************************************************
 C  Parameters computed with the IERS convention ITRF96 = ITRF97
@@ -4158,24 +4227,6 @@ C  Parameters computed with the IERS convention ITRF96 = ITRF97
       dscale1(9) = 0.0d0
       refepc1(9) = 1997.0d0    !Previous 2000.0d0 (prior to v3.4.0)
 
-*** From ITRF94 to WGS72 (composition of ITRF94 -> NAD_83 -> WGS72)
-*** Remove WGS72 and replace with new WGS84 original (Transit) in v3.4.0
-c      tx1(10) = 0.9910d0
-c      ty1(10) = -1.9072d0
-c      tz1(10) = -0.5129d0 - 4.5d0
-c      dtx1(10) = 0.d0
-c      dty1(10) = 0.d0
-c      dtz1(10) = 0.d0
-c      rx1(10) = 1.25033d-7
-c      ry1(10) = 0.46785d-7
-c      rz1(10) = 0.56529d-7 + 26.85868d-7
-c      drx1(10) = 0.00258d-7
-c      dry1(10) = -0.03599d-7
-c      drz1(10) = -0.00153d-7
-c      scale1(10) =  0.d0 - 0.2263d-6
-c      dscale1(10) = 0.0d0
-c      refepc1(10) = 1997.0d0
-      
 *** From ITRF94 to WGS84 original (Transit), added in v3.4.0.
 *** Based on IERS-published transformation from ITRF90 to WGS84 (Transit)
 *** in Table 3.1 of McCarthy (1992) "IERS standards," IERS Tech. Note 13, 
@@ -4194,7 +4245,7 @@ c      refepc1(10) = 1997.0d0
       drz1(10) =     0.0d0    / rhosec
       scale1(10) = -10.010d-9
       dscale1(10) =  0.0d0
-      refepc1(10) =  1997.0d0
+      refepc1(10) =  1988.0d0
 
 *** From ITRF94 to ITRF2000 (also IGS00 and IGb00)
 *** assumes that         ITRF94 = ITRF96 and
@@ -4321,7 +4372,7 @@ c      refepc1(10) = 1997.0d0
       dscale1(16) = -0.12d-9
       refepc1(16) =  2010.0d0
 
-*** From ITRF94 to ITRF2020 (also IGS20)
+*** From ITRF94 to ITRF2020 (also IGS20 and IGb20)
 *** assumes that ITRF94 = ITRF96
 *** uses IERS convention ITRF96 = ITRF97
 *** uses IERS values for ITRF97 -> ITRF2000
@@ -4395,6 +4446,29 @@ c      refepc1(10) = 1997.0d0
       dscale1(19) = -0.09d-9
       refepc1(19) =  2010.0d0
 
+*** From ITRF94 to WGS72
+*** Removed in v3.2.1, added back in v3.6.0 with new parameters
+*** based on IERS-published transformation from ITRF90
+*** in Table 3.1 of McCarthy (1992) "IERS standards," IERS Tech. Note 13, 
+*** Observatoire de Paris, France: Central Bureau of IERS. 
+*** Note that this frame requires the WGS72 ellipsoid, which was
+*** added to v3.6.0.
+      tx1(20) =     0.078d0
+      ty1(20) =    -0.505d0
+      tz1(20) =    -4.753d0
+      dtx1(20) =    0.0d0    
+      dty1(20) =    0.0d0
+      dtz1(20) =    0.0d0
+      rx1(20) =    -0.0183d0 / rhosec
+      ry1(20) =     0.0003d0 / rhosec
+      rz1(20) =     0.5470d0 / rhosec
+      drx1(20) =    0.0d0
+      dry1(20) =    0.0d0
+      drz1(20) =    0.0d0
+      scale1(20) = -230.01d-9
+      dscale1(20) = 0.0d0
+      refepc1(20) = 1988.0d0
+
       return
       end
 *************************************************************
@@ -4405,8 +4479,8 @@ c      refepc1(10) = 1997.0d0
 *** given date
 ****************
 C  Important note:
-C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
-C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
+C  The parameters in common block tranpa are computed using the IGS values of ITRF96 <> ITRF97
+C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96 = ITRF97
 
 *** (x1, y1, z1) --> input ITRF94 coordinates (meters)
 *** (x2, y2, z2) --> output coordinates (meters)
@@ -4416,15 +4490,13 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 19)
+      parameter (numref = 20)
 
       common /tranpa/ tx(numref), ty(numref), tz(numref), 
      &                dtx(numref), dty(numref), dtz(numref),
      &                rx(numref), ry(numref), rz(numref), 
      &                drx(numref), dry(numref), drz(numref),
      &                scale(numref), dscale(numref), refepc(numref)
-
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       if (jopt .eq. 0) then
          iopt = 1
@@ -4455,8 +4527,8 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 *** given date
 ****************
 C  Important note:
-C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
-C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
+C  The parameters in common block tranpa are computed using the IGS values of ITRF96 <> ITRF97
+C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96 = ITRF97
 
 *** (x1, y1, z1) --> input ITRF94 coordinates (meters)
 *** (x2, y2, z2) --> output coordinates (meters)
@@ -4466,15 +4538,13 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 19)
+      parameter (numref = 20)
 
       common /tranpa1/ tx1(numref), ty1(numref), tz1(numref), 
      &                dtx1(numref), dty1(numref), dtz1(numref),
      &                rx1(numref), ry1(numref), rz1(numref), 
      &                drx1(numref), dry1(numref), drz1(numref),
      &                scale1(numref), dscale1(numref), refepc1(numref)
-
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       if (jopt .eq. 0) then
          iopt = 1
@@ -4505,8 +4575,8 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 *** to ITRF94 cartesian coordinates for the given date
 ****************
 C  Important note:
-C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
-C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
+C  The parameters in common block tranpa are computed using the IGS values of ITRF96 <> ITRF97
+C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96 = ITRF97
 
 *** (x1, y1, z1) --> input coordinates (meters)
 *** (x2, y2, z2) --> output  ITRF94 coordinates (meters)
@@ -4516,15 +4586,13 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 19)
+      parameter (numref = 20)
 
       common /tranpa/ tx(numref), ty(numref), tz(numref), 
      &                dtx(numref), dty(numref), dtz(numref),
      &                rx(numref), ry(numref), rz(numref), 
      &                drx(numref), dry(numref), drz(numref),
      &                scale(numref), dscale(numref), refepc(numref)
-
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       if (jopt .eq. 0) then
          iopt = 1
@@ -4555,8 +4623,8 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 *** to ITRF94 cartesian coordinates for the given date
 ****************
 C  Important note:
-C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
-C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
+C  The parameters in common block tranpa are computed using the IGS values of ITRF96 <> ITRF97
+C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96 = ITRF97
 
 *** (x1, y1, z1) --> input coordiates (meters)
 *** (x2, y2, z2) --> output  ITRF94 coordinates (meters)
@@ -4566,15 +4634,13 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 19)
+      parameter (numref = 20)
 
       common /tranpa1/ tx1(numref), ty1(numref), tz1(numref), 
      &                dtx1(numref), dty1(numref), dtz1(numref),
      &                rx1(numref), ry1(numref), rz1(numref), 
      &                drx1(numref), dry1(numref), drz1(numref),
      &                scale1(numref), dscale1(numref), refepc1(numref)
-
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       if (jopt .eq. 0) then
          iopt = 1
@@ -4604,8 +4670,8 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit integer*4 (i-n)
       character    mframe*24, nframe*24
-      dimension    nframe(24)
-      dimension    iframe(24)
+      dimension    nframe(26)
+      dimension    iframe(26)
       common /files/ luin, luout, i1, i2, i3, i4, i5, i6
 
       iframe(1) = 1
@@ -4616,100 +4682,104 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
       
       iframe(3) = 13
       nframe(3) = 'NAD_83(MA11/MARP00)     '
-      
-      
-      iframe(4) = 10
-      nframe(4) = 'WGS84 original (Transit)'
-      
-      iframe(5) = 5
-      nframe(5) = 'WGS84(G730)             '
-      
-      iframe(6) = 8
-      nframe(6) = 'WGS84(G873)             '
-      
-      iframe(7) = 18
-      nframe(7) = 'WGS84(G1150)            '
-      
-      iframe(8) = 19
-      nframe(8) = 'WGS84(G1674)            '
-      
-      iframe(9) = 15
-      nframe(9) = 'WGS84(G1762)            '
-      
-      iframe(10)= 16
-      nframe(10)= 'WGS84(G2139)            '
-      
-      
-c      iframe(11)= 5                          !Included with ITRF91 in v3.4.0
-c      nframe(11)= 'SIO/MIT_92              ' !Included with ITRF91 in v3.4.0
 
-      iframe(11)= 2
-      nframe(11)= 'ITRF88                  '
+      iframe(4) = 20
+      nframe(4) = 'WGS72                   ' 
       
-      iframe(12)= 3
-      nframe(12)= 'ITRF89                  '
+      iframe(5) = 10
+      nframe(5) = 'WGS84 original (Transit)'
       
-      iframe(13)= 4
-      nframe(13)= 'ITRF90                  '
+      iframe(6) = 5
+      nframe(6) = 'WGS84(G730)             '
       
-      iframe(14)= 5
-      nframe(14)= 'ITRF91                  '
+      iframe(7) = 8
+      nframe(7) = 'WGS84(G873)             '
       
-      iframe(15)= 6
-      nframe(15)= 'ITRF92                  '
+      iframe(8) = 18
+      nframe(8) = 'WGS84(G1150)            '
       
-      iframe(16)= 7
-      nframe(16)= 'ITRF93                  '
+      iframe(9) = 19
+      nframe(9) = 'WGS84(G1674)            '
       
-      iframe(17)= 8
-      nframe(17)= 'ITRF94                  '
+      iframe(10)= 15
+      nframe(10)= 'WGS84(G1762)            '
       
-      iframe(18)= 8
-      nframe(18)= 'ITRF96                  '
+      iframe(11)= 16
+      nframe(11)= 'WGS84(G2139)            '
+
+      iframe(12)= 17
+      nframe(12)= 'WGS84(G2296)            '    
       
-      iframe(19)= 9
-      nframe(19)= 'ITRF97                  '
+      iframe(13)= 2
+      nframe(13)= 'ITRF88                  '
       
-      iframe(20)= 11
-      nframe(20)= 'ITRF2000 or IGS00/IGb00 '
+      iframe(14)= 3
+      nframe(14)= 'ITRF89                  '
       
-      iframe(21)= 14
-      nframe(21)= 'ITRF2005 or IGS05       '
+      iframe(15)= 4
+      nframe(15)= 'ITRF90                  '
       
-      iframe(22)= 15
-      nframe(22)= 'ITRF2008 or IGS08/IGb08 '
+      iframe(16)= 5
+      nframe(16)= 'ITRF91                  '
       
-      iframe(23)= 16
-      nframe(23)= 'ITRF2014 or IGS14/IGb14 '
+      iframe(17)= 6
+      nframe(17)= 'ITRF92                  '
       
-      iframe(24)= 17
-      nframe(24)= 'ITRF2020 or IGS20       '
+      iframe(18)= 7
+      nframe(18)= 'ITRF93                  '
+      
+      iframe(19)= 8
+      nframe(19)= 'ITRF94                  '
+      
+      iframe(20)= 8
+      nframe(20)= 'ITRF96                  '
+      
+      iframe(21)= 9
+      nframe(21)= 'ITRF97                  '
+      
+      iframe(22)= 11
+      nframe(22)= 'ITRF2000 or IGS00/IGb00 '
+      
+      iframe(23)= 14
+      nframe(23)= 'ITRF2005 or IGS05       '
+      
+      iframe(24)= 15
+      nframe(24)= 'ITRF2008 or IGS08/IGb08 '
+      
+      iframe(25)= 16
+      nframe(25)= 'ITRF2014 or IGS14/IGb14 '
+      
+      iframe(26)= 17
+      nframe(26)= 'ITRF2020 or IGS20/IGb20 '
 
       write(luout, 100)  
   100 format(
-     1'  1...NAD_83(2011/CORS96/2007)  North America plate fixed     '/
-     1'  2...NAD_83(PA11/PACP00)       Pacific plate fixed           '/
-     1'  3...NAD_83(MA11/MARP00)       Mariana plate fixed           '/
-     1'                                                              '/
-     1'  4...WGS84 original (Transit)                                '/
-     1'  5...WGS84(G730)   ITRF91 used                               '/
-     1'  6...WGS84(G873)   ITRF94=ITRF96=ITRF97 used                 '/
-     1'  7...WGS84(G1150)  Biased with respect to ITRF2000           '/
-     1'  8...WGS84(G1674)  Biased with respect to ITRF2008           '/
-     1'  9...WGS84(G1762)  ITRF2008=IGS08=IGb08 used                 '/
-     1' 10...WGS84(G2139)  ITRF2014=IGS14=IGb14 used                 '/
-     1'                                                              '/
-     1' 11...ITRF88                      18...ITRF96 (=ITRF94=ITRF97)'/
-     1' 12...ITRF89                      19...ITRF97 (=ITRF94=ITRF96)'/
-     1' 13...ITRF90 (or PNEOS90/NEOS90)  20...ITRF2000 or IGS00/IGb00'/
-     1' 14...ITRF91 (or SIO/MIT_92)      21...ITRF2005 or IGS05      '/
-     1' 15...ITRF92                      22...ITRF2008 or IGS08/IGb08'/
-     1' 16...ITRF93                      23...ITRF2014 or IGS14/IGb14'/
-     1' 17...ITRF94 (=ITRF96=ITRF97)     24...ITRF2020 or IGS20      '/)
+     1'  1. NAD_83(2011/CORS96/2007)  North America plate fixed       '/
+     1'  2. NAD_83(PA11/PACP00)       Pacific plate fixed             '/
+     1'  3. NAD_83(MA11/MARP00)       Mariana plate fixed             '/
+     1'                                                               '/
+     1'  4. WGS72                                                     '/
+     1'  5. WGS84 original (Transit)                                  '/
+     1'  6. WGS84(G730)   ITRF91 used                                 '/
+     1'  7. WGS84(G873)   ITRF94=ITRF96=ITRF97 used                   '/
+     1'  8. WGS84(G1150)  Biased with respect to ITRF2000             '/
+     1'  9. WGS84(G1674)  Biased with respect to ITRF2008             '/
+     1' 10. WGS84(G1762)  ITRF2008=IGS08=IGb08 used                   '/
+     1' 11. WGS84(G2139)  ITRF2014=IGS14=IGb14 used                   '/
+     1' 12. WGS84(G2296)  ITRF2020=IGS20=IGb20=ITRF2020-u2023 used    '/
+     1'                                                               '/
+     1' 13. ITRF88                   20. ITRF96 (=ITRF94=ITRF97)      '/
+     1' 14. ITRF89                   21. ITRF97 (=ITRF94=ITRF96)      '/
+     1' 15. ITRF90 (=PNEOS90=NEOS90) 22. ITRF2000 (=IGS00=IGb00)      '/
+     1' 16. ITRF91 (=SIO/MIT_92)     23. ITRF2005 (=IGS05)            '/
+     1' 17. ITRF92                   24. ITRF2008 (=IGS08=IGb08)      '/
+     1' 18. ITRF93                   25. ITRF2014 (=IGS14=IGb14)      '/
+     1' 19. ITRF94 (=ITRF96=ITRF97)  26. ITRF2020 (=IGS20=IGb20=ITRF2020
+     1-u2023)'/)
 
       read (luin, *,err=50,iostat=ios) iopt
       if (ios /= 0) goto 50
-      if ( 1 .le. iopt .and. iopt .le. 24) then
+      if ( 1 .le. iopt .and. iopt .le. 26) then
         mframe = nframe(iopt)
         kopt = iframe(iopt)
       else
@@ -4733,7 +4803,7 @@ c      nframe(11)= 'SIO/MIT_92              ' !Included with ITRF91 in v3.4.0
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (numref = 19)
+      parameter (numref = 20)
       parameter (nbbdim = 10000)
       CHARACTER    OLDBB*80, NEWBB*80, NAMEIF*80
       CHARACTER    NAME24*24
@@ -4741,9 +4811,10 @@ c      nframe(11)= 'SIO/MIT_92              ' !Included with ITRF91 in v3.4.0
       CHARACTER    LATDIR*1, LONDIR*1, LATDR*1, LONDR*1
       character    frame1*24, frame2*24
       character    HTDP_version*8
+      CHARACTER    ELPSD*5
       LOGICAL      TEST
       LOGICAL      Is_iopt_NAD83
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
 
       WRITE(LUOUT,20)
@@ -4848,6 +4919,13 @@ c      nframe(11)= 'SIO/MIT_92              ' !Included with ITRF91 in v3.4.0
          LONDR = 'W'
          IF (ISIGN .eq. -1) LONDR = 'E'
          ELONT = -YLONT
+         
+C  Specify ellipsoid for source frame1.
+         IF((frame1(1:5) .NE. 'WGS72') .AND. (frame1(1:5) .NE. 'WGS84')) 
+     1     ELPSD = 'GRS80'
+         IF(frame1(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+         IF(frame1(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+         
          CALL TOXYZ(YLATT,ELONT,EHTNEW,X1,Y1,Z1)
          DX = X1 - X
          DY = Y1 - Y
@@ -4887,6 +4965,10 @@ c      nframe(11)= 'SIO/MIT_92              ' !Included with ITRF91 in v3.4.0
          if (ios /= 0) goto 500
          IF(ANSWER .eq. 'Y' .or. ANSWER .eq. 'y') GO TO 1050
          CLOSE(I2,STATUS='KEEP')
+         
+         ELPSD = 'GRS80'   !Set ellipsoid back to default.
+         CALL MODEL
+         
          RETURN
 
 *** Updating a Bluebook 
@@ -5015,7 +5097,7 @@ c        ENDIF
   641          format(' ***CAUTION: Observations were transformed using'
      1                ,' HTDP version ', a8, ' ***')
              ENDIF
-         
+
              IF(BBTYPE .EQ. '1') THEN
                  CALL UPGFI4(DATE2, MIN2, IOPT, KOPT, 
      *                       MONTH2, IDAY2, IYEAR2)
@@ -5091,6 +5173,13 @@ c        ENDIF
             call TODMSS(ylont,londn,lonmn,slonn,isign)
             londr = 'W'
             if (isign .eq. -1) londr = 'E'
+            
+C  Specify ellipsoid for target frame2.
+            IF((frame2(1:5) .NE. 'WGS72') .AND.  
+     1        (frame2(1:5) .NE. 'WGS84')) ELPSD = 'GRS80'
+            IF(frame2(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+            IF(frame2(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+            
             call TOXYZ(ylat,elon,eht,x,y,z)
             elont = -ylont
             call TOXYZ(ylatt,elont,ehtnew,x1,y1,z1)
@@ -5106,10 +5195,18 @@ c        ENDIF
           go to 730
   750     close(I1, STATUS='KEEP')
           close(I2, status = 'KEEP')
+          
+          ELPSD = 'GRS80'   !Set ellipsoid back to default.
+          CALL MODEL
+          
           return
       ELSE
          WRITE(LUOUT,700)
   700    FORMAT(' Improper entry !'/)
+  
+         ELPSD = 'GRS80'   !Set ellipsoid back to default.
+         CALL MODEL
+  
          GO TO 999
       ENDIF
 
@@ -5157,7 +5254,7 @@ c        ENDIF
       CHARACTER    CARD*80
       CHARACTER    PIDs*6
 
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COMMON /ARRAYS/ HT(nbbdim),LOC(nbbdim),PIDs(nbbdim)
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
 
@@ -5249,7 +5346,7 @@ C        HT(ISN) = HT(ISN) + GH
       CHARACTER   CARD*80
       CHARACTER   PIDs*6
 
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COMMON /ARRAYS/ HT(nbbdim),LOC(nbbdim),PIDs(nbbdim)
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
 
@@ -5345,7 +5442,7 @@ C        HT(ISN) = HT(ISN) + GH
       LOGICAL TEST, TEST1
       COMMON /ARRAYS/ HT(nbbdim),LOC(nbbdim) ,PIDs(nbbdim)
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
 
 C***    To update classical observations an *12* record
 C***    is needed to identify the correct century, as
@@ -5673,7 +5770,7 @@ C     CHARACTER     DATE*6
       LOGICAL       TEST
       COMMON /ARRAYS/ HT(nbbdim),LOC(nbbdim) ,PIDs(nbbdim)
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
 
   170 READ(I1,175,END=600,err=700,iostat=ios) CARD
       if (ios /= 0) goto 700
@@ -5995,15 +6092,14 @@ C*******************************************************************
       CHARACTER     ZT*2
       CHARACTER     CHAR14*14
       LOGICAL       TEST
-      LOGICAL Is_inp_NAD83, Is_out_NAD83, Is_out1_NAD83
+      LOGICAL       Is_vec1_NAD83, Is_vec2_NAD83
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
 
       ZT = 'ZT'
       
-C  Initialize NAD 83 input/poutput logical variables as false:
-      Is_inp_NAD83 = .FALSE.
-      Is_out_NAD83 = .FALSE.
-      Is_out1_NAD83 = .FALSE.
+C  Initialize NAD 83 input/output logical variables as false:
+      Is_vec1_NAD83 = .FALSE.
+      Is_vec2_NAD83 = .FALSE.
 
 *** Obtain Bluebook reference frame identifier
 *** corresponding to KOPT  (output frame for vectors)
@@ -6052,47 +6148,52 @@ C  Initialize NAD 83 input/poutput logical variables as false:
          DECYR2 = DBLE(IYEAR2) + DBLE(MJD2 - MJD0)/365.D0
          MINO = (MINO1 + MINO2) / 2
          DECYR = (DECYR1 + DECYR2) / 2.D0
-         CALL RFCON(IBBREF, JREF)      !JREF is the current frame or frame of input
+         CALL RFCON(IBBREF, JREF)
          IF (KOPT .NE. -1) THEN
             CARD(52:53) = NRF
          ENDIF
-         Is_inp_NAD83 = (JREF == 1)
-         Is_out_NAD83 = (IOPT == 1)    !IOPT is the frame of the positions
-         Is_out1_NAD83 = (KOPT == 1)   !KOPT is the frame of the vectors (comment corrected v3.4.0)
+         
+         Is_vec1_NAD83 = (JREF == 1)   !JREF is the input frame or the vectors
+         Is_vec2_NAD83 = (KOPT == 1)   !KOPT is the output frame of the vectors
+         
       ELSEIF(TYPE .eq. 'C') THEN
          READ(CARD,120,err=302,iostat=ios)ISN,JSN,DX,DY,DZ
          if (ios /= 0) goto 302
   120    FORMAT(BZ,1X,2I4,F11.4,5X,F11.4,5X,F11.4)
-   
+        
          CALL CHECK(ISN, JSN, CARD, TEST)
          IF (TEST) THEN
-            CALL DDXYZ(ISN, JSN,                                 
-     1              MINO, MIN2, DDX, DDY, DDZ)
-*** Convert vector from JREF to IOPT frame                        
-            if (Is_inp_NAD83 .or. Is_out_NAD83) then
-              call TRAVEC (DX, DY, DZ, DECYR, JREF, IOPT)
+         
+*** Determine vector endpoint coordinate displacement due to epoch change.
+            CALL DDXYZ(ISN, JSN, MINO, MIN2, DDX, DDY, DDZ)
+     
+*** Convert vector from input vector frame (JREF) to frame of the positions (IOPT)                  
+            if (Is_vec1_NAD83 .or. Is_vec2_NAD83) then
+              call TRAVEC(DX, DY, DZ, DECYR, JREF, IOPT) 
             else
-              call TRAVEC_IERS (DX, DY, DZ, DECYR, JREF, IOPT)
+              call TRAVEC_IERS(DX, DY, DZ, DECYR, JREF, IOPT) 
             endif
+            
+*** Add vector endpoint coordinate displacement due to epoch change.
             DX = DX + DDX
             DY = DY + DDY
-            DZ = DZ + DDZ
+            DZ = DZ + DDZ 
 
-*** Convert GPS vector from IOPT to KOPT reference frame
+*** Convert vector from frame of the positions (IOPT) to output vector frame (KOPT)
             IF (KOPT .NE. -1) THEN
-              if (Is_out_NAD83 .or. Is_out1_NAD83) then
+              if (Is_vec1_NAD83 .or. Is_vec2_NAD83) then
                 CALL TRAVEC(DX, DY, DZ, DATE2, IOPT, KOPT)
               else
                 CALL TRAVEC_IERS(DX, DY, DZ, DATE2, IOPT, KOPT)
               endif
             ELSE
-              if (Is_inp_NAD83 .or. Is_out_NAD83) then
+              if (Is_vec1_NAD83 .or. Is_vec2_NAD83) then
                 CALL TRAVEC(DX, DY, DZ, DATE2, IOPT, JREF)
               else
                 CALL TRAVEC_IERS(DX, DY, DZ, DATE2, IOPT, JREF)
               endif
             ENDIF
-
+            
 *** Rewrite GPS observational record
             CALL TOCHAR(DX,CHAR14)          
             CARD(10:20) = CHAR14(3:13)          
@@ -6111,34 +6212,37 @@ C  Initialize NAD 83 input/poutput logical variables as false:
 
          CALL CHECK(ISN, JSN, CARD, TEST)
          IF (TEST) THEN
-            CALL DDXYZ(ISN, JSN,                               
-     1              MINO, MIN2, DDX, DDY, DDZ)
+         
+*** Determine vector endpoint coordinate displacement due to epoch change.
+            CALL DDXYZ(ISN, JSN, MINO, MIN2, DDX, DDY, DDZ)
 
-            if (Is_inp_NAD83 .or. Is_out_NAD83) then
-              call TRAVEC( DX, DY, DZ, DECYR, JREF, IOPT) 
+*** Convert vector from input vector frame (JREF) to frame of the positions (IOPT) 
+            if (Is_vec1_NAD83 .or. Is_vec2_NAD83) then
+              call TRAVEC(DX, DY, DZ, DECYR, JREF, IOPT) 
             else
-              call TRAVEC_IERS( DX, DY, DZ, DECYR, JREF, IOPT) 
+              call TRAVEC_IERS(DX, DY, DZ, DECYR, JREF, IOPT) 
             endif
 
+*** Add vector endpoint coordinate displacement due to epoch change.
             DX = DX + DDX
             DY = DY + DDY
             DZ = DZ + DDZ
 
-*** Convert GPS vector to output reference frame
+*** Convert vector from frame of the positions (IOPT) to output vector frame (KOPT)
             IF (KOPT .NE. -1) THEN
-              if (Is_out_NAD83 .or. Is_out1_NAD83) then
+              if (Is_vec1_NAD83 .or. Is_vec2_NAD83) then
                 CALL TRAVEC(DX, DY, DZ, DATE2, IOPT, KOPT)
               else
-                CALL TRAVEC_IERS (DX, DY, DZ, DATE2, IOPT, KOPT)
+                CALL TRAVEC_IERS(DX, DY, DZ, DATE2, IOPT, KOPT)
               endif
             ELSE
-              if (Is_out_NAD83 .or. Is_out1_NAD83) then
+              if (Is_vec1_NAD83 .or. Is_vec2_NAD83) then
                 CALL TRAVEC(DX, DY, DZ, DATE2, IOPT, JREF)
               else
-                CALL TRAVEC_IERS (DX, DY, DZ, DATE2, IOPT, JREF)
+                CALL TRAVEC_IERS(DX, DY, DZ, DATE2, IOPT, JREF)
               endif
             ENDIF
-
+            
 *** Rewrite GPS observational record
             CALL TOCHAR(DX,CHAR14)
             CARD(10:22) = CHAR14(1:13)
@@ -6276,7 +6380,7 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
             DY = DY + DDY
             DZ = DZ + DDZ
 
-*** Convert GPS vector to outout reference frame
+*** Convert GPS vector to output reference frame
             IF (KOPT .NE. -1) THEN
               CALL TRAVEC(DX, DY, DZ, DATE2, IOPT, KOPT)
             ELSE
@@ -6338,7 +6442,7 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
  
       implicit double precision(a-h,o-z)
       IMPLICIT INTEGER*4 (I-N)
-      common/CONST/A,F,E2,EP2,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
  
     1 if(val.gt.twopi) then
         val=val-twopi
@@ -6384,26 +6488,19 @@ C        DECYR2 = DBLE(IYEAR2) + DBLE(MINO2 - MIN00)/525600.D0
 *** to a reference frame identifier in HTDP and back
 
       IMPLICIT INTEGER*4 (I-N)
-      parameter ( numref = 19 )
-      COMMON /REFCON/ IRFCON(40), JRFCON(numref)
+      parameter ( numref = 20 )
+      COMMON /REFCON/ IRFCON(42), JRFCON(numref)
 
-*** From Bluebook identifier to HTDP indentifier
+
+*** From Bluebook identifier to HTDP identifier
 *** WGS72 Precise
-c     IRFCON(1) = 10
-      IRFCON(1) = 1
-C HTDP no longer supports WGS72. Hence, if a BlueBook
-C file contains WGS72 coordinates, HTDP treats these
-C coordinates as if they were NAD 83(2011) coordinates.
+      IRFCON(1) = 20   !Added in v3.6.0
 
 *** WGS84 (orig) Precise
       IRFCON(2) = 10   !Changed in v3.4.0 (no longer equal to NAD 83)
 
 *** WGS72 Broadcast
-c     IRFCON(3) = 10
-      IRFCON(3) = 1
-C HTDP no longer supports WGS72. Hence, if a BlueBook
-C file contains WGS72 coordinates, HTDP treats these
-C coordinates as if they were NAD 83(2011)coordinates.
+      IRFCON(3) = 20   !Added in v3.6.0
 
 *** WGS84 (orig) Broadcast
       IRFCON(4) = 10   !Changed in v3.4.0 (no longer equal to NAD 83)
@@ -6420,7 +6517,7 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** ITRF91
       IRFCON(8) = 5
 
-*** SIO/MIT 92.57 (set equal to ITRF91)   !This ooption no longer available as of v3.4.0
+*** SIO/MIT 92.57 (set equal to ITRF91)   !This option no longer available as of v3.4.0
       IRFCON(9) = 5
 
 *** ITRF91
@@ -6516,6 +6613,13 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** IGS20
       IRFCON(40) = 17
 
+*** WGS84 (G2296)
+      IRFCON(41) = 17
+
+*** IGb20
+      IRFCON(42) = 17
+
+
 *** From HTDP identifier to Bluebook identifier.
 *** NAD 83 (2011/2007/CORS96/...) referenced to North America plate.
       JRFCON(1) = 34
@@ -6544,11 +6648,11 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** ITRF97
       JRFCON(9) = 19
 
-*** WGS72
-      JRFCON(10) = 1
+*** WGS84
+      JRFCON(10) = 2
 
 *** ITRF2000
-      JRFCON(11) = 21
+      JRFCON(11) = 22
 
 *** NAD 83 (PACP00) or NAD 83 (PA11)
       JRFCON(12) = 35
@@ -6559,20 +6663,23 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** ITRF2005 or IGS05
       JRFCON(14) = 26
 
-*** ITRF2008 or IGS08
-      JRFCON(15) = 27
-
-*** IGb08
+*** ITRF2008 or IGS08 or IGb08
       JRFCON(15) = 28
 
-*** ITRF2014 or IGS14
-      JRFCON(16) = 33
-
-*** IGb14
+*** ITRF2014 or IGS14 or IGb14
       JRFCON(16) = 37
 
-*** ITRF2020 or IGS20
-      JRFCON(17) = 40
+*** ITRF2020 or IGS20 or IGb20
+      JRFCON(17) = 42
+
+*** WGS84(G1150)
+      JRFCON(18) = 23
+
+*** WGS84(G1674)
+      JRFCON(19) = 30
+
+*** WGS72
+      JRFCON(20) = 1
 
       RETURN
       END
@@ -6584,10 +6691,10 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** system used in HTDP
 
       IMPLICIT INTEGER*4 (I-N)
-      parameter ( numref = 19 )
-      COMMON /REFCON/ IRFCON(40), JRFCON(numref)
+      parameter ( numref = 20 )
+      COMMON /REFCON/ IRFCON(42), JRFCON(numref)
 
-      IF (1 .LE. IBBREF .AND. IBBREF .LE. 40) THEN
+      IF (1 .LE. IBBREF .AND. IBBREF .LE. 42) THEN
           JREF = IRFCON(IBBREF)
       ELSE
           WRITE(6, 10) IBBREF
@@ -6607,8 +6714,8 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** used in the Bluebook
 
       IMPLICIT INTEGER*4 (I-N)
-      parameter ( numref = 19 )
-      COMMON /REFCON/ IRFCON(40), JRFCON(numref)
+      parameter ( numref = 20 )
+      COMMON /REFCON/ IRFCON(42), JRFCON(numref)
 
       IF (JREF .EQ. 0) THEN
         I = 1
@@ -6642,8 +6749,8 @@ C coordinates as if they were NAD 83(2011)coordinates.
 *** for the given date                                     
 ****************
 C  Important note:
-C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
-C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
+C  The parameters in common block tranpa are computed using the IGS values of ITRF96 <> ITRF97
+C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96 = ITRF97
 
 *** (dxi, dyi, dzi) --> (input) components of input vector in meters
 ***                 --> (output) components of transformed vector in meters
@@ -6656,7 +6763,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 19)
+      parameter (numref = 20)
 
       common /tranpa/ tx(numref), ty(numref), tz(numref), 
      &                dtx(numref), dty(numref), dtz(numref),
@@ -6709,8 +6816,8 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 *** for the given date, using the IERS 96-97 transformation parameters                                     
 ****************
 C  Important note:
-C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
-C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
+C  The parameters in common block tranpa are computed using the IGS values of ITRF96 <>ITRF97
+C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96 = ITRF97
 
 *** (dxi, dyi, dzi) --> (input) components of input vector in meters
 ***                 --> (output) components of transformed vector in meters
@@ -6723,7 +6830,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 19)
+      parameter (numref = 20)
 
       common /tranpa1/ tx1(numref), ty1(numref), tz1(numref), 
      &                dtx1(numref), dty1(numref), dtz1(numref),
@@ -6782,7 +6889,7 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
       CHARACTER    COPT*1,LATDIR*1,LONDIR*1
       LOGICAL      FRMXYZ
       COMMON /FILES/ LUIN,LUOUT, I1, I2, I3, I4, I5, I6
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
 
       WRITE(LUOUT,100)
   100 FORMAT(' Enter name for point (maximum 24 characters).')
@@ -7013,7 +7120,9 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
   150     FORMAT(' Enter Z coordinate in meters.  ')
           READ(LUIN,*,err=207,iostat=ios) Z
           if (ios /= 0) goto 207
+          
           IF(.NOT.FRMXYZ(X,Y,Z,XLAT,XLON,EHT)) STOP 666
+          
           XLON = -XLON
           IF(XLON .LT. 0.0D0) XLON = XLON + TWOPI
           CALL TODMSS(XLAT,LATD,LATM,SLAT,ISIGN)
@@ -7201,7 +7310,6 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
       IMPLICIT INTEGER*4 (I-N)
       parameter (NDLOC = 2740)
 
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
       COMMON /TIMREF/ ITREF
       COMMON /QPARM/ STRIKE(NDLOC), HL(NDLOC), EQLAT(NDLOC),
      1          EQLON(NDLOC), SSLIP(NDLOC), DSLIP(NDLOC),
@@ -7267,7 +7375,6 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
       HT = HTOLD
 
@@ -7307,7 +7414,11 @@ C  The parameters in common block tranpa1 are computed using the IERS values of 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
       logical  Is_iopt_NAD83
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      CHARACTER ELPSD*5
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
+      
+** Change ellipsoid if frame is WGS72 (change for WGS84 ellipsoid negligible for velocities)
+      IF(IOPT .EQ. 20) ELPSD = 'WGS72'
 
 ** Get reference latitude (RLAT) and reference longitude (RLON)
 C  The following 2 lines were added on 07/22/2015 after Rich found this bug
@@ -7336,9 +7447,9 @@ C  The following 2 lines were added on 07/22/2015 after Rich found this bug
            VU = 0.D0
            RETURN
          ENDIF
-         CALL COMVEL( RLAT, RLON, JREGN, VN, VE, VU)       !Those velocities are in ITRF2008
+         CALL COMVEL( RLAT, RLON, JREGN, VN, VE, VU)       !Velocities are in ITRF2008
 
-** Convert  velocity to reference of iopt, if frame not ITRF2008
+** Convert velocity to reference of iopt, if frame not ITRF2008
 
          Is_iopt_NAD83 = (iopt == 1)
          IF (IOPT .NE. 15) THEN
@@ -7351,6 +7462,9 @@ C  The following 2 lines were added on 07/22/2015 after Rich found this bug
            CALL TOVNEU( YLAT, ELON, VX, VY, VZ, VN, VE, VU)
          ENDIF
 
+         ELPSD = 'GRS80'   !Set ellipsoid back to default.
+         CALL MODEL
+
          RETURN
          END
 
@@ -7361,16 +7475,17 @@ C  The following 2 lines were added on 07/22/2015 after Rich found this bug
 
       implicit double precision (a-h, o-z)
       implicit integer*4 (i-n)
-      parameter (numref = 19)
+      parameter (numref = 20)
       character    nameif*80,name24*80
       character    NAMEF*80
       character    frame1*24, frame2*24
       character    option*1
       character    vopt*1, LATDIR*1,LONDIR*1
       character    record*120                 
+      CHARACTER ELPSD*5
       LOGICAL      Is_inp_NAD83, Is_out_NAD83
       COMMON /FILES/ LUIN, LUOUT, I1, I2, I3, I4, I5, I6
-      COMMON /CONST/ A, F, E2, EPS, AF, PI, TWOPI, RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
 
 C  Initialize NAD 83 input/poutput logical variables as false:
       Is_inp_NAD83 = .FALSE.
@@ -7405,7 +7520,19 @@ c      Is_inp_NAD83 = (iopt1 ==  1)    !Comment out v3.4.0
       write( luout, *) 'Improper selection -- try again.'
       go to 115
       endif
-      
+
+C  Specify ellipsoid for source frame1.
+      IF((frame1(1:5) .NE. 'WGS72') .AND. (frame1(1:5) .NE. 'WGS84')) 
+     1  ELPSD = 'GRS80'
+      IF(frame1(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+      IF(frame1(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+
+C  Specify ellipsoid for target frame2.
+      IF((frame2(1:5) .NE. 'WGS72') .AND. (frame2(1:5) .NE. 'WGS84')) 
+     1  ELPSD = 'GRS80'
+      IF(frame2(1:5) .EQ. 'WGS72') ELPSD = 'WGS72'
+      IF(frame2(1:5) .EQ. 'WGS84') ELPSD = 'WGS84'
+
       IF(iopt2 .EQ. 1) Is_out_NAD83 = .TRUE.
 c      Is_out_NAD83 = (iopt2 ==  1)    !Comment out v3.4.0
 
@@ -7433,7 +7560,7 @@ c      Is_out_NAD83 = (iopt2 ==  1)    !Comment out v3.4.0
       if (ios /= 0) goto 601
       if (option .eq. '0') then
         go to 500
-      elseif (option .eq. '1') then
+      elseif (option .eq. '1') then     
         call GETPNT( latd, latm, slat, LATDIR, lond, lonm, slon,
      1       LONDIR, name24, x, y, z, ylat, ylon, eht)
         elon = - ylon
@@ -7501,9 +7628,13 @@ c      Is_out_NAD83 = (iopt2 ==  1)    !Comment out v3.4.0
          go to 210
   220    close (i1, status = 'keep')
       endif
-       
+      
   500 continue
       close (i2, status = 'keep')
+      
+      ELPSD = 'GRS80'   !Set ellipsoid back to default.
+      CALL MODEL
+      
       return
 
   600 write (*,'(/)')
@@ -7538,12 +7669,12 @@ c      Is_out_NAD83 = (iopt2 ==  1)    !Comment out v3.4.0
 *** reference frame of IOPT2.
 ****************
 C  Important note:
-C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
-C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
+C  The parameters in common block tranpa are computed using the IGS values of ITRF96 <> ITRF97
+C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96 = TRF97
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (numref = 19)
+      parameter (numref = 20)
       common /tranpa/ tx(numref), ty(numref), tz(numref),
      &                dtx(numref), dty(numref), dtz(numref),
      &                rx(numref), ry(numref), rz(numref),
@@ -7602,12 +7733,12 @@ c     write (*,*) "Inside VTRANF  ",Vx,Vy,Vz
 *** reference frame of IOPT2.
 ****************
 C  Important note:
-C  The parameters in common block tranpa are computed using the IGS values of ITRF96==>ITRF97
-C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96==>ITRF97
+C  The parameters in common block tranpa are computed using the IGS values of ITRF96 <> ITRF97
+C  The parameters in common block tranpa1 are computed using the IERS values of ITRF96 = TRF97
 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       IMPLICIT INTEGER*4 (I-N)
-      parameter (numref = 19)
+      parameter (numref = 20)
       common /tranpa1/ tx1(numref), ty1(numref), tz1(numref), 
      &                dtx1(numref), dty1(numref), dtz1(numref),
      &                rx1(numref), ry1(numref), rz1(numref), 
@@ -7942,21 +8073,12 @@ C      B=  2 - A + DINT( A*0.25D0 )
 C      C=  365.25D0*IYRP
 C      D=  30.6001D0*(IMOP + 1)
 C      MJD =  (B + C + D + IDAY - 679006) 
-C      
-C      WRITE(*,*)'Old values:'
-C      WRITE(*,*)'A, B, C, D =', A, B, C, D
-C      WRITE(*,*)'MJD =', MJD
       
       A = IDINT(DBLE(IYRP)*0.01D0)
       B = 2 - A + IDINT(DBLE(A)*0.25D0)
       C = IDINT(365.25D0*DBLE(IYRP))
       D = IDINT(30.6001D0*(DBLE(IMOP + 1)))
       MJD = B + C + D + IDAY - 679006
-
-C      WRITE(*,*)'New values:'
-C      WRITE(*,*)'A, B, C, D =', A, B, C, D
-C      WRITE(*,*)'MJD =', MJD
-C      WRITE(*,*)
  
       RETURN
       END
@@ -7982,7 +8104,7 @@ C      WRITE(*,*)
       LOGICAL INSIDE
 
       parameter (NUMPSG = 1)
-      COMMON /CONST/ A, F,E2,EPS,AF,PI,TWOPI,RHOSEC
+      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC,ELPSD
       COMMON /TIMREF/ ITREF
       COMMON /PSGRID/ PSGLX(NUMPSG), PSGUX(NUMPSG),
      1          PSGLY(NUMPSG), PSGUY(NUMPSG),
@@ -8113,7 +8235,7 @@ C    THIS MODULE CALLS:       NONE
 C
 C    INCLUDE FILES USED:      NONE
 C
-C    COMMON BLOCKS USED:      /PSGRID/, /CONST/
+C    COMMON BLOCKS USED:      /PSGRID/
 C
 C    REFERENCES:  SEE RICHARD SNAY
 C
@@ -8135,7 +8257,6 @@ C**** COMPUTES THE WEIGHTS FOR AN ELEMENT IN A GRID
       COMMON /PSGRID/ PSGLX(NUMPSG), PSGUX(NUMPSG), 
      1          PSGLY(NUMPSG), PSGUY(NUMPSG),
      1          ICNTPX(NUMPSG), ICNTPY(NUMPSG), NBASEP(NUMPSG)
-      COMMON /CONST/ A,F,E2,EPS,AF,PI,TWOPI,RHOSEC
 
 C*** Obtain indices for the lower-left corner of the cell
 C*** containing the point
@@ -8242,7 +8363,7 @@ C---------------------------------------------------------------------
       subroutine extract_name (name,i)
 
 C  In f90, use trim(name) to truncate all spaces after the name.
-C  But "trim" were not available in f77.
+C  But "trim" was not available in f77.
 
       implicit none
       integer*4 i
